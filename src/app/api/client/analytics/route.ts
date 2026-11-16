@@ -14,6 +14,7 @@ type Visit = {
   city: string | null;
   country: string | null;
   duration_s: number | null;
+  qr_id?: string | null;
 };
 type UnitEvent = { visit_id: number | null; visitor_id: string; unit_display_id: string; kind: "view" | "favorite"; duration_s: number; created_at: string };
 type Lead = { unit_display_id: string | null; created_at: string };
@@ -50,13 +51,21 @@ const visitorLabel = (id: string) => {
 
 async function load(service: SupabaseClient, complexId: string, since: string | null) {
   const visits = await fetchAll<Visit>((a, b) => {
-    let q = service.from("complex_visits").select("id, visitor_id, created_at, source, device, os, city, country, duration_s").eq("complex_id", complexId);
+    let q = service.from("complex_visits").select("id, visitor_id, created_at, source, device, os, city, country, duration_s, qr_id").eq("complex_id", complexId);
     if (since) q = q.gte("created_at", since);
     return q.order("created_at", { ascending: false }).range(a, b);
   });
-  // before migration 014 the analytics columns do not exist: fall back to the basic ones
-  const safeVisits = visits.length
+  // before migration 016 there is no qr_id column
+  const withQr = visits.length
     ? visits
+    : await fetchAll<Visit>((a, b) => {
+      let q = service.from("complex_visits").select("id, visitor_id, created_at, source, device, os, city, country, duration_s").eq("complex_id", complexId);
+      if (since) q = q.gte("created_at", since);
+      return q.order("created_at", { ascending: false }).range(a, b);
+    });
+  // before migration 014 the analytics columns do not exist: fall back to the basic ones
+  const safeVisits = withQr.length
+    ? withQr
     : await fetchAll<Visit>((a, b) => {
       let q = service.from("complex_visits").select("id, visitor_id, created_at").eq("complex_id", complexId);
       if (since) q = q.gte("created_at", since);
@@ -98,8 +107,12 @@ export async function GET(req: Request) {
   const prevEvents = inPrev(allEvents);
   const leads = inPeriod(allLeads);
 
-  const { data: unitRows } = await service.from("units").select("display_id, model, type").eq("complex_id", complexId);
-  const units = (unitRows ?? []) as { display_id: string; model: string | null; type: number }[];
+  const { data: unitRows } = await service.from("units").select("display_id, model, type, mesh_id").eq("complex_id", complexId);
+  const units = (unitRows ?? []) as { display_id: string; model: string | null; type: number; mesh_id: string | null }[];
+
+  // QR codes of this project, with the visits each one brought in the period
+  const { data: qrRows } = await service.from("qr_codes").select("id, label, created_at").eq("complex_id", complexId).order("created_at");
+  const qrCodes = (qrRows ?? []) as { id: string; label: string; created_at: string }[];
 
   /* ---------------- traffic ---------------- */
   const perVisitor = new Map<string, number>();
@@ -173,6 +186,15 @@ export async function GET(req: Request) {
   }));
 
   /* ---------------- properties ---------------- */
+  const qrVisits = visits.filter((v) => v.source === "qr");
+  const perQr = new Map<string, number>();
+  for (const v of qrVisits) if (v.qr_id) perQr.set(v.qr_id, (perQr.get(v.qr_id) ?? 0) + 1);
+  const qrStats = qrCodes.map((c) => ({ id: c.id, label: c.label || "Untitled", n: perQr.get(c.id) ?? 0 }));
+  const qrIds = new Set(qrCodes.map((c) => c.id));
+  const untracked = qrVisits.filter((v) => !v.qr_id || !qrIds.has(v.qr_id)).length;
+  if (untracked) qrStats.push({ id: "other", label: "Older codes (no id)", n: untracked });
+  // creation order, so QR1, QR2… keep their number
+
   type U = { villa: string; model: string; viewers: Set<string>; views: number; favorites: number; inquiries: number; time: number };
   const byUnit = new Map<string, U>();
   const unitOf = (villa: string) => {
@@ -198,6 +220,7 @@ export async function GET(req: Request) {
   const unitStats = [...byUnit.values()].map((u) => ({
     villa: u.villa,
     model: u.model,
+    mesh: units.find((x) => x.display_id === u.villa)?.mesh_id ?? null,
     viewers: u.viewers.size,
     views: u.views,
     favorites: u.favorites,
@@ -233,6 +256,7 @@ export async function GET(req: Request) {
       returning,
       returningDelta: delta(returning, prevReturning),
       sources: count(visits.map((v) => v.source ?? "direct")).map(([k, n]) => ({ key: k, n, pct: pct(n, visits.length) })),
+      qr: qrStats,
       devices: count(visits.map((v) => v.device ?? "unknown")).map(([k, n]) => ({ key: k, n, pct: pct(n, visits.length) })),
       os: count(visits.filter((v) => v.os).map((v) => v.os as string)).map(([k, n]) => ({ key: k, n, pct: pct(n, visits.length) })),
       series: series.map((s) => ({ t: s.t, sessions: s.sessions, unique: s.visitors.size })),

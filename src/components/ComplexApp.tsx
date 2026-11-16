@@ -30,16 +30,11 @@ import {
 } from "@/components/Icons";
 import { GalleryPage, HelpPage, LocationPage } from "@/components/TourPages";
 import PanoramaViewer from "@/components/PanoramaViewer";
+import RecommendPanel, { IconSparkle } from "@/components/RecommendPanel";
 import Visite360Viewer from "@/components/Visite360Viewer";
 import { startVisit, trackFavorite, trackUnitView } from "@/lib/track";
 import { attachGlideScroll } from "@/lib/glide-scroll";
 import { STREET_360_PINS } from "@/lib/street360";
-
-const STATUS_LABEL: Record<UnitStatus, string> = {
-  available: "Available",
-  reserved: "Reserved",
-  sold: "Sold",
-};
 
 const STATUS_AR: Record<UnitStatus, string> = {
   available: "متاح",
@@ -598,9 +593,10 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [layoutReady, setLayoutReady] = useState(false);
-  const [headingDir, setHeadingDir] = useState("ش");
+  const [headingDir, setHeadingDir] = useState("N");
   const [headingDeg, setHeadingDeg] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [recoOpen, setRecoOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
@@ -1884,12 +1880,12 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
           </div>
         )}
         {selected && !hover && !tourUnit && !scene360Open && approachedRef.current === selected.id && (
-          <div className="tip">
+          <div className="tip tip-enter">
             {mediaSrc(tourPlanUrl(tour, selected)) ? <img src={tourPlanUrl(tour, selected)} alt="" /> : null}
             <div>
               <div className="tip-head">
                 <b>{selected.displayId}</b>
-                <small className={selected.status}>{STATUS_LABEL[selected.status]}</small>
+                <small className={selected.status} dir="rtl">{STATUS_AR[selected.status]}</small>
               </div>
               <em className="hint" dir="rtl">انقر مرة أخرى للدخول</em>
             </div>
@@ -1990,6 +1986,18 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
             }}>
               <span className="rail-name">مساعدة</span>
               <span className="rail-ico glass"><IconHelp size={20} /></span>
+            </button>
+            <button
+              type="button"
+              className={`rail-fab reco-fab${recoOpen ? " is-active" : ""}`}
+              aria-pressed={recoOpen}
+              onClick={() => {
+                if (isPhoneLayout()) closeFilters();
+                setRecoOpen((v) => !v);
+              }}
+            >
+              <span className="rail-name">اقتراح فيلا</span>
+              <span className="rail-ico glass"><IconSparkle size={20} /></span>
             </button>
           </div>
         </nav>
@@ -2291,6 +2299,18 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
       </div>
 
       {helpOpen && <HelpPage tour={tour} onClose={() => setHelpOpen(false)} />}
+      {recoOpen && !scene360Open && !tourUnit && (
+        <RecommendPanel
+          units={units}
+          priceOf={unitPrice}
+          photoOf={(u) => cardPhoto(tour, u)}
+          onPick={(u) => {
+            setRecoOpen(false);
+            void pickUnit(u);
+          }}
+          onClose={() => setRecoOpen(false)}
+        />
+      )}
       {locationOpen && <LocationPage tour={tour} onClose={() => setLocationOpen(false)} />}
       {galleryOpen && <GalleryPage tour={tour} onClose={() => setGalleryOpen(false)} />}
       {tourUnit && (
@@ -2701,7 +2721,7 @@ function Spin360({ type, folder }: { type: number; folder: string }) {
   // Same as maquette HUD: needle rotates; letter snaps to N / NE / E / …
   const headingDeg = n > 0 ? (pos / n) * 360 : 0;
   const normDeg = ((headingDeg % 360) + 360) % 360;
-  const headingDir = (["ش", "ش.ق", "ق", "ج.ق", "ج", "ج.غ", "غ", "ش.غ"] as const)[
+  const headingDir = (["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const)[
     Math.round(normDeg / 45) % 8
   ];
 

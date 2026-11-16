@@ -49,14 +49,28 @@ export async function POST(req: Request) {
   }
 
   const base = { complex_id: cx.id, visitor_id: visitorId };
+  // a code made on the QR tab of this same project
+  const qrRaw = String(body?.qr ?? "");
+  let qrId: string | null = null;
+  if (/^[0-9a-f-]{36}$/i.test(qrRaw)) {
+    const { data: code } = await service.from("qr_codes").select("id").eq("id", qrRaw).eq("complex_id", cx.id).maybeSingle();
+    qrId = (code?.id as string | undefined) ?? null;
+  }
   const details = {
     ...base,
-    source: pick(body?.source, SOURCES) ?? "direct",
+    ...(qrId ? { qr_id: qrId } : {}),
+    source: qrId ? "qr" : pick(body?.source, SOURCES) ?? "direct",
     device: pick(body?.device, DEVICES),
     os: pick(body?.os, OSES),
     ...geo(req),
   };
   let { data, error } = await service.from("complex_visits").insert(details).select("id").single();
+  if (error && qrId) {
+    // qr_id column not created yet (migration 016): keep the rest of the details
+    const { qr_id: _skip, ...rest } = details as typeof details & { qr_id?: string };
+    void _skip;
+    ({ data, error } = await service.from("complex_visits").insert(rest).select("id").single());
+  }
   if (error) {
     // analytics columns not created yet (migration 014): still count the visit
     ({ data, error } = await service.from("complex_visits").insert(base).select("id").single());

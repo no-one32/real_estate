@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ComplexRow } from "@/lib/types";
 import { exportExcel } from "./contacts-export";
 import ProjectStrip from "./ProjectStrip";
+import { IcChart } from "./DashIcons";
 import { Donut, HBars, LineChart, VBars, fmtDur, fmtN, type Slice } from "./AnalyticsCharts";
 
 /* Categorical order validated for colour-blind safety (blue · green · amber · red · indigo); colour follows the source. */
@@ -25,6 +26,7 @@ type Data = {
   traffic: {
     sessions: number; sessionsDelta: number | null; unique: number; uniqueDelta: number | null; returning: number; returningDelta: number | null;
     sources: { key: string; n: number; pct: number }[];
+    qr?: { id: string; label: string; n: number }[];
     devices: { key: string; n: number; pct: number }[];
     os: { key: string; n: number; pct: number }[];
     series: { t: string; sessions: number; unique: number }[];
@@ -36,7 +38,7 @@ type Data = {
   property: {
     viewedUnits: number; totalUnits: number; views: number; viewsDelta: number | null; favorites: number; favoritesDelta: number | null;
     inquiries: number; inquiryRate: number;
-    units: { villa: string; model: string; viewers: number; views: number; favorites: number; inquiries: number; avgTime: number; rate: number; level: "high" | "medium" | "low" }[];
+    units: { villa: string; model: string; mesh?: string | null; viewers: number; views: number; favorites: number; inquiries: number; avgTime: number; rate: number; level: "high" | "medium" | "low" }[];
     byModel: { model: string; avgTime: number; views: number }[];
   };
 };
@@ -63,7 +65,7 @@ function Stat({ label, value, sub, icon, tint }: { label: string; value: ReactNo
   );
 }
 
-function Card({ title, sub, pill, pillTone = "blue", children, className = "" }: { title: string; sub: string; pill?: ReactNode; pillTone?: "blue" | "green" | "red"; children: ReactNode; className?: string }) {
+function Card({ title, sub, pill, pillTone = "blue", actions, children, className = "" }: { title: string; sub: string; pill?: ReactNode; pillTone?: "blue" | "green" | "red"; actions?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <section className={`axn-card ${className}`}>
       <header>
@@ -71,7 +73,7 @@ function Card({ title, sub, pill, pillTone = "blue", children, className = "" }:
           <h2>{title}</h2>
           <p>{sub}</p>
         </div>
-        {pill ? <span className={`axn-pill ${pillTone}`}>{pill}</span> : null}
+        {actions ?? (pill ? <span className={`axn-pill ${pillTone}`}>{pill}</span> : null)}
       </header>
       {children}
     </section>
@@ -107,6 +109,24 @@ export default function AnalyticsView({
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
   const [picked, setPicked] = useState<string | null>(null);
+  const [heatView, setHeatView] = useState<"list" | "top">("list");
+  const [plan, setPlan] = useState<Plan | null>(null);
+
+  // top-view plan of the project (image + villa outlines taken from the 3D model), when there is one
+  useEffect(() => {
+    let alive = true;
+    setPlan(null);
+    fetch(`/complexes/${cx.slug}/plan/units.json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => alive && setPlan(j && j.units ? (j as Plan) : null))
+      .catch(() => alive && setPlan(null));
+    return () => {
+      alive = false;
+    };
+  }, [cx.slug]);
+  useEffect(() => {
+    if (!plan && heatView === "top") setHeatView("list");
+  }, [plan, heatView]);
 
   useEffect(() => {
     let alive = true;
@@ -136,6 +156,10 @@ export default function AnalyticsView({
     for (const s of t.sources) {
       if (SOURCE[s.key]) out.push({ key: s.key, label: SOURCE[s.key].label, value: s.n, pct: s.pct, color: SOURCE[s.key].color });
       else other += s.n;
+    }
+    // the main sources (QR Code included) are always listed, even at 0%
+    for (const k of Object.keys(SOURCE)) {
+      if (!out.some((x) => x.key === k)) out.push({ key: k, label: SOURCE[k].label, value: 0, pct: 0, color: SOURCE[k].color });
     }
     if (other) out.push({ key: "other", label: "Other", value: other, pct: Math.round((other / Math.max(1, t.sessions)) * 1000) / 10, color: C.indigo });
     // fixed order, so a colour always means the same source
@@ -169,6 +193,7 @@ export default function AnalyticsView({
   return (
     <section className="axn">
       <header className="axn-head">
+        {tabs ? <span className="axp-emblem"><IcChart size={42} stroke={2} /></span> : null}
         <div className="axn-title">
           <h1>{sub === "traffic" ? "Traffic Analytics" : "Property Analytics"}</h1>
           <p>
@@ -214,7 +239,8 @@ export default function AnalyticsView({
           <div className="axn-row half">
             <Card title="Traffic Sources" sub="Where visitors discovered this maquette" pill={`${fmtN(t.sessions)} sessions`}>
               {t.sessions ? <Donut slices={sources} total={t.sessions} unit="Sessions" /> : <p className="axn-empty">No visits in this period yet.</p>}
-              <p className="axn-note">QR codes made on the QR page are counted as “QR Code”. Add ?src=facebook (or instagram…) to links you post to see them here.</p>
+              <QrBox rows={t.qr ?? []} />
+              <p className="axn-note">Codes made on the QR tab are counted one by one. Add ?src=facebook (or instagram…) to links you post to see them here.</p>
             </Card>
             <Card title="Device Distribution" sub="Devices used to access the virtual tour">
               <HBars
@@ -309,7 +335,19 @@ export default function AnalyticsView({
           </div>
 
           <div className="axn-row wide">
-            <Card title="Property Interest Heatmap" sub="Click a unit to inspect its metrics" pill={<>Green: high · Amber: medium · Grey: low</>}>
+            <Card
+              title="Property Interest Heatmap"
+              sub="Click a unit to inspect its metrics"
+              actions={
+                <div className="axn-seg small" role="radiogroup" aria-label="Heatmap view">
+                  <button type="button" role="radio" aria-checked={heatView === "list"} className={heatView === "list" ? "on" : ""} onClick={() => setHeatView("list")}>List</button>
+                  <button type="button" role="radio" aria-checked={heatView === "top"} className={heatView === "top" ? "on" : ""} onClick={() => setHeatView("top")} disabled={!plan} title={plan ? undefined : "No top view for this project yet"}>Top view</button>
+                </div>
+              }
+            >
+              {heatView === "top" && plan ? (
+                <PlanView plan={plan} base={`/complexes/${cx.slug}/plan/`} units={units} selected={selected?.villa ?? null} onPick={setPicked} />
+              ) : (
               <div className="axn-heat" role="listbox" aria-label="Villas by interest">
                 {units.map((u) => (
                   <button
@@ -325,6 +363,12 @@ export default function AnalyticsView({
                     <small>{cap(u.level)}</small>
                   </button>
                 ))}
+              </div>
+              )}
+              <div className="axn-legend-row">
+                <span><i style={{ background: "#34c58a" }} />High interest</span>
+                <span><i style={{ background: "#f5b740" }} />Medium</span>
+                <span><i style={{ background: "#c3ccda" }} />Low</span>
               </div>
             </Card>
             <Card
@@ -395,5 +439,79 @@ function RankTable({ rows, head, onPick }: { rows: [string, string, string][]; h
         ))}
       </tbody>
     </table>
+  );
+}
+
+type Plan = { image: string; width: number; height: number; units: Record<string, [number, number][]> };
+type HeatUnit = Data["property"]["units"][number];
+
+const HEAT: Record<HeatUnit["level"], string> = { high: "#34c58a", medium: "#f5b740", low: "#c3ccda" };
+
+/** Site plan seen from above; each villa outline comes from the 3D model and is coloured by interest. */
+function PlanView({ plan, base, units, selected, onPick }: { plan: Plan; base: string; units: HeatUnit[]; selected: string | null; onPick: (villa: string) => void }) {
+  const byMesh = useMemo(() => new Map(units.filter((u) => u.mesh).map((u) => [u.mesh as string, u])), [units]);
+  const [hover, setHover] = useState<HeatUnit | null>(null);
+  const entries = Object.entries(plan.units);
+  return (
+    <div className="axn-plan" onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${plan.width} ${plan.height}`} role="listbox" aria-label="Villas on the site plan">
+        <image href={`${base}${plan.image}`} x={0} y={0} width={plan.width} height={plan.height} preserveAspectRatio="none" />
+        {entries.map(([mesh, pts]) => {
+          const u = byMesh.get(mesh);
+          const d = `M${pts.map((p) => p.join(",")).join("L")}Z`;
+          if (!u) return <path key={mesh} d={d} className="axn-plan-off" />;
+          const on = selected === u.villa;
+          return (
+            <path
+              key={mesh}
+              d={d}
+              role="option"
+              aria-selected={on}
+              aria-label={`Villa ${u.villa}, ${u.level} interest`}
+              tabIndex={0}
+              className={`axn-plan-unit${on ? " on" : ""}`}
+              fill={HEAT[u.level]}
+              onClick={() => onPick(u.villa)}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onPick(u.villa)}
+              onMouseEnter={() => setHover(u)}
+            />
+          );
+        })}
+      </svg>
+      {hover ? (
+        <div className="axn-plan-tip">
+          <b>Villa {hover.villa}</b>
+          <span>{fmtN(hover.views)} views · {fmtN(hover.favorites)} favorites</span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Small box under the sources donut: visits brought by each QR code. */
+function QrBox({ rows }: { rows: { id: string; label: string; n: number }[] }) {
+  const max = Math.max(1, ...rows.map((r) => r.n));
+  const total = rows.reduce((n, r) => n + r.n, 0);
+  return (
+    <div className="axn-qrbox">
+      <div className="axn-qrbox-head">
+        <b>Visits by QR code</b>
+        <span>{fmtN(total)} total</span>
+      </div>
+      {rows.length ? (
+        <ul>
+          {rows.map((r, i) => (
+            <li key={r.id} title={`${r.label}: ${r.n} visits`}>
+              <span className="axn-qrbox-tag">QR{i + 1}</span>
+              <span className="axn-qrbox-name">{r.label}</span>
+              <span className="axn-qrbox-bar"><i style={{ width: `${r.n ? Math.max(3, (r.n / max) * 100) : 0}%` }} /></span>
+              <b>{fmtN(r.n)}</b>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No QR codes yet. Make one on the QR tab to follow its scans here.</p>
+      )}
+    </div>
   );
 }

@@ -378,7 +378,7 @@ export default function ApartmentsView({
       ) : null}
 
       <div className="axa-card">
-        <div className="axa-scroll">
+        <div className={`axa-scroll${pages > 1 ? " paged" : ""}`}>
           <table className="axa-table">
             <colgroup>
               <col style={{ width: "33%" }} />

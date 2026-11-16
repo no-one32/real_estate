@@ -50,6 +50,12 @@ export function detectSource(): string {
   return "other";
 }
 
+/** Id of the dashboard QR code that opened the tour (?qr=…), if any. */
+export function detectQr(): string | null {
+  const id = new URLSearchParams(window.location.search).get("qr") || "";
+  return /^[0-9a-f-]{36}$/i.test(id) ? id : null;
+}
+
 export function detectDevice() {
   const ua = navigator.userAgent;
   const touchMac = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1; // iPadOS reports as Mac
@@ -96,7 +102,7 @@ export async function startVisit(slug: string) {
     const res = await fetch("/api/visit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, visitorId, source: detectSource(), device, os }),
+      body: JSON.stringify({ slug, visitorId, source: detectSource(), device, os, qr: detectQr() }),
       keepalive: true,
     });
     const json = await res.json().catch(() => ({}));

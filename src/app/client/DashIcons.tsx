@@ -33,6 +33,13 @@ export const IcUsers = ({ size = 24, stroke = 2 }: P) => (
     <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
   </svg>
 );
+/** chat bubble with a spark: the dashboard assistant */
+export const IcAssistant = ({ size = 24, stroke = 2 }: P) => (
+  <svg {...base(size, stroke)}>
+    <path d="M21 11.5a8.4 8.4 0 0 1-12.2 7.5L3 21l2-5.3A8.4 8.4 0 1 1 21 11.5Z" />
+    <path d="M12 7.5l1 2.4 2.5 1-2.5 1-1 2.4-1-2.4-2.5-1 2.5-1Z" />
+  </svg>
+);
 export const IcHelp = ({ size = 24, stroke = 2 }: P) => (
   <svg {...base(size, stroke)}>
     <circle cx="12" cy="12" r="10" />
@@ -105,22 +112,9 @@ export const IcCamera = ({ size = 24, stroke = 2 }: P) => (
 );
 
 /** Big AXIS "X" watermark: four double chevrons pointing at the centre, like the logo. */
+/** Big faded AXIS mark behind the dashboard: the real logo (public/branding/axis-mark.png), tinted by CSS. */
 export function AxisWatermark({ className }: { className?: string }) {
-  const chevron = (o: number) => `M${-72} ${-o - 72} L0 ${-o} L72 ${-o - 72}`;
-  const quarter = (
-    <>
-      <path d={chevron(10)} />
-      <path d={chevron(30)} />
-    </>
-  );
-  return (
-    <svg className={className} viewBox="-110 -110 220 220" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round">
-      <g>{quarter}</g>
-      <g transform="rotate(90)">{quarter}</g>
-      <g transform="rotate(180)">{quarter}</g>
-      <g transform="rotate(270)">{quarter}</g>
-    </svg>
-  );
+  return <div className={className} aria-hidden="true" />;
 }
 
 export const IcUsersRound = ({ size = 24, stroke = 2 }: P) => (

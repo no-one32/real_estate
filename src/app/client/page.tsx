@@ -8,6 +8,8 @@ import { priceOf } from "./ApartmentsView";
 import ApartmentsView from "./ApartmentsView";
 import QrView from "./QrView";
 import AnalyticsView from "./AnalyticsView";
+import HelpView from "./HelpView";
+import NotificationsView, { type NotificationTarget } from "./NotificationsView";
 import { IcBuilding, IcCalendar, IcChart, IcClock, IcDoor, IcEye, IcHandshake, IcPin, IcQr, IcUsers } from "./DashIcons";
 import type { ComplexRow, LeadRow, ProjectStats, UnitRow } from "@/lib/types";
 import { displayPersonName } from "@/lib/person-name";
@@ -20,9 +22,9 @@ type ProjectTab = "apartments" | "qr" | "analytics" | "contacts";
 function ProjectTabs({ tab, onTab }: { tab: ProjectTab; onTab: (t: ProjectTab) => void }) {
   const items: [ProjectTab, string, React.ReactNode][] = [
     ["apartments", "Apartments", <IcDoor key="d" size={16} stroke={1.6} />],
-    ["qr", "QR", <IcQr key="q" size={17} stroke={1.7} />],
     ["analytics", "Analytics", <IcChart key="c" size={17} stroke={1.8} />],
     ["contacts", "Contacts", <IcUsers key="u" size={17} stroke={2} />],
+    ["qr", "QR", <IcQr key="q" size={17} stroke={1.7} />],
   ];
   return (
     <nav className="axp-tabs" aria-label="Project sections">
@@ -175,20 +177,42 @@ export default function ClientHome() {
 
   const notifications = useMemo(() => Object.values(stats).reduce((n, s) => n + s.badge, 0), [stats]);
 
-  const openProject = (cx: ComplexRow) => {
-    setActive(cx.id);
-    setView("project");
-    setProjectTab("apartments");
-    // the owner has now seen everything new on this project
+  /** the owner has now seen everything new on this project (badge, "+N new", notifications) */
+  const markSeen = (complexId: string) => {
     setStats((prev) => {
-      const s = prev[cx.id];
-      return s ? { ...prev, [cx.id]: { ...s, badge: 0, newVisitors: 0, newLeads: 0, lastSeenAt: new Date().toISOString() } } : prev;
+      const s = prev[complexId];
+      return s ? { ...prev, [complexId]: { ...s, badge: 0, newVisitors: 0, newLeads: 0, lastSeenAt: new Date().toISOString() } } : prev;
     });
     void fetch("/api/client/seen", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ complexId: cx.id }),
+      body: JSON.stringify({ complexId }),
     });
+  };
+
+  const openProject = (cx: ComplexRow) => {
+    setActive(cx.id);
+    setView("project");
+    setProjectTab("apartments");
+    markSeen(cx.id);
+  };
+
+  /** a notification was clicked: go to the right place inside its project */
+  const openNotification = (t: NotificationTarget) => {
+    setActive(t.complexId);
+    setView("project");
+    if (t.kind === "lead") {
+      setProjectTab("contacts");
+      setFocus({ id: t.leadId, n: Date.now() });
+    } else {
+      setProjectTab("analytics");
+      setFocus(null);
+    }
+    if (stats[t.complexId]?.badge) markSeen(t.complexId);
+  };
+
+  const readAll = () => {
+    for (const c of complexes) if (stats[c.id]?.badge || stats[c.id]?.newVisitors) markSeen(c.id);
   };
 
   const cx = complexes.find((c) => c.id === active) || complexes[0] || null;
@@ -213,6 +237,8 @@ export default function ClientHome() {
       { key: "p:projects", group: "Pages", title: "My Projects", terms: ["home", "projects", "dashboard"], go: () => setView("projects") },
       { key: "p:contacts", group: "Pages", title: "All Contacts", terms: ["leads", "clients", "contacts", "interested"], go: () => setView("contacts") },
       { key: "p:analytics", group: "Pages", title: "Analytics", terms: ["stats", "statistics", "charts"], go: () => setView("analytics") },
+      { key: "p:notifications", group: "Pages", title: "Notifications", terms: ["alerts", "new", "visitors", "interested"], go: () => setView("notifications") },
+      { key: "p:help", group: "Pages", title: "Help Center", terms: ["help", "faq", "support", "guide"], go: () => setView("help") },
     );
     const label: Record<ProjectTab, [string, string[]]> = {
       apartments: ["Apartments", ["villas", "units", "prices", "status"]],
@@ -312,6 +338,10 @@ export default function ClientHome() {
             </div>
           )}
         </section>
+      ) : view === "notifications" ? (
+        <NotificationsView complexes={complexes} leads={leads} stats={stats} onOpen={openNotification} onReadAll={readAll} />
+      ) : view === "help" ? (
+        <HelpView onView={pickView} />
       ) : view === "contacts" ? (
         <ContactsView leads={leads} units={units} complexes={complexes} onLeads={setLeads} focus={focus} />
       ) : view === "project" && cx && projectTab === "contacts" ? (
@@ -321,6 +351,7 @@ export default function ClientHome() {
           complexes={complexes}
           onLeads={setLeads}
           scope={cx}
+          focus={focus}
           tabs={<ProjectTabs tab={projectTab} onTab={pickTab} />}
         />
       ) : view === "project" && cx && projectTab === "apartments" ? (

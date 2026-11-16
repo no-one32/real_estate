@@ -4,13 +4,13 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { DESIGN_W, DESIGN_H, setUiScale } from "./ui-scale";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
-import { AxisWatermark, IcBell, IcCamera, IcChart, IcChevronDown, IcGrid, IcHelp, IcLogout, IcUsers } from "./DashIcons";
+import { AxisWatermark, IcAssistant, IcBell, IcCamera, IcChart, IcChevronDown, IcGrid, IcHelp, IcLogout, IcUsers } from "./DashIcons";
 import GlobalSearch, { type SearchHit } from "./GlobalSearch";
 import "../admin/admin.css";
 import "./dashboard.css";
 
 /** "project" = inside one project (its own Apartments / Analytics / Contacts tabs) */
-export type ClientView = "projects" | "analytics" | "contacts" | "project";
+export type ClientView = "projects" | "analytics" | "contacts" | "project" | "help" | "notifications";
 
 type Props = {
   children: React.ReactNode;
@@ -136,26 +136,41 @@ export default function ClientShell({ children, view, onView, notifications, nam
             <button
               key={key}
               type="button"
-              className={`axd-nav-item${view === key ? " on" : ""}`}
-              aria-current={view === key ? "page" : undefined}
+              className={`axd-nav-item${view === key || (key === "projects" && view === "project") ? " on" : ""}`}
+              aria-current={view === key || (key === "projects" && view === "project") ? "page" : undefined}
               onClick={() => onView(key)}
             >
               {icon}
               <span className="axd-label">{label}</span>
             </button>
           ))}
+          {/* AI assistant to ask about clients, villas… — the chat comes later */}
+          <button type="button" className="axd-nav-item" title="Assistant (coming soon)">
+            <IcAssistant size={24} />
+            <span className="axd-label">Assistant</span>
+          </button>
         </nav>
         <div className="axd-divider" />
 
         <div className="axd-side-bottom">
-          <button type="button" className="axd-nav-item axd-small" onClick={() => onView("projects")}>
+          <button
+            type="button"
+            className={`axd-nav-item axd-small${view === "notifications" ? " on" : ""}`}
+            aria-current={view === "notifications" ? "page" : undefined}
+            onClick={() => onView("notifications")}
+          >
             <span className="axd-bell">
               <IcBell size={22} />
               {notifications > 0 ? <span className="axd-dot">{notifications > 99 ? "99+" : notifications}</span> : null}
             </span>
             <span className="axd-label">Notifications</span>
           </button>
-          <button type="button" className="axd-nav-item axd-small" title="Help (coming soon)">
+          <button
+            type="button"
+            className={`axd-nav-item axd-small${view === "help" ? " on" : ""}`}
+            aria-current={view === "help" ? "page" : undefined}
+            onClick={() => onView("help")}
+          >
             <IcHelp size={22} />
             <span className="axd-label">Help</span>
           </button>

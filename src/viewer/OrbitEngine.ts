@@ -188,8 +188,8 @@ export class OrbitEngine {
   }
 
   getHeadingDir() {
-    // Arabic compass: ش شمال · ق شرق · ج جنوب · غ غرب
-    const dirs = ["ش", "ش.ق", "ق", "ج.ق", "ج", "ج.غ", "غ", "ش.غ"] as const;
+    // Compass letters: N / NE / E / … (English, per client request)
+    const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
     return dirs[Math.round(this.getHeading() / 45) % 8];
   }
 
@@ -810,6 +810,9 @@ export class OrbitEngine {
       if (this.disposed) return;
     }
     const best = this.bestFrameForUnit(id);
+    // Start fetching/decoding the sharp frame now so it overlaps the turn instead of
+    // holding the zoom afterwards (that pause was the "small lag" on click).
+    const sharp = this.ensureHigh(best, COMPLEX.zoomMax);
     if (best !== this.currentFrame) {
       await this.goToFrame(best);
       if (this.disposed) return;
@@ -833,49 +836,35 @@ export class OrbitEngine {
     const fromZoom = this.zoom;
     const fromPanX = this.panX;
     const fromPanY = this.panY;
-    const sharp = this.ensureHigh(this.currentFrame, COMPLEX.zoomMax);
-    await this.tween(520, (e) => {
-      this.cropX = fromCropX + (toCropX - fromCropX) * e;
-      this.cropY = fromCropY + (toCropY - fromCropY) * e;
-      this.zoom = fromZoom + (1 - fromZoom) * e;
-      this.panX = fromPanX * (1 - e);
-      this.panY = fromPanY * (1 - e);
-      this.paintCurrent();
-      this.syncCamera();
+    const toZoom = COMPLEX.zoomMax;
+    const toPanX = toZoom * (cw / 2 - (baseX + toCropX + box.cx));
+    const toPanY = toZoom * (ch / 2 - (baseY + toCropY + box.cy));
+    const cropMoves = Math.abs(toCropX - fromCropX) > 0.5 || Math.abs(toCropY - fromCropY) > 0.5;
+    const frameAtZoom = this.currentFrame;
+    // When the HD frame lands mid-flight, swap it in once the camera has stopped.
+    void sharp.then(() => {
+      if (!this.disposed && !this.approaching && this.currentFrame === frameAtZoom && !this.isNavigating) {
+        this.crossfadeHigh(frameAtZoom);
+      }
+    });
+    // One continuous move (re-centre + zoom together) — no stop between two phases.
+    // Re-painting is only needed when the crop shifts, and then the light frame is used
+    // (redrawing the 8K frame every animation frame is what made the move stutter).
+    await this.tween(900, (e) => {
+      if (cropMoves) {
+        this.cropX = fromCropX + (toCropX - fromCropX) * e;
+        this.cropY = fromCropY + (toCropY - fromCropY) * e;
+        this.paintLowNow();
+        this.syncCamera();
+      }
+      this.zoom = fromZoom + (toZoom - fromZoom) * e;
+      this.panX = fromPanX + (toPanX - fromPanX) * e;
+      this.panY = fromPanY + (toPanY - fromPanY) * e;
       this.applyTransform();
     });
     if (this.disposed) return;
     this.cropX = toCropX;
     this.cropY = toCropY;
-    this.zoom = 1;
-    this.panX = 0;
-    this.panY = 0;
-    this.syncCamera();
-    this.applyTransform();
-    const placed = this.getDrawRect();
-    const villaX = placed.dx + box.cx;
-    const villaY = placed.dy + box.cy;
-    const toZoom = COMPLEX.zoomMax;
-    const toPanX = toZoom * (placed.cw / 2 - villaX);
-    const toPanY = toZoom * (placed.ch / 2 - villaY);
-    // Don't hold the zoom for the HD frame (slow on mobile data): wait at most a moment,
-    // then zoom on what is shown; the HD frame swaps in by itself when it arrives.
-    const frameAtZoom = this.currentFrame;
-    const sharpInTime = await Promise.race([sharp.then(() => true), new Promise<boolean>((r) => setTimeout(() => r(false), 350))]);
-    if (this.disposed) return;
-    if (!sharpInTime) {
-      void sharp.then(() => {
-        if (!this.disposed && this.currentFrame === frameAtZoom && !this.isNavigating) this.crossfadeHigh(frameAtZoom);
-      });
-    }
-    this.paintCurrent();
-    await this.tween(640, (e) => {
-      this.zoom = 1 + (toZoom - 1) * e;
-      this.panX = toPanX * e;
-      this.panY = toPanY * e;
-      this.applyTransform();
-    });
-    if (this.disposed) return;
     this.zoom = toZoom;
     this.panX = toPanX;
     this.panY = toPanY;
@@ -1196,6 +1185,14 @@ export class OrbitEngine {
     if (img instanceof HTMLImageElement && (!img.complete || !img.naturalWidth)) return;
     this.paint(this.ctx, img as CanvasImageSource, wantHigh && high ? "high" : "low");
     if (!wantHigh) this.scheduleUpgrade();
+  }
+
+  /** Light frame only, without queueing the HD upgrade (used inside camera moves). */
+  private paintLowNow() {
+    const img = this.lowBitmaps[this.currentFrame] || this.lowImages[this.currentFrame];
+    if (!img) return;
+    if (img instanceof HTMLImageElement && (!img.complete || !img.naturalWidth)) return;
+    this.paint(this.ctx, img as CanvasImageSource, "low");
   }
 
   private scheduleUpgrade() {

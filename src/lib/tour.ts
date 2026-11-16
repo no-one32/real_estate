@@ -170,10 +170,20 @@ export function localScenes360Fallback(slug: string): TourScene360[] {
   });
 }
 
+/** Visitor-facing project name in Arabic ("Villas" → "فيلات"). Admin/client dashboards keep the stored name. */
+export function arabicProjectName(name: string) {
+  return name
+    .replace(/\bvillas?\b/gi, "فيلات")
+    .replace(/\bajyad\b/gi, "أجياد")
+    .replace(/\bsa?e?dim+\b/gi, "سديم")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function emptyShell(slug: string, name?: string): TourMedia {
   return {
     slug,
-    name: name || slug,
+    name: arabicProjectName(name || slug),
     locationQuery: COMPLEX.locationQuery,
     locationLat: COMPLEX.locationLat,
     locationLng: COMPLEX.locationLng,
@@ -238,7 +248,7 @@ export function buildTour(payload: Payload, slug: string): TourMedia {
 
   return {
     slug: cx?.slug || slug,
-    name: cx?.name || slug,
+    name: arabicProjectName(cx?.name || slug),
     locationQuery: COMPLEX.locationQuery,
     locationLat: COMPLEX.locationLat,
     locationLng: COMPLEX.locationLng,

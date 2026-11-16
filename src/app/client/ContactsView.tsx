@@ -479,7 +479,7 @@ export default function ContactsView({
 
       {err ? <p className="axd-err" role="alert">{err}</p> : null}
 
-      <div className="axc-table">
+      <div className={`axc-table${pages > 1 ? " paged" : ""}`}>
         <div className="axc-scroll">
           <div className="axc-grid axc-headrow" role="row">
             <span className="axc-check-cell">
