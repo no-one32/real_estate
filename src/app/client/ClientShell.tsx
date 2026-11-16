@@ -10,7 +10,7 @@ import "../admin/admin.css";
 import "./dashboard.css";
 
 /** "project" = inside one project (its own Apartments / Analytics / Contacts tabs) */
-export type ClientView = "projects" | "analytics" | "contacts" | "project" | "help" | "notifications";
+export type ClientView = "projects" | "analytics" | "contacts" | "project" | "help" | "notifications" | "assistant";
 
 type Props = {
   children: React.ReactNode;
@@ -144,8 +144,12 @@ export default function ClientShell({ children, view, onView, notifications, nam
               <span className="axd-label">{label}</span>
             </button>
           ))}
-          {/* AI assistant to ask about clients, villas… — the chat comes later */}
-          <button type="button" className="axd-nav-item" title="Assistant (coming soon)">
+          <button
+            type="button"
+            className={`axd-nav-item${view === "assistant" ? " on" : ""}`}
+            aria-current={view === "assistant" ? "page" : undefined}
+            onClick={() => onView("assistant")}
+          >
             <IcAssistant size={24} />
             <span className="axd-label">Assistant</span>
           </button>
