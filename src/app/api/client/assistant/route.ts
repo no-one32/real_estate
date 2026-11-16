@@ -12,7 +12,7 @@ import { listComplexIdsForUser } from "@/lib/members";
  * .env.local:  GROQ_API_KEY=gsk_...   (optional: GROQ_MODEL=...)
  */
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+const MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 const MAX_TURNS = 12;
 const MAX_CHARS = 1500;
@@ -163,6 +163,8 @@ export async function POST(req: Request) {
         model: MODEL,
         temperature: 0.2,
         max_tokens: 900,
+        reasoning_effort: "low",
+        include_reasoning: false,
         messages: [{ role: "system", content: systemPrompt(data, clientName) }, ...history],
       }),
     });
