@@ -6659,17 +6659,16 @@ html.phone-layout .tip.tip-enter img { width: 92px; height: 72px; }
 
 /* ======================= Villa finder (recommendation) ======================= */
 .rail-stack { height: 365.71px; } /* one more button (اقتراح فيلا) under مساعدة */
-.rail-fab.reco-fab.is-active .rail-ico.glass,
-.rail-fab.reco-fab:hover .rail-ico.glass { background: #0f1729; color: #fff; }
-.rail-fab.reco-fab .rail-ico.glass { color: #3b7dd8; }
+/* the اقتراح فيلا icon uses the same grey / white as the other rail buttons */
 
+/* opens at the bottom, right next to the villa list (sidebar), in the free space before the 360 / map tools */
 .reco {
   position: fixed;
   z-index: 30;
-  top: 28px;
-  right: 92px;
+  left: 16px;
+  bottom: 16px;
   width: 384px;
-  max-height: calc(100dvh - 56px);
+  max-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
   background: rgba(255, 255, 255, 0.96);
@@ -6683,8 +6682,9 @@ html.phone-layout .tip.tip-enter img { width: 92px; height: 72px; }
   overflow: hidden;
   animation: reco-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
+html:not(.phone-layout) .app:has(.panel.open) .reco { left: calc(min(382px, 86vw) + 28px); } /* clear of the list and its ‹ tab */
 @keyframes reco-in {
-  from { opacity: 0; transform: translateX(14px) scale(0.98); }
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
   to { opacity: 1; transform: none; }
 }
 .reco-head {

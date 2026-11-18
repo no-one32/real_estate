@@ -6,15 +6,11 @@ import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { AxisWatermark, IcAssistant, IcBell, IcCamera, IcChart, IcChevronDown, IcGrid, IcHelp, IcLogout, IcUsers } from "./DashIcons";
 import GlobalSearch, { type SearchHit } from "./GlobalSearch";
-import AssistantView from "./AssistantView";
 import "../admin/admin.css";
 import "./dashboard.css";
 
 /** "project" = inside one project (its own Apartments / Analytics / Contacts tabs) */
-export type ClientView = "projects" | "analytics" | "contacts" | "project" | "help" | "notifications";
-
-/** fire this to open the floating assistant from anywhere (e.g. "Search anything") */
-export const OPEN_ASSISTANT_EVENT = "axd-open-assistant";
+export type ClientView = "projects" | "analytics" | "contacts" | "project" | "help" | "notifications" | "assistant";
 
 type Props = {
   children: React.ReactNode;
@@ -74,12 +70,6 @@ export default function ClientShell({ children, view, onView, notifications, nam
     return () => window.removeEventListener("resize", fit);
   }, []);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
-  useEffect(() => {
-    const open = () => setChatOpen(true);
-    window.addEventListener(OPEN_ASSISTANT_EVENT, open);
-    return () => window.removeEventListener(OPEN_ASSISTANT_EVENT, open);
-  }, []);
   const [uploading, setUploading] = useState(false);
   const [photoErr, setPhotoErr] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -156,9 +146,9 @@ export default function ClientShell({ children, view, onView, notifications, nam
           ))}
           <button
             type="button"
-            className={`axd-nav-item${chatOpen ? " on" : ""}`}
-            aria-expanded={chatOpen}
-            onClick={() => setChatOpen((v) => !v)}
+            className={`axd-nav-item${view === "assistant" ? " on" : ""}`}
+            aria-current={view === "assistant" ? "page" : undefined}
+            onClick={() => onView("assistant")}
           >
             <IcAssistant size={24} />
             <span className="axd-label">Assistant</span>
@@ -238,9 +228,6 @@ export default function ClientShell({ children, view, onView, notifications, nam
         <GlobalSearch items={searchItems} />
         {children}
       </div>
-
-      {/* assistant window, opened from the sidebar, shown right next to it */}
-      {chatOpen ? <AssistantView onClose={() => setChatOpen(false)} /> : null}
     </div>
   );
 }

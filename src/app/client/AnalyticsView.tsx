@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { ComplexRow } from "@/lib/types";
 import { exportExcel } from "./contacts-export";
 import ProjectStrip from "./ProjectStrip";
@@ -450,11 +450,35 @@ const HEAT: Record<HeatUnit["level"], string> = { high: "#34c58a", medium: "#f5b
 /** Site plan seen from above; each villa outline comes from the 3D model and is coloured by interest. */
 function PlanView({ plan, base, units, selected, onPick }: { plan: Plan; base: string; units: HeatUnit[]; selected: string | null; onPick: (villa: string) => void }) {
   const byMesh = useMemo(() => new Map(units.filter((u) => u.mesh).map((u) => [u.mesh as string, u])), [units]);
-  const [hover, setHover] = useState<HeatUnit | null>(null);
+  const [hover, setHover] = useState<{ u: HeatUnit; d: string } | null>(null);
+  const [pos, setPos] = useState<{ x: number; y: number; flip: boolean } | null>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
   const entries = Object.entries(plan.units);
+  // the tooltip follows the cursor; it flips to the left near the right edge
+  const move = (e: React.MouseEvent) => {
+    const r = boxRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const z = r.width / (boxRef.current?.offsetWidth || r.width) || 1; // dashboard is drawn with CSS zoom
+    const x = (e.clientX - r.left) / z;
+    const y = (e.clientY - r.top) / z;
+    setPos({ x, y, flip: x > r.width / z - 220 });
+  };
   return (
-    <div className="axn-plan" onMouseLeave={() => setHover(null)}>
+    <div
+      ref={boxRef}
+      className={`axn-plan${hover ? " hovering" : ""}`}
+      onMouseMove={move}
+      onMouseLeave={() => {
+        setHover(null);
+        setPos(null);
+      }}
+    >
       <svg viewBox={`0 0 ${plan.width} ${plan.height}`} role="listbox" aria-label="Villas on the site plan">
+        <defs>
+          <filter id="axn-plan-lift" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="1.5" stdDeviation="2.2" floodColor="#0b1220" floodOpacity="0.35" />
+          </filter>
+        </defs>
         <image href={`${base}${plan.image}`} x={0} y={0} width={plan.width} height={plan.height} preserveAspectRatio="none" />
         {entries.map(([mesh, pts]) => {
           const u = byMesh.get(mesh);
@@ -473,15 +497,33 @@ function PlanView({ plan, base, units, selected, onPick }: { plan: Plan; base: s
               fill={HEAT[u.level]}
               onClick={() => onPick(u.villa)}
               onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onPick(u.villa)}
-              onMouseEnter={() => setHover(u)}
+              onMouseEnter={() => setHover({ u, d })}
+              onFocus={() => setHover({ u, d })}
+              onBlur={() => setHover(null)}
             />
           );
         })}
+        {/* the hovered villa drawn again on top: full colour, dark outline, soft shadow */}
+        {hover ? <path d={hover.d} className="axn-plan-hl" fill={HEAT[hover.u.level]} filter="url(#axn-plan-lift)" /> : null}
       </svg>
       {hover ? (
-        <div className="axn-plan-tip">
-          <b>Villa {hover.villa}</b>
-          <span>{fmtN(hover.views)} views · {fmtN(hover.favorites)} favorites</span>
+        <div
+          className={`axn-plan-tip${pos ? " follow" : ""}${pos?.flip ? " flip" : ""}`}
+          style={pos ? { left: pos.x, top: pos.y } : undefined}
+        >
+          <span className="axn-plan-tip-head">
+            <b>Villa {hover.u.villa}</b>
+            <span className={`axn-plan-lvl ${hover.u.level}`}>
+              <i style={{ background: HEAT[hover.u.level] }} />
+              {hover.u.level === "high" ? "High interest" : hover.u.level === "medium" ? "Medium" : "Low"}
+            </span>
+          </span>
+          <span className="axn-plan-tip-stats">
+            <span><b>{fmtN(hover.u.views)}</b> views</span>
+            <span><b>{fmtN(hover.u.favorites)}</b> favorites</span>
+            <span><b>{fmtN(hover.u.inquiries)}</b> inquiries</span>
+          </span>
+          {hover.u.model ? <span className="axn-plan-tip-model">Model {hover.u.model}</span> : null}
         </div>
       ) : null}
     </div>

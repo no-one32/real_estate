@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import ClientShell, { OPEN_ASSISTANT_EVENT, type ClientView } from "./ClientShell";
+import ClientShell, { type ClientView } from "./ClientShell";
 import ContactsView, { buildContacts } from "./ContactsView";
 import type { SearchHit } from "./GlobalSearch";
 import { priceOf } from "./ApartmentsView";
 import ApartmentsView from "./ApartmentsView";
 import QrView from "./QrView";
 import AnalyticsView from "./AnalyticsView";
+import AssistantView from "./AssistantView";
 import HelpView from "./HelpView";
 import NotificationsView, { type NotificationTarget } from "./NotificationsView";
 import { IcBuilding, IcCalendar, IcChart, IcClock, IcDoor, IcEye, IcHandshake, IcPin, IcQr, IcUsers } from "./DashIcons";
@@ -238,7 +239,7 @@ export default function ClientHome() {
       { key: "p:contacts", group: "Pages", title: "All Contacts", terms: ["leads", "clients", "contacts", "interested"], go: () => setView("contacts") },
       { key: "p:analytics", group: "Pages", title: "Analytics", terms: ["stats", "statistics", "charts"], go: () => setView("analytics") },
       { key: "p:notifications", group: "Pages", title: "Notifications", terms: ["alerts", "new", "visitors", "interested"], go: () => setView("notifications") },
-      { key: "p:assistant", group: "Pages", title: "Assistant", terms: ["ai", "chat", "ask", "question", "assistant"], go: () => window.dispatchEvent(new Event(OPEN_ASSISTANT_EVENT)) },
+      { key: "p:assistant", group: "Pages", title: "Assistant", terms: ["ai", "chat", "ask", "question", "assistant"], go: () => setView("assistant") },
       { key: "p:help", group: "Pages", title: "Help Center", terms: ["help", "faq", "support", "guide"], go: () => setView("help") },
     );
     const label: Record<ProjectTab, [string, string[]]> = {
@@ -343,6 +344,8 @@ export default function ClientHome() {
         <NotificationsView complexes={complexes} leads={leads} stats={stats} onOpen={openNotification} onReadAll={readAll} />
       ) : view === "help" ? (
         <HelpView onView={pickView} />
+      ) : view === "assistant" ? (
+        <AssistantView />
       ) : view === "contacts" ? (
         <ContactsView leads={leads} units={units} complexes={complexes} onLeads={setLeads} focus={focus} />
       ) : view === "project" && cx && projectTab === "contacts" ? (
