@@ -1881,7 +1881,8 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
         )}
         {selected && !hover && !tourUnit && !scene360Open && approachedRef.current === selected.id && (
           <div className="tip tip-enter">
-            {mediaSrc(tourPlanUrl(tour, selected)) ? <img src={tourPlanUrl(tour, selected)} alt="" /> : null}
+            {/* same light thumbnail as the villa list: already in the browser cache, so it shows at once */}
+            {mediaSrc(cardPhoto(tour, selected)) ? <img src={cardPhoto(tour, selected)} alt="" decoding="async" /> : null}
             <div>
               <div className="tip-head">
                 <b>{selected.displayId}</b>
