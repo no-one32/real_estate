@@ -231,10 +231,9 @@ export default function RecommendPanel({
   return (
     <aside className="reco" dir="rtl" role="dialog" aria-label="مساعد اختيار الفيلا" onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onWheel={(e) => e.stopPropagation()}>
       <header className="reco-head">
-        <span className="reco-badge"><IconSparkle size={20} /></span>
         <div>
           <h2>اعثر على فيلتك المثالية</h2>
-          <p>{done ? "أفضل 3 فيلات متاحة تناسب إجاباتك" : `أجب عن ${questions.length} أسئلة سريعة`}</p>
+          <p>{done ? "أفضل 3 فيلات متاحة لك" : `السؤال ${step + 1} من ${questions.length}`}</p>
         </div>
         <button type="button" className="reco-x" onClick={onClose} aria-label="إغلاق">×</button>
       </header>
@@ -245,19 +244,14 @@ export default function RecommendPanel({
 
       {!done && cur ? (
         <div className="reco-body" key={cur.key}>
-          <span className="reco-step">السؤال {step + 1} من {questions.length}</span>
           <h3>{cur.title}</h3>
-          <p className="reco-sub">{cur.sub}</p>
           <div className="reco-options" role="radiogroup" aria-label={cur.title}>
             {cur.options.map((o) => {
               const on = answers[cur.key] === o.value;
               return (
                 <button key={String(o.value)} type="button" role="radio" aria-checked={on} className={`reco-opt${on ? " on" : ""}`} onClick={() => choose(cur.key, o.value)}>
-                  <span className="reco-opt-ico">{o.icon}</span>
-                  <span className="reco-opt-text">
-                    <b>{o.title}</b>
-                    {o.hint ? <small>{o.hint}</small> : null}
-                  </span>
+                  <b>{o.title}</b>
+                  <i className="reco-radio" aria-hidden />
                 </button>
               );
             })}
@@ -278,33 +272,25 @@ export default function RecommendPanel({
                 const price = sarParts(priceOf(r.unit));
                 const photo = photoOf(r.unit);
                 return (
-                  <li key={r.unit.id} className={`reco-card${i === 0 ? " best" : ""}`}>
-                    <div className="reco-card-top">
+                  <li key={r.unit.id}>
+                    <button type="button" className={`reco-card${i === 0 ? " best" : ""}`} onClick={() => onPick(r.unit)} aria-label={`عرض الفيلا ${r.unit.displayId} على المخطط`}>
                       <span className="reco-photo">
                         {photo ? <img src={photo} alt="" /> : null}
-                        <em>{i === 0 ? "الأفضل" : `#${i + 1}`}</em>
+                        <em>{i + 1}</em>
                       </span>
-                      <div className="reco-card-info">
-                        <strong>فيلا <bdi dir="ltr">{r.unit.displayId}</bdi></strong>
+                      <span className="reco-card-info">
+                        <span className="reco-card-row">
+                          <strong dir="ltr">{r.unit.displayId}</strong>
+                          {i === 0 ? <span className="reco-best">الأنسب لك</span> : null}
+                        </span>
                         <span className="reco-price" dir="ltr">
                           <span className="sar-cur">{price.currency}</span> {price.amount}
                         </span>
                         <span className="reco-specs">
                           {r.unit.rooms} غرف · {fmt(r.unit.surface)} م² · {r.unit.floor} طوابق
                         </span>
-                      </div>
-                      <span className="reco-match" style={{ ["--p" as string]: `${r.score}` }}>
-                        <b>{r.score}%</b>
-                        <small>تطابق</small>
                       </span>
-                    </div>
-                    {r.reasons.length ? (
-                      <div className="reco-reasons">
-                        {r.reasons.map((t) => <span key={t}>✓ {t}</span>)}
-                      </div>
-                    ) : null}
-                    <button type="button" className="reco-go" onClick={() => onPick(r.unit)}>
-                      عرض الفيلا على المخطط
+                      <span className="reco-chev" aria-hidden>‹</span>
                     </button>
                   </li>
                 );
