@@ -6667,13 +6667,13 @@ html.phone-layout .tip.tip-enter img { width: 90px; height: 66px; border-radius:
   z-index: 30;
   left: 16px;
   bottom: 16px;
-  width: 380px;
+  width: 384px;
   max-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.97);
+  background: #f7faf9; /* same as the villa list (sidebar) */
   border: 1px solid #fff;
-  border-radius: 18px;
+  border-radius: 22px;
   box-shadow: 0 24px 60px -18px rgba(15, 30, 60, 0.35), 0 2px 8px rgba(15, 30, 60, 0.06);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -6691,125 +6691,115 @@ html:not(.phone-layout) .app:has(.panel.open) .reco { left: calc(min(382px, 86vw
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 16px 14px 18px;
-  background: linear-gradient(180deg, #f5f8fd 0%, #fff 100%);
+  padding: 18px 18px 14px;
+  background: linear-gradient(135deg, #eef4ff 0%, #f8fbff 100%);
 }
 .reco-badge {
   display: grid;
   place-items: center;
   flex: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #0f1729 0%, #2a3a57 100%);
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #3b7dd8 0%, #6aa2f0 100%);
   color: #fff;
-  box-shadow: 0 6px 14px -6px rgba(15, 23, 41, 0.55);
+  box-shadow: 0 8px 18px -8px rgba(59, 125, 216, 0.8);
 }
 .reco-head > div { flex: 1; min-width: 0; }
-.reco-head h2 { font-size: 15.5px; font-weight: 700; line-height: 22px; }
-.reco-head p { font-size: 12px; line-height: 18px; color: #7a8794; }
+.reco-head h2 { font-size: 16px; font-weight: 700; line-height: 22px; }
+.reco-head p { font-size: 12px; line-height: 18px; color: #6b7a8c; }
 .reco-x {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border: 0;
-  border-radius: 50%;
+  border-radius: 10px;
   background: #fff;
-  color: #5e6872;
-  font-size: 18px;
+  color: #6b7a8c;
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(15, 30, 60, 0.12);
+  box-shadow: 0 1px 3px rgba(15, 30, 60, 0.1);
 }
 .reco-x:hover { color: #0f1729; }
-.reco-progress { height: 3px; background: #edf1f6; }
-.reco-progress i { display: block; height: 100%; background: linear-gradient(90deg, #00b58d, #0f1729); transition: width 0.3s ease; }
+.reco-progress { height: 4px; background: #e9eef6; }
+.reco-progress i { display: block; height: 100%; background: linear-gradient(90deg, #6aa2f0, #3b7dd8); border-radius: 4px 0 0 4px; transition: width 0.3s ease; }
 .reco-body {
-  padding: 16px 18px 18px;
+  padding: 18px;
   overflow-y: auto;
-  animation: reco-step 0.24s ease;
+  animation: reco-step 0.25s ease;
 }
 @keyframes reco-step {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateX(-10px); }
   to { opacity: 1; transform: none; }
 }
-.reco-body h3 { font-size: 17px; font-weight: 700; line-height: 26px; }
-.reco-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.reco-step { font-size: 11.5px; font-weight: 600; color: #3b7dd8; }
+.reco-body h3 { margin-top: 4px; font-size: 18px; font-weight: 700; line-height: 28px; }
+.reco-sub { font-size: 12.5px; color: #6b7a8c; }
+.reco-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
 .reco-opt {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 92px;
-  padding: 12px 13px;
+  gap: 10px;
+  min-height: 104px;
+  padding: 14px;
   text-align: right;
-  background: #f8fafc;
-  border: 1.5px solid #e9eef4;
-  border-radius: 14px;
+  background: #f7f9fc;
+  border: 1.5px solid #e6edf5;
+  border-radius: 16px;
   font: inherit;
-  color: #0f1729;
+  color: inherit;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
-.reco-opt b { font-size: 13.5px; font-weight: 700; line-height: 20px; unicode-bidi: plaintext; }
-.reco-opt:hover { background: #fff; border-color: #d3dbe6; transform: translateY(-1px); box-shadow: 0 8px 18px -12px rgba(15, 30, 60, 0.4); }
-.reco-opt.on { background: #fff; border-color: #0f1729; }
-.reco-opt:focus-visible { outline: 2px solid #0f1729; outline-offset: 2px; }
+.reco-opt:hover { background: #fff; border-color: #bcd3f5; transform: translateY(-1px); box-shadow: 0 8px 18px -12px rgba(59, 125, 216, 0.6); }
+.reco-opt.on { background: #eef4ff; border-color: #3b7dd8; }
+.reco-opt:focus-visible { outline: 2px solid #3b7dd8; outline-offset: 2px; }
 .reco-opt-ico {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   background: #fff;
-  color: #3f4c5e;
-  box-shadow: 0 1px 3px rgba(15, 30, 60, 0.1);
-  transition: background 0.15s ease, color 0.15s ease;
+  color: #3b7dd8;
+  box-shadow: 0 1px 3px rgba(15, 30, 60, 0.08);
 }
-.reco-opt-ico svg { width: 18px; height: 18px; }
-.reco-opt.on .reco-opt-ico { background: #0f1729; color: #fff; }
+.reco-opt.on .reco-opt-ico { background: #3b7dd8; color: #fff; }
+.reco-opt-text { display: flex; flex-direction: column; gap: 2px; }
+.reco-opt-text b { font-size: 13.5px; font-weight: 700; line-height: 20px; unicode-bidi: plaintext; }
+.reco-opt-text small { font-size: 11.5px; line-height: 16px; color: #7a8794; }
 .reco-back {
-  margin-top: 12px;
+  margin-top: 14px;
   border: 0;
   background: none;
   font: inherit;
   font-size: 12.5px;
-  color: #7a8794;
+  color: #6b7a8c;
   cursor: pointer;
 }
-.reco-back:hover { color: #0f1729; }
+.reco-back:hover { color: #3b7dd8; }
 
-.reco-results { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-.reco-results li { animation: reco-step 0.28s ease both; }
-.reco-results li:nth-child(2) { animation-delay: 0.06s; }
-.reco-results li:nth-child(3) { animation-delay: 0.12s; }
+.reco-results { list-style: none; display: flex; flex-direction: column; gap: 12px; }
 .reco-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  padding: 10px;
-  text-align: right;
+  padding: 12px;
   background: #fff;
-  border: 1px solid #e6ebf2;
+  border: 1px solid #e6edf5;
   border-radius: 16px;
-  box-shadow: 0 6px 16px -12px rgba(15, 30, 60, 0.3);
-  font: inherit;
-  color: #0f1729;
-  cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 6px 16px -12px rgba(15, 30, 60, 0.35);
+  animation: reco-step 0.3s ease both;
 }
-.reco-card:hover { border-color: #cfd8e4; box-shadow: 0 10px 22px -12px rgba(15, 30, 60, 0.4); transform: translateY(-1px); }
-.reco-card:focus-visible { outline: 2px solid #0f1729; outline-offset: 2px; }
-.reco-card.best { border-color: #0f1729; }
+.reco-card:nth-child(2) { animation-delay: 0.06s; }
+.reco-card:nth-child(3) { animation-delay: 0.12s; }
+.reco-card.best { border-color: #9cc0f2; background: linear-gradient(180deg, #f4f8ff 0%, #fff 60%); }
 .reco-card-top { display: flex; align-items: center; gap: 12px; }
 .reco-photo {
   position: relative;
   flex: none;
-  width: 82px;
-  height: 66px;
-  border-radius: 11px;
+  width: 74px;
+  height: 64px;
+  border-radius: 12px;
   overflow: hidden;
   background: #e9eef6;
 }
@@ -6819,30 +6809,54 @@ html:not(.phone-layout) .app:has(.panel.open) .reco { left: calc(min(382px, 86vw
   top: 5px;
   right: 5px;
   padding: 1px 7px;
-  border-radius: 7px;
-  background: rgba(15, 23, 41, 0.8);
+  border-radius: 8px;
+  background: rgba(15, 23, 41, 0.78);
   color: #fff;
   font-style: normal;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 700;
 }
+.reco-card.best .reco-photo em { background: #3b7dd8; }
 .reco-card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.reco-card-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.reco-card-info strong { font-size: 14.5px; font-weight: 700; }
-.reco-match { flex: none; padding: 2px 8px; border-radius: 999px; background: #e7f8f2; color: #00936f; font-size: 10.5px; font-weight: 600; }
-.reco-match b { font-weight: 800; }
-.reco-price { align-self: flex-start; font-size: 13.5px; font-weight: 700; color: #00b58d; }
+.reco-card-info strong { font-size: 15px; font-weight: 700; }
+.reco-price { align-self: flex-start; font-size: 13.5px; font-weight: 700; color: #3b7dd8; }
 .reco-specs { font-size: 11.5px; color: #7a8794; }
-.reco-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 9px; border-top: 1px solid #eef2f6; }
-.reco-reasons { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
-.reco-reasons span { padding: 2px 8px; border-radius: 999px; background: #f2f5f9; color: #4b5a6d; font-size: 10.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.reco-go { flex: none; font-size: 12px; font-weight: 700; color: #0f1729; }
-.reco-card:hover .reco-go { text-decoration: underline; }
+.reco-match {
+  --p: 0;
+  flex: none;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, #fff 76%, transparent 78% 100%),
+    conic-gradient(#3dba67 calc(var(--p) * 1%), #e9eef6 0);
+}
+.reco-match b { font-size: 13px; font-weight: 800; line-height: 15px; color: #0f1729; direction: ltr; }
+.reco-match small { font-size: 9.5px; color: #7a8794; }
+.reco-reasons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.reco-reasons span { padding: 3px 9px; border-radius: 999px; background: #edfaf2; color: #23874a; font-size: 11px; font-weight: 600; }
+.reco-go {
+  width: 100%;
+  height: 38px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 11px;
+  background: #0f1729;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.reco-go:hover { background: #1e2a40; }
 .reco-restart {
   display: block;
   margin: 14px auto 0;
-  padding: 7px 14px;
-  border: 1px solid #e1e7ef;
+  padding: 8px 16px;
+  border: 1px solid #dbe4f0;
   border-radius: 10px;
   background: #fff;
   font: inherit;
@@ -6850,7 +6864,7 @@ html:not(.phone-layout) .app:has(.panel.open) .reco { left: calc(min(382px, 86vw
   color: #3b4a5e;
   cursor: pointer;
 }
-.reco-restart:hover { border-color: #0f1729; color: #0f1729; }
+.reco-restart:hover { border-color: #3b7dd8; color: #3b7dd8; }
 .reco-empty { padding: 24px 0; text-align: center; color: #7a8794; font-size: 13px; }
 
 /* phone: bottom sheet */
