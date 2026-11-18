@@ -231,9 +231,10 @@ export default function RecommendPanel({
   return (
     <aside className="reco" dir="rtl" role="dialog" aria-label="مساعد اختيار الفيلا" onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onWheel={(e) => e.stopPropagation()}>
       <header className="reco-head">
+        <span className="reco-badge"><IconSparkle size={18} /></span>
         <div>
           <h2>اعثر على فيلتك المثالية</h2>
-          <p>{done ? "أفضل 3 فيلات متاحة لك" : `السؤال ${step + 1} من ${questions.length}`}</p>
+          <p>{done ? "أفضل 3 فيلات متاحة تناسب إجاباتك" : `السؤال ${step + 1} من ${questions.length}`}</p>
         </div>
         <button type="button" className="reco-x" onClick={onClose} aria-label="إغلاق">×</button>
       </header>
@@ -250,8 +251,8 @@ export default function RecommendPanel({
               const on = answers[cur.key] === o.value;
               return (
                 <button key={String(o.value)} type="button" role="radio" aria-checked={on} className={`reco-opt${on ? " on" : ""}`} onClick={() => choose(cur.key, o.value)}>
+                  <span className="reco-opt-ico">{o.icon}</span>
                   <b>{o.title}</b>
-                  <i className="reco-radio" aria-hidden />
                 </button>
               );
             })}
@@ -274,23 +275,30 @@ export default function RecommendPanel({
                 return (
                   <li key={r.unit.id}>
                     <button type="button" className={`reco-card${i === 0 ? " best" : ""}`} onClick={() => onPick(r.unit)} aria-label={`عرض الفيلا ${r.unit.displayId} على المخطط`}>
-                      <span className="reco-photo">
-                        {photo ? <img src={photo} alt="" /> : null}
-                        <em>{i + 1}</em>
+                      <span className="reco-card-top">
+                        <span className="reco-photo">
+                          {photo ? <img src={photo} alt="" /> : null}
+                          <em>{i === 0 ? "الأفضل" : `#${i + 1}`}</em>
+                        </span>
+                        <span className="reco-card-info">
+                          <span className="reco-card-row">
+                            <strong>فيلا <bdi dir="ltr">{r.unit.displayId}</bdi></strong>
+                            <span className="reco-match"><b dir="ltr">{r.score}%</b> تطابق</span>
+                          </span>
+                          <span className="reco-price" dir="ltr">
+                            <span className="sar-cur">{price.currency}</span> {price.amount}
+                          </span>
+                          <span className="reco-specs">
+                            {r.unit.rooms} غرف · {fmt(r.unit.surface)} م² · {r.unit.floor} طوابق
+                          </span>
+                        </span>
                       </span>
-                      <span className="reco-card-info">
-                        <span className="reco-card-row">
-                          <strong dir="ltr">{r.unit.displayId}</strong>
-                          {i === 0 ? <span className="reco-best">الأنسب لك</span> : null}
+                      <span className="reco-card-foot">
+                        <span className="reco-reasons">
+                          {r.reasons.slice(0, 1).map((t) => <span key={t}>✓ {t}</span>)}
                         </span>
-                        <span className="reco-price" dir="ltr">
-                          <span className="sar-cur">{price.currency}</span> {price.amount}
-                        </span>
-                        <span className="reco-specs">
-                          {r.unit.rooms} غرف · {fmt(r.unit.surface)} م² · {r.unit.floor} طوابق
-                        </span>
+                        <span className="reco-go">عرض على المخطط ‹</span>
                       </span>
-                      <span className="reco-chev" aria-hidden>‹</span>
                     </button>
                   </li>
                 );
@@ -298,7 +306,7 @@ export default function RecommendPanel({
             </ol>
           )}
           <button type="button" className="reco-restart" onClick={restart}>
-            إعادة الأسئلة
+            ↻ إعادة الأسئلة
           </button>
         </div>
       )}
