@@ -238,8 +238,11 @@ export default function AnalyticsView({
 
           <div className="axn-row half">
             <Card title="Traffic Sources" sub="Where visitors discovered this maquette" pill={`${fmtN(t.sessions)} sessions`}>
-              {t.sessions ? <Donut slices={sources} total={t.sessions} unit="Sessions" /> : <p className="axn-empty">No visits in this period yet.</p>}
-              <QrBox rows={t.qr ?? []} />
+              {/* donut and the per-QR list side by side, so the card stays as short as Device Distribution */}
+              <div className="axn-src">
+                {t.sessions ? <Donut slices={sources} total={t.sessions} unit="Sessions" /> : <p className="axn-empty">No visits in this period yet.</p>}
+                <QrBox rows={t.qr ?? []} />
+              </div>
               <p className="axn-note">Codes made on the QR tab are counted one by one. Add ?src=facebook (or instagram…) to links you post to see them here.</p>
             </Card>
             <Card title="Device Distribution" sub="Devices used to access the virtual tour">

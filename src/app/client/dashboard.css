@@ -1790,7 +1790,7 @@ button.axc-status:hover { filter: brightness(0.97); }
 
 .axn-row { display: grid; gap: 12px; }
 .axn-row.half { grid-template-columns: 1fr 1fr; }
-.axn-row.wide { grid-template-columns: 1.4fr 1fr; }
+.axn-row.wide { grid-template-columns: 1.4fr 1fr; align-items: start; } /* Selected Property keeps its own height (no stretch with the top view) */
 
 .axn-card {
   position: relative;
@@ -1835,6 +1835,10 @@ button.axc-status:hover { filter: brightness(0.97); }
   min-height: 180px;
 }
 .axn-donut { position: relative; flex: none; }
+.axn-src { display: flex; align-items: center; gap: 20px; }
+.axn-src > .axn-donut-wrap { flex: none; gap: 20px; }
+.axn-src > .axn-qrbox { flex: 1; min-width: 0; margin-top: 0; }
+.axn-src .axn-qrbox li { grid-template-columns: 34px minmax(0, 1fr) minmax(40px, 0.7fr) 32px; gap: 8px; }
 .axn-donut svg circle { transition: opacity 0.15s ease; }
 .axn-donut svg:hover circle:not(:hover):not(:first-child) { opacity: 0.6; }
 .axn-donut-center {
@@ -1973,6 +1977,10 @@ button.axc-status:hover { filter: brightness(0.97); }
   .axn-stats.three,
   .axn-stats.four { grid-template-columns: 1fr; }
   .axn-donut-wrap { flex-direction: column; }
+}
+@media (max-width: 1023px) {
+  .axn-src { flex-direction: column; align-items: stretch; }
+  .axn-src > .axn-qrbox { margin-top: 4px; }
 }
 
 /* ---------- Help Center (Figma "AXIS · Help Center") ---------- */
