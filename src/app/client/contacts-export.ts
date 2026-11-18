@@ -1,7 +1,7 @@
 /**
  * Exports shared by Contacts, Apartments and Analytics.
  * CSV: UTF-8 with BOM (opens in Excel, Arabic included). Raw values, so the Apartments CSV works as an import template.
- * PDF: a branded A4 report (header, summary, table, page numbers) printed through the browser's "Save as PDF".
+ * PDF: a branded A4 report (header, summary, table) printed through the browser's "Save as PDF".
  * Columns that are empty on every row are left out of both formats.
  */
 
@@ -76,13 +76,15 @@ export function exportPdf(table: ExportTable) {
 
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(t.title)} · ${stamp()}</title>
 <style>
-  @page { size: A4 ${many ? "landscape" : "portrait"}; margin: 16mm 14mm 18mm; }
-  @page {
-    @bottom-left { content: "AXIS Studio · ${esc(t.title).replace(/"/g, "")}"; font: 8px Inter, "Segoe UI", Arial, sans-serif; color: #9aa6bd; }
-    @bottom-right { content: "Page " counter(page) " / " counter(pages); font: 8px Inter, "Segoe UI", Arial, sans-serif; color: #9aa6bd; }
-  }
+  /* margin 0: leaves no room for the browser's own header/footer (site address, date, title).
+     The page margins come from the .page table below: its empty head/foot rows repeat on every page. */
+  @page { size: A4 ${many ? "landscape" : "portrait"}; margin: 0; }
   * { box-sizing: border-box; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 100%; border-collapse: collapse; }
+  .page > thead > tr > td { height: 14mm; padding: 0; }
+  .page > tfoot > tr > td { height: 16mm; padding: 0; }
+  .page > tbody > tr > td { padding: 0 14mm; }
   body { margin: 0; font: 10px/1.45 Inter, "Segoe UI", "Noto Sans Arabic", Tahoma, Arial, sans-serif; color: #0c1323; }
   header { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 2px solid #0c1323; }
   header img { width: 34px; height: 44px; object-fit: contain; }
@@ -96,23 +98,24 @@ export function exportPdf(table: ExportTable) {
   .sum span { display: block; font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #7a86a0; }
   .sum b { display: block; margin-top: 3px; font-size: 17px; font-weight: 700; }
   .sum .green b { color: #15803d; } .sum .amber b { color: #b45309; } .sum .red b { color: #c62828; } .sum .blue b { color: #1d4ed8; }
-  table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: ${t.summary?.length ? 0 : 16}px; }
-  thead { display: table-header-group; }
-  th { padding: 8px 9px; background: #0c1323; color: #fff; font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; white-space: nowrap; }
-  th:first-child { border-radius: 7px 0 0 7px; } th:last-child { border-radius: 0 7px 7px 0; }
-  th.r { text-align: right; }
-  td { padding: 7px 9px; border-bottom: 1px solid #edf1f7; vertical-align: top; white-space: nowrap; }
-  tbody tr:nth-child(even) td { background: #f8faff; }
-  tr { break-inside: avoid; }
-  td:first-child { font-weight: 600; }
-  td.r { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  td.wide { min-width: 140px; max-width: 260px; color: #3f4c69; white-space: normal; }
-  td.empty { color: #c3cad8; }
+  .data { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: ${t.summary?.length ? 0 : 16}px; }
+  .data thead { display: table-header-group; }
+  .data th { padding: 8px 9px; background: #0c1323; color: #fff; font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; white-space: nowrap; }
+  .data th:first-child { border-radius: 7px 0 0 7px; } .data th:last-child { border-radius: 0 7px 7px 0; }
+  .data th.r { text-align: right; }
+  .data td { padding: 7px 9px; border-bottom: 1px solid #edf1f7; vertical-align: top; white-space: nowrap; }
+  .data tbody tr:nth-child(even) td { background: #f8faff; }
+  .data tr { break-inside: avoid; }
+  .data td:first-child { font-weight: 600; }
+  .data td.r { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .data td.wide { min-width: 140px; max-width: 260px; color: #3f4c69; white-space: normal; }
+  .data td.empty { color: #c3cad8; }
   .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 8.5px; font-weight: 600; white-space: nowrap; }
   .pill.green { background: #e3f7ec; color: #15803d; } .pill.amber { background: #fff3d9; color: #b45309; }
   .pill.red { background: #fde7e7; color: #c62828; } .pill.blue { background: #e6eeff; color: #1d4ed8; } .pill.grey { background: #eef1f6; color: #5b6780; }
   .none { margin-top: 30px; text-align: center; color: #7a86a0; font-size: 12px; }
 </style></head><body>
+<table class="page"><thead><tr><td></td></tr></thead><tfoot><tr><td></td></tr></tfoot><tbody><tr><td>
 <header>
   <img src="${logo}" alt="">
   <div class="t"><h1>${esc(t.title)}</h1>${t.subtitle ? `<p>${esc(t.subtitle)}</p>` : ""}</div>
@@ -120,9 +123,10 @@ export function exportPdf(table: ExportTable) {
 </header>
 ${t.summary?.length ? `<div class="sum">${t.summary.map((s) => `<div class="${s.tone ?? ""}"><span>${esc(s.label)}</span><b>${esc(s.value)}</b></div>`).join("")}</div>` : ""}
 ${t.rows.length
-    ? `<table><thead><tr>${t.head.map((h, i) => `<th${t.cols?.[i]?.format ? ' class="r"' : ""}>${esc(h)}</th>`).join("")}</tr></thead>
+    ? `<table class="data"><thead><tr>${t.head.map((h, i) => `<th${t.cols?.[i]?.format ? ' class="r"' : ""}>${esc(h)}</th>`).join("")}</tr></thead>
 <tbody>${t.rows.map((r) => `<tr>${r.map((c, i) => cellHtml(c ?? "", t.cols?.[i])).join("")}</tr>`).join("")}</tbody></table>`
     : `<p class="none">Nothing to export.</p>`}
+</td></tr></tbody></table>
 </body></html>`;
 
   const frame = document.createElement("iframe");
