@@ -360,7 +360,7 @@ export default function AnalyticsView({
             </Card>
           </div>
 
-          <div className="axn-row wide">
+          <div className={`axn-row wide${heatView === "top" && plan ? " top-view" : ""}`}>
             <Card
               title="Property Interest Heatmap"
               sub="Click a unit to inspect its metrics"
