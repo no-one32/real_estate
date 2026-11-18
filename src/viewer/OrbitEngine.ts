@@ -850,7 +850,8 @@ export class OrbitEngine {
     // One continuous move (re-centre + zoom together) — no stop between two phases.
     // Re-painting is only needed when the crop shifts, and then the light frame is used
     // (redrawing the 8K frame every animation frame is what made the move stutter).
-    await this.tween(900, (e) => {
+    // 1400 ms: slow, calm approach to the clicked villa (was 900 ms, felt too fast)
+    await this.tween(1400, (e) => {
       if (cropMoves) {
         this.cropX = fromCropX + (toCropX - fromCropX) * e;
         this.cropY = fromCropY + (toCropY - fromCropY) * e;
@@ -884,7 +885,7 @@ export class OrbitEngine {
     const fromPanY = this.panY;
     const fromCropX = this.cropX;
     const fromCropY = this.cropY;
-    await this.tween(560, (e) => {
+    await this.tween(800, (e) => {
       this.zoom = fromZoom + (1 - fromZoom) * e;
       this.panX = fromPanX * (1 - e);
       this.panY = fromPanY * (1 - e);
