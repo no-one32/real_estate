@@ -450,8 +450,8 @@ export default function QrView({
                 <tr>
                   <th>Name</th>
                   <th>Date</th>
-                  <th>QR</th>
-                  <th className="right">Download</th>
+                  <th className="center">QR</th>
+                  <th className="center">Download</th>
                 </tr>
               </thead>
               <tbody>
@@ -462,10 +462,10 @@ export default function QrView({
                       <span className="axq-t-url" title={encodedUrl(h)}>{encodedUrl(h)}</span>
                     </td>
                     <td className="axq-t-date">{fmtWhen(h.at)}</td>
-                    <td>
+                    <td className="center">
                       <span className="axq-t-qr">{thumbs[h.id] ? <img src={thumbs[h.id]} alt={`QR code ${h.label}`} /> : null}</span>
                     </td>
-                    <td className="right">
+                    <td className="center">
                       <span className="axq-t-actions">
                         <button type="button" className="axq-dark small" onClick={() => void downloadRow(h)} disabled={rowBusy === h.id}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
