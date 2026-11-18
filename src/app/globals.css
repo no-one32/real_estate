@@ -6635,21 +6635,27 @@ html.phone-layout .scene360-pano canvas {
 /* "انقر مرة أخرى للدخول" card — a bit bigger, bigger photo, Arabic status */
 .tip.tip-enter {
   gap: 14px;
-  padding: 10px 14px 10px 10px;
+  padding: 0 16px 0 0; /* the photo fills the left side edge to edge, no white border around it */
   border-radius: 16px;
-  max-width: 300px;
+  overflow: hidden;
+  max-width: 320px;
   max-height: none;
+  align-items: stretch;
 }
-.tip.tip-enter img { width: 88px; height: 66px; border-radius: 10px; }
+.tip.tip-enter > div { align-self: center; padding: 12px 0; }
+.tip.tip-enter:not(:has(img)) { padding-left: 16px; } /* no photo: keep the text off the edge */
+.tip.tip-enter img { width: 112px; height: 84px; border-radius: 0; object-fit: cover; }
 .tip.tip-enter .tip-head { gap: 10px; align-items: center; }
 .tip.tip-enter .tip-head b { font-size: 16px; }
-.tip.tip-enter .tip-head small { font-size: 13px; font-family: var(--font-noto-arabic), system-ui, sans-serif; }
+.tip.tip-enter .tip-head b { line-height: 1; }
+/* the Arabic font sits low next to the Latin ID: lift it so both share the same middle line */
+.tip.tip-enter .tip-head small { font-size: 13px; line-height: 1; position: relative; top: -3px; font-family: var(--font-noto-arabic), system-ui, sans-serif; }
 .tip.tip-enter .tip-head small.available { color: #2f9e57; }
 .tip.tip-enter .tip-head small.reserved { color: #c98a00; }
 .tip.tip-enter .tip-head small.sold { color: #d64545; }
 .tip.tip-enter .hint { display: block; margin-top: 4px; font-size: 13px; font-style: normal; color: var(--muted); }
 html.phone-layout .tip.tip-enter { max-width: min(270px, calc(100vw - 80px)); }
-html.phone-layout .tip.tip-enter img { width: 74px; height: 56px; }
+html.phone-layout .tip.tip-enter img { width: 92px; height: 72px; }
 
 /* ======================= Villa finder (recommendation) ======================= */
 .rail-stack { height: 365.71px; } /* one more button (اقتراح فيلا) under مساعدة */

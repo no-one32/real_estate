@@ -19,7 +19,7 @@ const GENERIC_ERROR = "The assistant is not available right now. Please try agai
 
 const isArabic = (s: string) => /[؀-ۿ]/.test(s);
 
-export default function AssistantView() {
+export default function AssistantView({ onClose }: { onClose: () => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -74,18 +74,21 @@ export default function AssistantView() {
   };
 
   return (
-    <section className="axd-page axas">
-      <header className="axd-head">
-        <span className="axd-accent" aria-hidden="true" />
+    <section className="axas" role="dialog" aria-label="Assistant">
+      <header className="axas-head">
+        <span className="axas-head-ico"><IcAssistant size={20} /></span>
         <div className="axas-headtext">
-          <h1>Assistant</h1>
-          <p>Ask about your visitors, villas, contacts and QR codes</p>
+          <b>Assistant</b>
+          <span>Ask about your visitors, villas, contacts and QR codes</span>
         </div>
         {msgs.length ? (
           <button type="button" className="axas-clear" onClick={clear}>
             New chat
           </button>
         ) : null}
+        <button type="button" className="axas-close" aria-label="Close the assistant" onClick={onClose}>
+          ×
+        </button>
       </header>
 
       <div className="axas-box">
