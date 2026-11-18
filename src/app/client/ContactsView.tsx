@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { exportExcel, exportPdf } from "./contacts-export";
+import { exportExcel, exportPdf, type ExportTable } from "./contacts-export";
 import { toUi } from "./ui-scale";
 import { useConfirm } from "@/components/ConfirmDialog";
 import type { ComplexRow, LeadRow, LeadStatus, UnitRow } from "@/lib/types";
@@ -312,7 +312,21 @@ export default function ContactsView({
       fmtDate(c.date),
       STATUS_LABEL[c.status],
     ]);
-    const table = { title: scope ? `${scope.name} Contacts` : "All Contacts", head, rows };
+    const by = (st: LeadStatus) => list.filter((c) => c.status === st).length;
+    const table: ExportTable = {
+      title: scope ? `${scope.name} · Contacts` : "All Contacts",
+      subtitle: selected.size ? "Selected contacts" : scope ? "Everyone who asked about a villa in this project" : "Everyone who asked about a villa, all projects",
+      noun: "contact",
+      head,
+      rows,
+      cols: [{}, {}, {}, {}, { wide: true }, { wide: true }, ...(scope ? [] : [{}]), {}, { tones: { New: "blue", "In Progress": "amber", Sold: "green" } }],
+      summary: [
+        { label: "Contacts", value: String(list.length) },
+        { label: "New", value: String(by("new")), tone: "blue" },
+        { label: "In progress", value: String(by("in_progress")), tone: "amber" },
+        { label: "Sold", value: String(by("sold")), tone: "green" },
+      ],
+    };
     if (format === "excel") exportExcel(table);
     else exportPdf(table);
   };

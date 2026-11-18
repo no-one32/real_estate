@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { ComplexRow } from "@/lib/types";
-import { exportExcel } from "./contacts-export";
+import { exportExcel, exportPdf, type ExportTable } from "./contacts-export";
 import ProjectStrip from "./ProjectStrip";
 import { IcChart } from "./DashIcons";
 import { Donut, HBars, LineChart, VBars, fmtDur, fmtN, type Slice } from "./AnalyticsCharts";
@@ -173,21 +173,44 @@ export default function AnalyticsView({
   const maxModel = Math.max(1, ...(p?.byModel ?? []).map((m) => m.avgTime));
   const periodLabel = days ? `Showing last ${days} days` : "Showing all time";
 
-  const exportCsv = () => {
+  const exportAs = (format: "csv" | "pdf") => {
     if (!data) return;
-    if (sub === "traffic") {
-      exportExcel({
-        title: `${cx.name} Traffic Analytics`,
-        head: ["Date", "Visits", "Unique visitors"],
-        rows: data.traffic.series.map((s) => [s.t.slice(0, 10), String(s.sessions), String(s.unique)]),
-      });
-    } else {
-      exportExcel({
-        title: `${cx.name} Property Analytics`,
-        head: ["Villa", "Model", "Unique viewers", "Total views", "Favorites", "Inquiries", "Inquiry rate %", "Avg. time (s)", "Interest"],
-        rows: units.map((u) => [u.villa, u.model, String(u.viewers), String(u.views), String(u.favorites), String(u.inquiries), String(u.rate), String(u.avgTime), u.level]),
-      });
-    }
+    const period = days ? `Last ${days} days` : "All time";
+    const pdf = format === "pdf";
+    const table: ExportTable =
+      sub === "traffic"
+        ? {
+            title: `${cx.name} · Traffic`,
+            subtitle: `${period} · ${data.period.bucketDays > 1 ? "weekly" : "daily"} visits`,
+            noun: data.period.bucketDays > 1 ? "week" : "day",
+            head: [data.period.bucketDays > 1 ? "Week of" : "Date", "Visits", "Unique visitors"],
+            rows: data.traffic.series.map((x) => [x.t.slice(0, 10), String(x.sessions), String(x.unique)]),
+            cols: [{}, { format: "number" }, { format: "number" }],
+            summary: [
+              { label: "Visits", value: fmtN(data.traffic.sessions) },
+              { label: "Unique visitors", value: fmtN(data.traffic.unique), tone: "blue" },
+              { label: "Returning", value: fmtN(data.traffic.returning), tone: "amber" },
+              { label: "From QR codes", value: `${data.traffic.sources.find((x) => x.key === "qr")?.pct ?? 0}%`, tone: "green" },
+            ],
+          }
+        : {
+            title: `${cx.name} · Property interest`,
+            subtitle: `${period} · villas from most to least viewed`,
+            noun: "villa",
+            head: ["Villa", "Model", "Interest", "Unique viewers", "Views", "Favorites", "Inquiries", pdf ? "Avg. time" : "Avg. time (s)"],
+            rows: [...units]
+              .sort((x, y) => y.views - x.views || x.villa.localeCompare(y.villa, undefined, { numeric: true }))
+              .map((u) => [u.villa, u.model, cap(u.level), String(u.viewers), String(u.views), String(u.favorites), String(u.inquiries), pdf ? (u.views ? fmtDur(u.avgTime) : "") : String(u.avgTime)]),
+            cols: [{}, {}, { tones: { High: "green", Medium: "amber", Low: "grey" } }, { format: "number" }, { format: "number" }, { format: "number" }, { format: "number" }, {}],
+            summary: [
+              { label: "Villa views", value: fmtN(data.property.views) },
+              { label: "Favorites", value: fmtN(data.property.favorites), tone: "red" },
+              { label: "Inquiries", value: fmtN(data.property.inquiries), tone: "green" },
+              { label: "Villas viewed", value: `${data.property.viewedUnits} / ${data.property.totalUnits}`, tone: "blue" },
+            ],
+          };
+    if (pdf) exportPdf(table);
+    else exportExcel(table);
   };
 
   return (
@@ -221,7 +244,7 @@ export default function AnalyticsView({
         </div>
         <span className="axn-spacer" />
         <span className="axn-period-note">{loading ? "Loading…" : periodLabel}</span>
-        <button type="button" className="axn-btn" onClick={exportCsv} disabled={!data}>↓ Export CSV</button>
+        <button type="button" className="axn-btn" onClick={() => exportAs("csv")} disabled={!data}>↓ Export CSV</button>
       </div>
 
       {err ? <p className="axd-err" role="alert">{err}</p> : null}

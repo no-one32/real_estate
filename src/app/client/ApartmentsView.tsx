@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { COMPLEX } from "@/lib/complex";
 import type { ComplexRow, UnitRow, UnitStatus } from "@/lib/types";
-import { exportExcel, exportPdf } from "./contacts-export";
+import { exportExcel, exportPdf, type ExportTable } from "./contacts-export";
 import { toUi } from "./ui-scale";
 import {
   IcArrowLeft,
@@ -236,8 +236,18 @@ export default function ApartmentsView({
 
   const exportAs = (format: "excel" | "pdf") => {
     setExportOpen(false);
-    const table = {
-      title: `${cx.name} Apartments`,
+    const by = (st: UnitStatus) => filtered.filter((u) => u.status === st).length;
+    const table: ExportTable = {
+      title: `${cx.name} · Apartments`,
+      subtitle: "Villas, status and prices",
+      noun: "villa",
+      cols: [{}, {}, { tones: { Available: "green", Reserved: "amber", Sold: "red" } }, { format: "money" }, { format: "number" }, { format: "number" }, { format: "number" }],
+      summary: [
+        { label: "Villas", value: String(filtered.length) },
+        { label: "Available", value: String(by("available")), tone: "green" },
+        { label: "Reserved", value: String(by("reserved")), tone: "amber" },
+        { label: "Sold", value: String(by("sold")), tone: "red" },
+      ],
       head: ["Villa", "Model", "Status", "Price (SAR)", "Bedrooms", "Area (m²)", "Floors"],
       rows: filtered.map((u) => [
         u.display_id,
