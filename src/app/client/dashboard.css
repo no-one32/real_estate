@@ -2563,11 +2563,11 @@ html:has(.axd) { scrollbar-gutter: stable; }
 }
 .axas-sugs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
 :where(.axd) .axas-sugs button {
-  padding: 9px 14px;
+  padding: 10px 16px;
   border-radius: 999px;
   background: #fff;
   border: 1px solid #e3e8f3;
-  font-size: 13px;
+  font-size: 15px; /* Arabic questions: a bit bigger so they read easily */
   color: var(--axd-ink);
 }
 .axas-sugs button:hover { border-color: var(--axd-blue); color: var(--axd-blue); }
