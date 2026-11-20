@@ -556,7 +556,7 @@ export default function ContactsView({
                   <span className="axc-cell">
                     {c.email ? <a className="axc-email" dir="ltr" href={`mailto:${c.email}`} title={c.email}>{c.email}</a> : "—"}
                   </span>
-                  <span className="axc-cell" dir="ltr">{c.phone || "—"}</span>
+                  <span className="axc-cell"><bdi dir="ltr">{c.phone || "—"}</bdi></span>
                   <span className="axc-cell">
                     {c.note ? (
                       c.note.length > NOTE_PREVIEW ? (
@@ -569,7 +569,7 @@ export default function ContactsView({
                           }}
                           title="قراءة الملاحظة كاملة"
                         >
-                          {c.note.slice(0, NOTE_PREVIEW).trimEnd()}...
+                          <bdi dir="auto">{c.note.slice(0, NOTE_PREVIEW).trimEnd()}…</bdi>
                         </button>
                       ) : (
                         <span dir="auto">{c.note}</span>
