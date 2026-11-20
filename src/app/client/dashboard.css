@@ -2793,3 +2793,54 @@ html:has(.axd) { scrollbar-gutter: stable; }
   }
   .axd-top .axd-account-toggle svg { width: 11px; height: 11px; }
 }
+
+/* ---------- Inside a project, phone & tablet: the same header on every tab, so the tabs never move ----------
+   icon + title on one line (fixed height), the tabs on their own line underneath */
+@media (max-width: 1023px) {
+  .axd-view-project :is(.axc, .axq, .axn) { padding-top: 20px; }
+  .axd-view-project :is(.axc-head, .axq-head, .axn-head) {
+    display: grid;
+    grid-template-columns: 60px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 16px;
+    height: auto;
+    margin: 0 0 20px;
+  }
+  .axd-view-project :is(.axa-emblem, .axc-emblem, .axp-emblem) { width: 60px; height: 60px; border-radius: 16px; }
+  .axd-view-project :is(.axa-emblem, .axc-emblem, .axp-emblem) svg { width: 30px; height: 30px; }
+  .axd-view-project .axn-title { padding-left: 0; border-left: 0; }
+  .axd-view-project :is(.axc-head, .axq-head) h1,
+  .axd-view-project .axn-title h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 30px;
+    letter-spacing: -0.6px;
+    color: #0d1735;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* one line only, so a long description can't push the tabs down */
+  .axd-view-project :is(.axc-head, .axq-head) p,
+  .axd-view-project .axn-title p {
+    margin: 2px 0 0;
+    padding: 0;
+    font-size: 13px;
+    line-height: 18px;
+    color: #65758b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .axd-view-project :is(.axc-head, .axq-head, .axn-head) .axp-tabs {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    margin: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .axd-view-project .axp-tabs::-webkit-scrollbar { display: none; }
+  .axd-view-project .axp-tabs button { flex: none; }
+}
