@@ -77,6 +77,10 @@ export default function RecommendPanel({
 }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
+  /** "my answers" summary open */
+  const [review, setReview] = useState(false);
+  /** a question opened from the summary: once answered, go straight back to the results */
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -217,13 +221,34 @@ export default function RecommendPanel({
   }, [done, pool, answers, bands, priceOf]);
 
   const choose = (key: Key, value: Answers[Key]) => {
-    setAnswers((a) => ({ ...a, [key]: value }));
-    window.setTimeout(() => setStep((s) => s + 1), 160);
+    const next = { ...answers, [key]: value };
+    setAnswers(next);
+    const all = questions.every((x) => next[x.key] !== undefined);
+    window.setTimeout(() => {
+      if (editing && all) {
+        setEditing(false);
+        setStep(questions.length);
+      } else setStep((s) => s + 1);
+    }, 160);
   };
   const restart = () => {
     setAnswers({});
     setStep(0);
+    setReview(false);
+    setEditing(false);
   };
+  const back = () => {
+    if (review) return setReview(false);
+    setEditing(false);
+    setStep((s) => Math.max(0, s - 1));
+  };
+  const edit = (i: number) => {
+    setReview(false);
+    setEditing(true);
+    setStep(i);
+  };
+  const answered = questions.filter((x) => answers[x.key] !== undefined).length;
+  const optionOf = (x: Question) => x.options.find((o) => o.value === answers[x.key]);
 
   const cur = questions[step];
   const progress = Math.round((Math.min(step, questions.length) / questions.length) * 100);
@@ -243,9 +268,64 @@ export default function RecommendPanel({
         <i style={{ width: `${done ? 100 : progress}%` }} />
       </div>
 
-      {!done && cur ? (
+      <div className="reco-tools">
+        <button type="button" className="reco-tool" onClick={back} disabled={!review && step === 0} title="الرجوع لتغيير الإجابة">
+          <Ico d={<path d="M9 6l6 6-6 6" />} size={16} />
+          رجوع
+        </button>
+        <button
+          type="button"
+          className={`reco-tool${review ? " on" : ""}`}
+          onClick={() => setReview((r) => !r)}
+          disabled={!answered}
+          aria-pressed={review}
+          title="عرض إجاباتك"
+        >
+          <Ico d={<><path d="M9 6h11M9 12h11M9 18h11" /><path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2" /></>} size={16} />
+          إجاباتي
+          {answered ? <i>{answered}</i> : null}
+        </button>
+        {!done && cur && !review ? <span className="reco-step">السؤال {step + 1} من {questions.length}</span> : null}
+      </div>
+
+      {review ? (
+        <div className="reco-body reco-review">
+          <h3>إجاباتك</h3>
+          <p className="reco-sub">اضغط على أي سؤال لتغيير إجابتك</p>
+          <ol className="reco-answers">
+            {questions.map((x, i) => {
+              const o = optionOf(x);
+              return (
+                <li key={x.key}>
+                  <button type="button" onClick={() => edit(i)}>
+                    <span className="reco-opt-ico">{o?.icon ?? <Ico d={<circle cx="12" cy="12" r="9" />} />}</span>
+                    <span className="reco-opt-text">
+                      <small>{x.title}</small>
+                      <b>{o ? o.title : "لم تتم الإجابة بعد"}</b>
+                    </span>
+                    <span className="reco-answer-edit">تغيير</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+          <div className="reco-review-foot">
+            {answered === questions.length ? (
+              <button type="button" className="reco-go" onClick={() => { setReview(false); setEditing(false); setStep(questions.length); }}>
+                عرض النتائج
+              </button>
+            ) : (
+              <button type="button" className="reco-go" onClick={() => setReview(false)}>
+                متابعة الأسئلة
+              </button>
+            )}
+            <button type="button" className="reco-restart" onClick={restart}>
+              إعادة الأسئلة
+            </button>
+          </div>
+        </div>
+      ) : !done && cur ? (
         <div className="reco-body" key={cur.key}>
-          <span className="reco-step">السؤال {step + 1} من {questions.length}</span>
           <h3>{cur.title}</h3>
           <p className="reco-sub">{cur.sub}</p>
           <div className="reco-options" role="radiogroup" aria-label={cur.title}>
@@ -262,11 +342,6 @@ export default function RecommendPanel({
               );
             })}
           </div>
-          {step > 0 ? (
-            <button type="button" className="reco-back" onClick={() => setStep((s) => s - 1)}>
-              → السؤال السابق
-            </button>
-          ) : null}
         </div>
       ) : (
         <div className="reco-body results">

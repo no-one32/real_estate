@@ -7,12 +7,12 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const STORE_KEY = "axd-assistant-chat";
 const SUGGESTIONS = [
-  "How many visitors did I get this week?",
-  "Which villas are the most viewed?",
-  "Who are my latest contacts?",
-  "Which QR code brings the most visits?",
+  "كم عدد الزوار هذا الأسبوع؟",
+  "ما هي الفيلات الأكثر مشاهدة؟",
+  "من هم آخر العملاء الذين تواصلوا معي؟",
+  "أي رمز QR يجلب أكثر عدد من الزيارات؟",
   "كم فيلا متاحة للبيع؟",
-  "Quelles villas sont encore disponibles ?",
+  "ما هي الفيلات الأكثر إضافة إلى المفضلة؟",
 ];
 
 const GENERIC_ERROR = "The assistant is not available right now. Please try again later.";

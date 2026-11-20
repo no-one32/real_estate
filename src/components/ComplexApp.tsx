@@ -1873,13 +1873,14 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
           </div>
         )}
 
-        {hover && hoverPos && !tourUnit && !scene360Open && (
+        {hover && hoverPos && !tourUnit && !scene360Open && !(selected && hover.id === selected.id && approachedRef.current === selected.id) && (
           // the same card as in the side list, just smaller
           <div className="tip follow tip-card" style={{ left: hoverPos.x, top: hoverPos.y }}>
             <MiniUnitCard unit={hover} photo={cardPhoto(tour, hover)} liked={favs.includes(hover.id)} />
           </div>
         )}
-        {selected && !hover && !tourUnit && !scene360Open && approachedRef.current === selected.id && (
+        {/* stays while the pointer is on this same villa; another villa's hover card replaces it */}
+        {selected && (!hover || hover.id === selected.id) && !tourUnit && !scene360Open && approachedRef.current === selected.id && (
           <div className="tip tip-enter">
             {/* same light thumbnail as the villa list: already in the browser cache, so it shows at once */}
             {mediaSrc(cardPhoto(tour, selected)) ? <img src={cardPhoto(tour, selected)} alt="" decoding="async" /> : null}
@@ -2817,6 +2818,17 @@ function VillaTour({
   const [sheetHeight, setSheetHeight] = useState(SHEET_OPEN);
   const [sheetDragging, setSheetDragging] = useState(false);
   const dragRef = useRef<{ startY: number; startH: number; h: number } | null>(null);
+  const [fullOn, setFullOn] = useState(false);
+  useEffect(() => {
+    const sync = () => setFullOn(Boolean(document.fullscreenElement));
+    sync();
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
+  const toggleFull = () => {
+    if (document.fullscreenElement) void document.exitFullscreen?.();
+    else void document.documentElement.requestFullscreen?.();
+  };
 
   useEffect(() => {
     const sync = () => setIsPhone(isPhoneLayout());
@@ -2911,6 +2923,15 @@ function VillaTour({
           ) : (
             <Visite360Viewer className="detail-visit" startId="10000" />
           )}
+          <button
+            type="button"
+            className={`detail-full${fullOn ? " on" : ""}`}
+            onClick={toggleFull}
+            title={fullOn ? "خروج من ملء الشاشة" : "ملء الشاشة"}
+            aria-label={fullOn ? "خروج من ملء الشاشة" : "ملء الشاشة"}
+          >
+            {fullOn ? <IconFullscreenExit size={20} /> : <IconFullscreen size={20} />}
+          </button>
         </div>
 
         <aside

@@ -1,8 +1,9 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { exportExcel, exportPdf, type ExportTable } from "./contacts-export";
-import { toUi } from "./ui-scale";
+import { toUi, uiScale } from "./ui-scale";
+import DashSelect from "./DashSelect";
 import { useConfirm } from "@/components/ConfirmDialog";
 import type { ComplexRow, LeadRow, LeadStatus, UnitRow } from "@/lib/types";
 import {
@@ -193,6 +194,20 @@ export default function ContactsView({
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE));
   const current = Math.min(page, pages);
   const rows = filtered.slice((current - 1) * PAGE, current * PAGE);
+
+  // every page keeps the height of the tallest page seen (a short last page leaves white space, it doesn't shrink)
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [pageH, setPageH] = useState(0);
+  useEffect(() => setPageH(0), [filtered.length]);
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    const first = el?.firstElementChild;
+    const last = el?.lastElementChild;
+    if (!el || !first || !last || pages < 2) return;
+    // rows only (not the box's min-height), screen px → dashboard px because of the page zoom
+    const h = (last.getBoundingClientRect().bottom - first.getBoundingClientRect().top) / uiScale();
+    setPageH((prev) => Math.max(prev, Math.ceil(h)));
+  }, [rows, pages]);
 
   const keepPage = useRef(false);
   useEffect(() => {
@@ -436,30 +451,31 @@ export default function ContactsView({
             />
           </label>
           {scope ? null : (
-            <label className="axc-select wide">
-              <select value={project} onChange={(e) => setProject(e.target.value)} aria-label="Project">
-                <option value="">All Projects</option>
-                {complexes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <IcChevronDown size={17} />
-            </label>
+            <DashSelect
+              className="axc-select wide"
+              ariaLabel="Project"
+              value={project}
+              onChange={setProject}
+              options={[{ value: "", label: "All Projects" }, ...complexes.map((c) => ({ value: c.id, label: c.name }))]}
+            />
           )}
-          <label className="axc-select">
-            <select value={status} onChange={(e) => setStatus(e.target.value as "" | LeadStatus)} aria-label="Status">
-              <option value="">{scope ? "All Status" : "Status"}</option>
-              {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-            </select>
-            <IcChevronDown size={17} />
-          </label>
-          <label className="axc-select">
-            <select value={range} onChange={(e) => setRange(e.target.value as typeof range)} aria-label="Date">
-              <option value="">All time</option>
-              <option value="7">Last 7 days</option>
-              <option value="30">Last 30 days</option>
-              <option value="90">Last 90 days</option>
-            </select>
-            <IcChevronDown size={17} />
-          </label>
+          <DashSelect<"" | LeadStatus>
+            ariaLabel="Status"
+            value={status}
+            onChange={setStatus}
+            options={[{ value: "", label: scope ? "All Status" : "Status" }, ...STATUS_ORDER.map((s) => ({ value: s, label: STATUS_LABEL[s] }))]}
+          />
+          <DashSelect<typeof range>
+            ariaLabel="Date"
+            value={range}
+            onChange={setRange}
+            options={[
+              { value: "", label: "All time" },
+              { value: "7", label: "Last 7 days" },
+              { value: "30", label: "Last 30 days" },
+              { value: "90", label: "Last 90 days" },
+            ]}
+          />
           <span className="axc-spacer" />
           <div className="axc-export" ref={exportRef}>
             <button
@@ -494,7 +510,7 @@ export default function ContactsView({
       {err ? <p className="axd-err" role="alert">{err}</p> : null}
 
       <div className={`axc-table${pages > 1 ? " paged" : ""}`}>
-        <div className="axc-scroll">
+        <div className="axc-scroll" ref={scrollRef} style={pages > 1 && pageH ? { minHeight: pageH } : undefined}>
           <div className="axc-grid axc-headrow" role="row">
             <span className="axc-check-cell">
               <input type="checkbox" className="axc-check" checked={allOnPage} onChange={toggleAll} aria-label="Select all on this page" />

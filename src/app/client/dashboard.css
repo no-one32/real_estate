@@ -752,7 +752,7 @@
   border-radius: 12.7px;
   color: var(--axc-ink);
 }
-.axc-select select {
+.axc-select :is(select, .dsel-btn) {
   appearance: none;
   height: 100%;
   min-width: 104px;
@@ -765,7 +765,7 @@
   color: inherit;
   cursor: pointer;
 }
-.axc-select.wide select { min-width: 160px; }
+.axc-select.wide :is(select, .dsel-btn) { min-width: 160px; }
 .axc-select svg {
   position: absolute;
   right: 14px;
@@ -1473,7 +1473,7 @@ button.axc-status:hover { filter: brightness(0.97); }
   color: #6b7688;
 }
 .axq-field input,
-.axq-select select {
+.axq-select :is(select, .dsel-btn) {
   width: 100%;
   height: 42px;
   padding: 0 13px;
@@ -1488,7 +1488,7 @@ button.axc-status:hover { filter: brightness(0.97); }
 .axq-field input:focus,
 .axq-select select:focus { border-color: #9db4ff; box-shadow: 0 0 0 3px rgba(47, 124, 246, 0.12); }
 .axq-select { position: relative; display: block; }
-.axq-select select { appearance: none; padding-right: 34px; cursor: pointer; }
+.axq-select :is(select, .dsel-btn) { appearance: none; padding-right: 34px; cursor: pointer; text-align: left; }
 .axq-select svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #5b6779; }
 .axq-note { font-size: 11.5px; color: #c97a00; }
 .axq-form .axd-err { margin: 0; font-size: 12px; }
@@ -1791,8 +1791,7 @@ button.axc-status:hover { filter: brightness(0.97); }
 .axn-row { display: grid; gap: 12px; }
 .axn-row.half { grid-template-columns: 1fr 1fr; }
 .axn-row.wide { grid-template-columns: 1.4fr 1fr; }
-/* Top view: the big plan may be taller; the card next to it keeps its own height (List view: same height again) */
-.axn-row.wide.top-view { align-items: start; }
+/* Top view and List view: the card next to the plan always has the same height */
 
 .axn-card {
   position: relative;
@@ -2268,6 +2267,8 @@ button.axc-status:hover { filter: brightness(0.97); }
 
 /* ---------- Paging: the white table box keeps a 10-row height on every page ---------- */
 .axc-table.paged .axc-scroll { min-height: 606px; }
+/* the page's scrollbar space is always kept: a shorter page never makes the tables wider */
+html:has(.axd) { scrollbar-gutter: stable; }
 .axa-scroll.paged { min-height: 666px; }
 
 /* ---------- QR: center image + generated codes table ---------- */
@@ -2430,9 +2431,8 @@ button.axc-status:hover { filter: brightness(0.97); }
 .axn-plan-unit:focus { outline: none; }
 .axn-plan-unit:focus-visible,
 .axn-plan-unit.on { stroke: #0b1220; stroke-width: 2; }
-/* while a villa is hovered, every other villa fades so the hovered one stands out */
-.axn-plan.hovering .axn-plan-unit { opacity: 0.32; }
-.axn-plan.hovering .axn-plan-off { opacity: 0.5; }
+/* the selected villa: black outline drawn above its neighbours (the other villas keep their colours) */
+.axn-plan-sel { fill: none; stroke: #0b1220; stroke-width: 2.6; stroke-linejoin: round; pointer-events: none; }
 .axn-plan-hl { stroke: #0b1220; stroke-width: 2.6; stroke-linejoin: round; pointer-events: none; }
 .axn-plan-off { fill: #dfe4ee; stroke: #fff; stroke-width: 0.8; transition: opacity 0.15s ease; }
 .axn-plan-tip {
@@ -2621,3 +2621,80 @@ button.axc-status:hover { filter: brightness(0.97); }
 @media (max-width: 1023px) {
   .axd-view-project :is(.axc, .axn, .axq) { padding-left: 16px; padding-right: 16px; }
 }
+
+/* ---- Drop-down lists: same look as the tour's country-code list (+966, +216…) ---- */
+.dsel { position: relative; }
+.dsel.open { z-index: 70; }
+.dsel-btn { text-align: left; white-space: nowrap; }
+.dsel.open > svg { transform: rotate(180deg); }
+.axc-select.dsel > svg { transition: transform 0.18s ease; }
+.axq-select.dsel > svg { transition: transform 0.18s ease; }
+.axq-select.dsel.open > svg { transform: translateY(-50%) rotate(180deg); }
+.axc-select.dsel.open { border-color: #2f7df6; box-shadow: 0 0 0 3px rgba(47, 125, 246, 0.18); }
+.axq-select.dsel.open .dsel-btn { border-color: #2f7df6; background: #fff; box-shadow: 0 0 0 3px rgba(47, 125, 246, 0.18); }
+.dsel-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  margin: 0;
+  list-style: none;
+  /* exactly 5 rows visible (5 × 34px + padding), the rest scrolls */
+  max-height: 178px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.dsel-list li { margin: 0; padding: 0; }
+.dsel-list,
+.axc-status-pop,
+.axq-pick,
+.axc-export-menu {
+  padding: 4px;
+  background: #fff;
+  border: 1px solid #e0e7f3;
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(18, 33, 74, 0.14);
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(18, 33, 74, 0.28) transparent;
+  animation: dsel-in 0.18s ease both;
+}
+@keyframes dsel-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+:is(.dsel-list, .axc-status-pop, .axq-pick, .axc-export-menu, .axc-note-pop p)::-webkit-scrollbar { width: 3px; }
+:is(.dsel-list, .axc-status-pop, .axq-pick, .axc-export-menu, .axc-note-pop p)::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
+:is(.dsel-list, .axc-status-pop, .axq-pick, .axc-export-menu, .axc-note-pop p)::-webkit-scrollbar-thumb { background: rgba(18, 33, 74, 0.28); border-radius: 3px; }
+.dsel-list button,
+.axc-status-pop button,
+.axq-pick button,
+.axc-export-menu button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 34px;
+  margin: 0;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #12214a;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dsel-list button:hover,
+.axc-status-pop button:hover,
+.axq-pick button:hover,
+.axc-export-menu button:hover { background: rgba(47, 125, 246, 0.08); }
+.dsel-list button.on,
+.axc-status-pop button.on,
+.axq-pick button.on { background: #2f7df6; color: #fff; font-weight: 700; }
+.axq-select .dsel-list button { font-size: 12px; }
+.axc-export-menu button { gap: 10px; }
+.axc-status-pop { gap: 2px; }

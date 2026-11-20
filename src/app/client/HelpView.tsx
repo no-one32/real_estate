@@ -41,7 +41,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "How do I export the numbers?",
-    a: "Click Export CSV on either analytics page to download a summary of the KPI cards.",
+    a: "Click Export on either analytics page and choose Excel or PDF to download the figures.",
   },
   {
     q: "Can I search the tables?",

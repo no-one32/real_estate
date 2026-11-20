@@ -4,13 +4,13 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { COMPLEX } from "@/lib/complex";
 import type { ComplexRow, UnitRow, UnitStatus } from "@/lib/types";
-import { exportExcel, exportPdf, type ExportTable } from "./contacts-export";
+import { exportExcel, exportPdf, readXlsx, type ExportTable } from "./contacts-export";
 import { toUi } from "./ui-scale";
+import DashSelect from "./DashSelect";
 import {
   IcArrowLeft,
   IcArrowRight,
   IcBuilding,
-  IcChevronDown,
   IcExport,
   IcFilter,
   IcImport,
@@ -269,11 +269,18 @@ export default function ApartmentsView({
     if (!file) return;
     setErr("");
     setMsg("");
-    if (!/\.(csv|txt)$/i.test(file.name)) {
-      setErr("Import a .csv file (in Excel: File → Save as → CSV). Tip: use Export → Excel as a template.");
+    const isXlsx = /\.xlsx$/i.test(file.name);
+    if (!isXlsx && !/\.(csv|txt)$/i.test(file.name)) {
+      setErr("Import an Excel (.xlsx) or .csv file. Tip: use Export → Excel as a template.");
       return;
     }
-    const table = parseCsv((await file.text()).replace(/^﻿/, ""));
+    let table: string[][];
+    try {
+      table = isXlsx ? await readXlsx(file) : parseCsv((await file.text()).replace(/^﻿/, ""));
+    } catch {
+      setErr("This file could not be read. Save it again as Excel (.xlsx) and retry.");
+      return;
+    }
     const head = (table[0] ?? []).map((h) => h.trim().toLowerCase());
     const col = (re: RegExp) => head.findIndex((h) => re.test(h));
     const iVilla = col(/^(villa|name|unit|id|الفيلا|رقم)/);
@@ -341,26 +348,25 @@ export default function ApartmentsView({
             <IcSearch size={19} />
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name , price , status" aria-label="Search villas" />
           </label>
-          <label className="axc-select wide">
-            <select value={model} onChange={(e) => setModel(e.target.value)} aria-label="Model">
-              <option value="">All Models</option>
-              {models.map((m) => <option key={m} value={m}>Model {m}</option>)}
-            </select>
-            <IcChevronDown size={17} />
-          </label>
-          <label className="axc-select">
-            <select value={status} onChange={(e) => setStatus(e.target.value as "" | UnitStatus)} aria-label="Status">
-              <option value="">Status</option>
-              {STATUSES.map((s) => <option key={s} value={s}>{STATUS[s]}</option>)}
-            </select>
-            <IcChevronDown size={17} />
-          </label>
+          <DashSelect
+            className="axc-select wide"
+            ariaLabel="Model"
+            value={model}
+            onChange={setModel}
+            options={[{ value: "", label: "All Models" }, ...models.map((m) => ({ value: m, label: `Model ${m}` }))]}
+          />
+          <DashSelect<"" | UnitStatus>
+            ariaLabel="Status"
+            value={status}
+            onChange={setStatus}
+            options={[{ value: "", label: "Status" }, ...STATUSES.map((s) => ({ value: s, label: STATUS[s] }))]}
+          />
           <span className="axc-spacer" />
-          <button type="button" className="axc-btn" onClick={() => fileRef.current?.click()} title="Update status / price of many villas from a CSV file">
+          <button type="button" className="axc-btn" onClick={() => fileRef.current?.click()} title="Update status / price of many villas from an Excel file">
             <IcImport size={18} stroke={1.8} />
             Import
           </button>
-          <input ref={fileRef} type="file" accept=".csv,text/csv" hidden onChange={(e) => void importFile(e.target.files?.[0])} />
+          <input ref={fileRef} type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={(e) => void importFile(e.target.files?.[0])} />
           <div className="axc-export" ref={exportRef}>
             <button type="button" className="axc-btn" aria-haspopup="menu" aria-expanded={exportOpen} onClick={() => setExportOpen((v) => !v)}>
               <IcExport size={18} />

@@ -23,14 +23,20 @@ const DAY = 864e5;
 const ENGAGED_S = 60;
 const QUICK_EXIT_S = 10;
 
-/** Supabase returns at most 1000 rows per request: page through. */
+/**
+ * Supabase returns at most 1000 rows per request: page through.
+ * Pages are asked 4 at a time (in parallel) instead of one after another: the analytics open much faster.
+ */
 async function fetchAll<T>(make: (from: number, to: number) => PromiseLike<{ data: unknown; error: unknown }>, cap = 60000): Promise<T[]> {
   const out: T[] = [];
-  for (let from = 0; from < cap; from += 1000) {
-    const { data, error } = await make(from, from + 999);
-    if (error || !Array.isArray(data)) break;
-    out.push(...(data as T[]));
-    if (data.length < 1000) break;
+  const BATCH = 4;
+  for (let from = 0; from < cap; from += 1000 * BATCH) {
+    const pages = await Promise.all(Array.from({ length: BATCH }, (_, i) => make(from + i * 1000, from + i * 1000 + 999)));
+    for (const { data, error } of pages) {
+      if (error || !Array.isArray(data)) return out;
+      out.push(...(data as T[]));
+      if (data.length < 1000) return out;
+    }
   }
   return out;
 }
@@ -50,38 +56,35 @@ const visitorLabel = (id: string) => {
 };
 
 async function load(service: SupabaseClient, complexId: string, since: string | null) {
-  const visits = await fetchAll<Visit>((a, b) => {
-    let q = service.from("complex_visits").select("id, visitor_id, created_at, source, device, os, city, country, duration_s, qr_id").eq("complex_id", complexId);
-    if (since) q = q.gte("created_at", since);
-    return q.order("created_at", { ascending: false }).range(a, b);
-  });
-  // before migration 016 there is no qr_id column
-  const withQr = visits.length
-    ? visits
-    : await fetchAll<Visit>((a, b) => {
-      let q = service.from("complex_visits").select("id, visitor_id, created_at, source, device, os, city, country, duration_s").eq("complex_id", complexId);
+  const visitsWith = (cols: string) =>
+    fetchAll<Visit>((a, b) => {
+      let q = service.from("complex_visits").select(cols).eq("complex_id", complexId);
       if (since) q = q.gte("created_at", since);
       return q.order("created_at", { ascending: false }).range(a, b);
     });
-  // before migration 014 the analytics columns do not exist: fall back to the basic ones
-  const safeVisits = withQr.length
-    ? withQr
-    : await fetchAll<Visit>((a, b) => {
-      let q = service.from("complex_visits").select("id, visitor_id, created_at").eq("complex_id", complexId);
+  // visits, unit events and leads are loaded at the same time
+  const [visits, events, leads] = await Promise.all([
+    (async () => {
+      const full = await visitsWith("id, visitor_id, created_at, source, device, os, city, country, duration_s, qr_id");
+      if (full.length) return full;
+      // before migration 016 there is no qr_id column
+      const noQr = await visitsWith("id, visitor_id, created_at, source, device, os, city, country, duration_s");
+      if (noQr.length) return noQr;
+      // before migration 014 the analytics columns do not exist: fall back to the basic ones
+      return visitsWith("id, visitor_id, created_at");
+    })(),
+    fetchAll<UnitEvent>((a, b) => {
+      let q = service.from("unit_events").select("visit_id, visitor_id, unit_display_id, kind, duration_s, created_at").eq("complex_id", complexId);
       if (since) q = q.gte("created_at", since);
       return q.order("created_at", { ascending: false }).range(a, b);
-    });
-  const events = await fetchAll<UnitEvent>((a, b) => {
-    let q = service.from("unit_events").select("visit_id, visitor_id, unit_display_id, kind, duration_s, created_at").eq("complex_id", complexId);
-    if (since) q = q.gte("created_at", since);
-    return q.order("created_at", { ascending: false }).range(a, b);
-  });
-  const leads = await fetchAll<Lead>((a, b) => {
-    let q = service.from("leads").select("unit_display_id, created_at").eq("complex_id", complexId);
-    if (since) q = q.gte("created_at", since);
-    return q.range(a, b);
-  });
-  return { visits: safeVisits, events, leads };
+    }),
+    fetchAll<Lead>((a, b) => {
+      let q = service.from("leads").select("unit_display_id, created_at").eq("complex_id", complexId);
+      if (since) q = q.gte("created_at", since);
+      return q.range(a, b);
+    }),
+  ]);
+  return { visits, events, leads };
 }
 
 export async function GET(req: Request) {
@@ -97,7 +100,12 @@ export async function GET(req: Request) {
   const now = Date.now();
   const start = days ? now - days * DAY : 0;
   const prevStart = days ? now - 2 * days * DAY : 0;
-  const { visits: allVisits, events: allEvents, leads: allLeads } = await load(service, complexId, days ? new Date(prevStart).toISOString() : null);
+  // everything this page needs, asked at the same time
+  const [{ visits: allVisits, events: allEvents, leads: allLeads }, { data: unitRows }, { data: qrRows }] = await Promise.all([
+    load(service, complexId, days ? new Date(prevStart).toISOString() : null),
+    service.from("units").select("display_id, model, type, mesh_id").eq("complex_id", complexId),
+    service.from("qr_codes").select("id, label, created_at").eq("complex_id", complexId).order("created_at"),
+  ]);
   const inPeriod = <T extends { created_at: string }>(rows: T[]) => rows.filter((r) => Date.parse(r.created_at) >= start);
   const inPrev = <T extends { created_at: string }>(rows: T[]) => (days ? rows.filter((r) => { const t = Date.parse(r.created_at); return t >= prevStart && t < start; }) : []);
 
@@ -107,11 +115,9 @@ export async function GET(req: Request) {
   const prevEvents = inPrev(allEvents);
   const leads = inPeriod(allLeads);
 
-  const { data: unitRows } = await service.from("units").select("display_id, model, type, mesh_id").eq("complex_id", complexId);
   const units = (unitRows ?? []) as { display_id: string; model: string | null; type: number; mesh_id: string | null }[];
 
   // QR codes of this project, with the visits each one brought in the period
-  const { data: qrRows } = await service.from("qr_codes").select("id, label, created_at").eq("complex_id", complexId).order("created_at");
   const qrCodes = (qrRows ?? []) as { id: string; label: string; created_at: string }[];
 
   /* ---------------- traffic ---------------- */

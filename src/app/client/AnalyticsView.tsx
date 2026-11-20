@@ -43,6 +43,34 @@ type Data = {
   };
 };
 
+/** last answer per project + period, kept while the dashboard is open */
+const dataCache = new Map<string, Data>();
+const inflight = new Map<string, Promise<Data>>();
+/** site plan per project slug (null = the project has none) */
+const planCache = new Map<string, Plan | null>();
+
+/** one request per project + period at a time; the answer goes to the cache */
+function loadAnalytics(complexId: string, days: number): Promise<Data> {
+  const key = `${complexId}:${days}`;
+  const running = inflight.get(key);
+  if (running) return running;
+  const job = fetch(`/api/client/analytics?complexId=${encodeURIComponent(complexId)}&days=${days}`)
+    .then(async (r) => {
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "Could not load analytics");
+      dataCache.set(key, j as Data);
+      return j as Data;
+    })
+    .finally(() => inflight.delete(key));
+  inflight.set(key, job);
+  return job;
+}
+
+/** start loading a project's analytics before its tab is opened (default period) */
+export function prefetchAnalytics(complexId: string) {
+  if (!dataCache.has(`${complexId}:30`)) void loadAnalytics(complexId, 30).catch(() => {});
+}
+
 const PERIODS: [number, string][] = [[7, "Last 7 days"], [30, "1 Month"], [90, "3 Months"], [0, "All time"]];
 
 function Delta({ v, all }: { v: number | null; all?: boolean }) {
@@ -105,20 +133,42 @@ export default function AnalyticsView({
 }) {
   const [sub, setSub] = useState<"traffic" | "property">("traffic");
   const [days, setDays] = useState(30);
-  const [data, setData] = useState<Data | null>(null);
+  // coming back to this tab: the figures already loaded show from the first frame
+  const [data, setData] = useState<Data | null>(() => dataCache.get(`${cx.id}:30`) ?? null);
   const [err, setErr] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !dataCache.has(`${cx.id}:30`));
   const [picked, setPicked] = useState<string | null>(null);
   const [heatView, setHeatView] = useState<"list" | "top">("list");
-  const [plan, setPlan] = useState<Plan | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!exportOpen) return;
+    const out = (e: PointerEvent) => !exportRef.current?.contains(e.target as Node) && setExportOpen(false);
+    const key = (e: KeyboardEvent) => e.key === "Escape" && setExportOpen(false);
+    document.addEventListener("pointerdown", out);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("pointerdown", out);
+      document.removeEventListener("keydown", key);
+    };
+  }, [exportOpen]);
+  const [plan, setPlan] = useState<Plan | null>(() => planCache.get(cx.slug) ?? null);
 
   // top-view plan of the project (image + villa outlines taken from the 3D model), when there is one
   useEffect(() => {
     let alive = true;
+    if (planCache.has(cx.slug)) {
+      setPlan(planCache.get(cx.slug) ?? null);
+      return;
+    }
     setPlan(null);
     fetch(`/complexes/${cx.slug}/plan/units.json`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((j) => alive && setPlan(j && j.units ? (j as Plan) : null))
+      .then((j) => {
+        const p = j && j.units ? (j as Plan) : null;
+        planCache.set(cx.slug, p);
+        if (alive) setPlan(p);
+      })
       .catch(() => alive && setPlan(null));
     return () => {
       alive = false;
@@ -130,16 +180,16 @@ export default function AnalyticsView({
 
   useEffect(() => {
     let alive = true;
-    setLoading(true);
+    const key = `${cx.id}:${days}`;
+    // already seen (tab switch, period switch back): show it at once, refresh quietly
+    const seen = dataCache.get(key);
+    if (seen) setData(seen);
+    setLoading(!seen);
     setErr("");
-    fetch(`/api/client/analytics?complexId=${encodeURIComponent(cx.id)}&days=${days}`)
-      .then(async (r) => {
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.error || "Could not load analytics");
-        return j as Data;
-      })
+    loadAnalytics(cx.id, days)
       .then((j) => alive && setData(j))
-      .catch((e) => alive && setErr(e.message))
+      // a failed quiet refresh keeps the figures already on screen
+      .catch((e) => alive && !seen && setErr(e.message))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
@@ -173,7 +223,8 @@ export default function AnalyticsView({
   const maxModel = Math.max(1, ...(p?.byModel ?? []).map((m) => m.avgTime));
   const periodLabel = days ? `Showing last ${days} days` : "Showing all time";
 
-  const exportAs = (format: "csv" | "pdf") => {
+  const exportAs = (format: "excel" | "pdf") => {
+    setExportOpen(false);
     if (!data) return;
     const period = days ? `Last ${days} days` : "All time";
     const pdf = format === "pdf";
@@ -244,7 +295,17 @@ export default function AnalyticsView({
         </div>
         <span className="axn-spacer" />
         <span className="axn-period-note">{loading ? "Loading…" : periodLabel}</span>
-        <button type="button" className="axn-btn" onClick={() => exportAs("csv")} disabled={!data}>↓ Export CSV</button>
+        <div className="axc-export" ref={exportRef}>
+          <button type="button" className="axn-btn" aria-haspopup="menu" aria-expanded={exportOpen} onClick={() => setExportOpen((v) => !v)} disabled={!data}>
+            ↓ Export
+          </button>
+          {exportOpen ? (
+            <div className="axc-pop axc-export-menu" role="menu">
+              <button type="button" role="menuitem" onClick={() => exportAs("excel")}><b className="xls">XLS</b> Excel</button>
+              <button type="button" role="menuitem" onClick={() => exportAs("pdf")}><b className="pdf">PDF</b> PDF</button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {err ? <p className="axd-err" role="alert">{err}</p> : null}
@@ -529,6 +590,10 @@ function PlanView({ plan, base, units, selected, onPick }: { plan: Plan; base: s
             />
           );
         })}
+        {(() => {
+          const sel = entries.find(([mesh]) => byMesh.get(mesh)?.villa === selected);
+          return sel ? <path d={`M${sel[1].map((p) => p.join(",")).join("L")}Z`} className="axn-plan-sel" /> : null;
+        })()}
         {/* the hovered villa drawn again on top: full colour, dark outline, soft shadow */}
         {hover ? <path d={hover.d} className="axn-plan-hl" fill={HEAT[hover.u.level]} filter="url(#axn-plan-lift)" /> : null}
       </svg>

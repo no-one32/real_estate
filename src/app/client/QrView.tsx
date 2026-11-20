@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import type { ComplexRow } from "@/lib/types";
-import { IcChevronDown, IcQr, IcRotate, IcTrash } from "./DashIcons";
+import { IcQr, IcRotate, IcTrash } from "./DashIcons";
 import ProjectStrip from "./ProjectStrip";
+import DashSelect from "./DashSelect";
 import { useConfirm } from "@/components/ConfirmDialog";
 
 const SIZES = [
@@ -365,12 +366,14 @@ export default function QrView({
             </label>
             <label className="axq-field">
               <span>Size</span>
-              <span className="axq-select">
-                <select value={draft.size} onChange={(e) => setDraft({ ...draft, size: Number(e.target.value) })}>
-                  {SIZES.map((s) => <option key={s.px} value={s.px}>{s.label}</option>)}
-                </select>
-                <IcChevronDown size={14} />
-              </span>
+              <DashSelect
+                className="axq-select"
+                chevron={14}
+                ariaLabel="Size"
+                value={draft.size}
+                onChange={(size) => setDraft({ ...draft, size })}
+                options={SIZES.map((s) => ({ value: s.px, label: s.label }))}
+              />
             </label>
             <label className="axq-field">
               <span>Label</span>

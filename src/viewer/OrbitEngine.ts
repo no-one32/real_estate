@@ -1611,7 +1611,8 @@ export class OrbitEngine {
   };
 
   private hover(e: MouseEvent) {
-    const unit = this.hit(e);
+    // pointer on a 360° street pin: its own preview shows, not the villa behind it
+    const unit = (e.target as HTMLElement | null)?.closest?.(".street360-pin") ? null : this.hit(e);
     this.hoveredId = unit?.id ?? null;
     this.syncMeshVisibility();
     if (!unit) {

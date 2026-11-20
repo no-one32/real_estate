@@ -7,7 +7,7 @@ import type { SearchHit } from "./GlobalSearch";
 import { priceOf } from "./ApartmentsView";
 import ApartmentsView from "./ApartmentsView";
 import QrView from "./QrView";
-import AnalyticsView from "./AnalyticsView";
+import AnalyticsView, { prefetchAnalytics } from "./AnalyticsView";
 import AssistantView from "./AssistantView";
 import HelpView from "./HelpView";
 import NotificationsView, { type NotificationTarget } from "./NotificationsView";
@@ -217,6 +217,10 @@ export default function ClientHome() {
   };
 
   const cx = complexes.find((c) => c.id === active) || complexes[0] || null;
+  // a project is open: load its analytics in the background, so the Analytics tab shows at once
+  useEffect(() => {
+    if (view === "project" && cx) prefetchAnalytics(cx.id);
+  }, [view, cx?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // manual navigation forgets the row picked in "Search anything"
   const pickView = (v: ClientView) => {
     setFocus(null);

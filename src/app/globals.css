@@ -3716,6 +3716,29 @@ html:not(.phone-layout) .scene360-pano canvas {
   cursor: default;
 }
 
+/* Fullscreen inside the villa: bottom-left corner, same glass look as the floor pills */
+.detail-full {
+  position: absolute;
+  left: 18px;
+  bottom: 24px;
+  z-index: 6;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #FFFFFF;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  color: #1A2330;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.detail-full:hover { background: rgba(255, 255, 255, 0.85); }
+html.phone-layout .detail-full { display: none; }
+
 /* Floor pills — Figma bottom-right horizontal row */
 .floor-float {
   position: absolute;
@@ -6770,16 +6793,68 @@ html:not(.phone-layout) .app:has(.panel.open) .reco { left: calc(min(382px, 86vw
 .reco-opt-text { display: flex; flex-direction: column; gap: 2px; }
 .reco-opt-text b { font-size: 13.5px; font-weight: 700; line-height: 20px; unicode-bidi: plaintext; }
 .reco-opt-text small { font-size: 11.5px; line-height: 16px; color: #7a8794; }
-.reco-back {
-  margin-top: 14px;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: 12.5px;
-  color: #6b7a8c;
-  cursor: pointer;
+/* top-right tools: back (change the last answer) · my answers (see them all, change any) */
+.reco-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px 0;
 }
-.reco-back:hover { color: #3b7dd8; }
+.reco-tools .reco-step { margin-inline-start: auto; }
+.reco-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 11px;
+  border: 1px solid #dbe4f0;
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3b4a5e;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.reco-tool:hover:not(:disabled) { border-color: #3b7dd8; color: #3b7dd8; }
+.reco-tool.on { background: #eef4ff; border-color: #3b7dd8; color: #3b7dd8; }
+.reco-tool:disabled { opacity: 0.45; cursor: default; }
+.reco-tool i {
+  display: grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #3b7dd8;
+  color: #fff;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+}
+.reco-tools + .reco-body { padding-top: 12px; }
+.reco-answers { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.reco-answers button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: right;
+  background: #f7f9fc;
+  border: 1.5px solid #e6edf5;
+  border-radius: 14px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.reco-answers button:hover { background: #fff; border-color: #bcd3f5; }
+.reco-answers .reco-opt-ico { flex: none; }
+.reco-answers .reco-opt-text { flex: 1; min-width: 0; }
+.reco-answer-edit { flex: none; font-size: 11.5px; font-weight: 600; color: #3b7dd8; }
+.reco-review-foot { margin-top: 6px; }
 
 .reco-results { list-style: none; display: flex; flex-direction: column; gap: 12px; }
 .reco-card {
