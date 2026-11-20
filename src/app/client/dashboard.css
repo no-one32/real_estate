@@ -2621,7 +2621,9 @@ html:has(.axd) { scrollbar-gutter: stable; }
 }
 
 /* ---------- inside a project: Apartments / Analytics / Contacts / QR keep exactly the same width ---------- */
-.axd-view-project :is(.axc, .axn, .axq) {
+/* the Analytics page opened from the sidebar fills the page the same way */
+.axd-view-project :is(.axc, .axn, .axq),
+.axd-view-analytics .axn {
   box-sizing: border-box;
   width: 100%;
   max-width: none;
@@ -2629,7 +2631,8 @@ html:has(.axd) { scrollbar-gutter: stable; }
   padding-left: 24px;
 }
 @media (max-width: 1023px) {
-  .axd-view-project :is(.axc, .axn, .axq) { padding-right: 16px; padding-left: 16px; }
+  .axd-view-project :is(.axc, .axn, .axq),
+  .axd-view-analytics .axn { padding-right: 16px; padding-left: 16px; }
 }
 
 /* ---- Drop-down lists: same look as the tour's country-code list (+966, +216…) ---- */
