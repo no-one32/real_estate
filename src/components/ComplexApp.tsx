@@ -1879,8 +1879,9 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
             <MiniUnitCard unit={hover} photo={cardPhoto(tour, hover)} liked={favs.includes(hover.id)} />
           </div>
         )}
-        {/* stays while the pointer is on this same villa; another villa's hover card replaces it */}
-        {selected && (!hover || hover.id === selected.id) && !tourUnit && !scene360Open && approachedRef.current === selected.id && (
+        {/* once a villa is clicked, this card stays (corner of the screen) wherever the pointer goes,
+            until the user enters the villa, clicks empty space or picks another villa */}
+        {selected && !tourUnit && !scene360Open && approachedRef.current === selected.id && (
           <div className="tip tip-enter">
             {/* same light thumbnail as the villa list: already in the browser cache, so it shows at once */}
             {mediaSrc(cardPhoto(tour, selected)) ? <img src={cardPhoto(tour, selected)} alt="" decoding="async" /> : null}
