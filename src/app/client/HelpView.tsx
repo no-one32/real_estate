@@ -20,32 +20,32 @@ type Step = { title: string; text: string };
 type Faq = { q: string; a: string };
 
 const STEPS: Step[] = [
-  { title: "Pick a project", text: "On My Projects, select the development you want to review." },
-  { title: "Explore analytics", text: "Switch between Traffic and Property tabs and set the period filter." },
-  { title: "Generate a QR code", text: "Open the QR tab of a project, set the size and label, then download the PNG." },
-  { title: "Follow up leads", text: "Open All Contacts and filter by name, project or status." },
+  { title: "اختر مشروعاً", text: "من صفحة «مشاريعي»، اختر المشروع الذي تريد مراجعته." },
+  { title: "استكشف الإحصائيات", text: "تنقّل بين تبويبي الزيارات والعقارات وحدد الفترة." },
+  { title: "أنشئ رمز QR", text: "افتح تبويب رمز QR في المشروع، وحدد الحجم والاسم، ثم حمّل صورة PNG." },
+  { title: "تابع العملاء", text: "افتح «جميع العملاء» وصفِّ حسب الاسم أو المشروع أو الحالة." },
 ];
 
 const FAQS: Faq[] = [
   {
-    q: "How do I change the reporting period?",
-    a: "Use the Period selector at the top of the Traffic or Property Analytics page. Every card and chart on the page updates to the chosen range.",
+    q: "كيف أغيّر فترة التقرير؟",
+    a: "استخدم محدد «الفترة» أعلى صفحة إحصائيات الزيارات أو العقارات. تتحدث كل البطاقات والرسوم في الصفحة حسب الفترة المختارة.",
   },
   {
-    q: "Do my QR codes expire?",
-    a: "No. A QR code always opens the project's live tour, so a printed code keeps working even after you change prices or villa status.",
+    q: "هل تنتهي صلاحية رموز QR؟",
+    a: "لا. يفتح رمز QR دائماً الجولة المباشرة للمشروع، لذا يبقى الرمز المطبوع يعمل حتى بعد تغيير الأسعار أو حالة الفلل.",
   },
   {
-    q: "Where do QR scans appear?",
-    a: "Visits coming from a scanned code are counted in the Traffic Sources panel of the Traffic Analytics page.",
+    q: "أين تظهر عمليات مسح رموز QR؟",
+    a: "تُحتسب الزيارات القادمة من رمز ممسوح في لوحة «مصادر الزيارات» بصفحة إحصائيات الزيارات.",
   },
   {
-    q: "How do I export the numbers?",
-    a: "Click Export on either analytics page and choose Excel or PDF to download the figures.",
+    q: "كيف أصدّر الأرقام؟",
+    a: "اضغط «تصدير» في أي صفحة إحصائيات واختر إكسل أو PDF لتحميل الأرقام.",
   },
   {
-    q: "Can I search the tables?",
-    a: "Yes. Use the search field in the top bar to find a project, a villa or a contact from anywhere in the dashboard.",
+    q: "هل يمكنني البحث في الجداول؟",
+    a: "نعم. استخدم حقل البحث في الشريط العلوي للعثور على مشروع أو فيلا أو عميل من أي مكان في لوحة التحكم.",
   },
 ];
 
@@ -62,31 +62,31 @@ export default function HelpView({ onView }: { onView: (v: ClientView) => void }
   const topics: Topic[] = [
     {
       key: "projects",
-      title: "Manage projects",
+      title: "إدارة المشاريع",
       icon: <IcGrid size={20} stroke={1.5} />,
-      text: <>Open {link("My Projects", "projects")} to select a development, review its visitors and jump into analytics.</>,
-      plain: "Open My Projects to select a development, review its visitors and jump into analytics.",
+      text: <>افتح {link("مشاريعي", "projects")} لاختيار مشروع ومراجعة زواره والانتقال إلى إحصائياته.</>,
+      plain: "افتح مشاريعي لاختيار مشروع ومراجعة زواره والانتقال إلى إحصائياته.",
     },
     {
       key: "analytics",
-      title: "Read analytics",
+      title: "قراءة الإحصائيات",
       icon: <IcChart size={20} stroke={1.6} />,
-      text: <>Use the {link("Traffic", "analytics")} and {link("Property", "analytics")} tabs, then change the period filter to compare performance.</>,
-      plain: "Use the Traffic and Property tabs, then change the period filter to compare performance.",
+      text: <>استخدم تبويبي {link("الزيارات", "analytics")} و{link("العقارات", "analytics")}، ثم غيّر الفترة لمقارنة الأداء.</>,
+      plain: "استخدم تبويبي الزيارات والعقارات، ثم غيّر الفترة لمقارنة الأداء.",
     },
     {
       key: "contacts",
-      title: "Track leads",
+      title: "متابعة العملاء",
       icon: <IcUsers size={20} stroke={1.5} />,
-      text: <>Visit {link("All Contacts", "contacts")} to search buyers, check their status and follow up on inquiries.</>,
-      plain: "Visit All Contacts to search buyers, check their status and follow up on inquiries.",
+      text: <>زر {link("جميع العملاء", "contacts")} للبحث عن المشترين ومعرفة حالتهم ومتابعة استفساراتهم.</>,
+      plain: "زر جميع العملاء للبحث عن المشترين ومعرفة حالتهم ومتابعة استفساراتهم.",
     },
     {
       key: "qr",
-      title: "Create QR codes",
+      title: "إنشاء رموز QR",
       icon: <IcQr size={20} stroke={1.5} />,
-      text: <>Open a project from {link("My Projects", "projects")} and use its QR tab to make a printable code that opens the live tour.</>,
-      plain: "Open a project from My Projects and use its QR tab to make a printable code that opens the live tour.",
+      text: <>افتح مشروعاً من {link("مشاريعي", "projects")} واستخدم تبويب رمز QR لإنشاء رمز قابل للطباعة يفتح الجولة المباشرة.</>,
+      plain: "افتح مشروعاً من مشاريعي واستخدم تبويب رمز QR لإنشاء رمز قابل للطباعة يفتح الجولة المباشرة.",
     },
   ];
 
@@ -101,16 +101,16 @@ export default function HelpView({ onView }: { onView: (v: ClientView) => void }
     <section className="axh">
       <header className="axh-head">
         <div>
-          <h1>Help Center</h1>
-          <p>Everything you need to get the most out of AXIS Studio</p>
+          <h1>مركز المساعدة</h1>
+          <p>كل ما تحتاجه للاستفادة القصوى من AXIS Studio</p>
         </div>
         <label className="axh-search">
           <IcSearch size={15} stroke={1.25} />
-          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search help topics..." aria-label="Search help topics" />
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث في مواضيع المساعدة..." aria-label="البحث في مواضيع المساعدة" />
         </label>
       </header>
 
-      {nothing ? <p className="axh-empty">Nothing found for “{q.trim()}”.</p> : null}
+      {nothing ? <p className="axh-empty">لا توجد نتائج لـ «{q.trim()}».</p> : null}
 
       {shownTopics.length ? (
         <div className="axh-topics">
@@ -130,8 +130,8 @@ export default function HelpView({ onView }: { onView: (v: ClientView) => void }
         <div className="axh-cols">
           {shownSteps.length ? (
             <section className="axh-card axh-panel">
-              <h2>Getting started in 4 steps</h2>
-              <p className="axh-sub">From project selection to sharing</p>
+              <h2>ابدأ في 4 خطوات</h2>
+              <p className="axh-sub">من اختيار المشروع إلى المشاركة</p>
               <ol className="axh-steps">
                 {shownSteps.map((s) => (
                   <li key={s.n}>
@@ -148,8 +148,8 @@ export default function HelpView({ onView }: { onView: (v: ClientView) => void }
 
           {shownFaqs.length ? (
             <section className="axh-card axh-panel">
-              <h2>Frequently asked questions</h2>
-              <p className="axh-sub">Quick answers to common questions</p>
+              <h2>الأسئلة الشائعة</h2>
+              <p className="axh-sub">إجابات سريعة عن الأسئلة المتكررة</p>
               <div className="axh-faqs">
                 {shownFaqs.map((f) => {
                   const isOpen = open[f.i] || Boolean(needle);
@@ -171,15 +171,15 @@ export default function HelpView({ onView }: { onView: (v: ClientView) => void }
 
       <section className="axh-cta">
         <div>
-          <h2>Still need a hand?</h2>
-          <p>Our studio team is happy to walk you through the dashboard or set up tracking for a new launch.</p>
+          <h2>هل تحتاج إلى مساعدة؟</h2>
+          <p>يسعد فريقنا أن يرشدك في لوحة التحكم أو يجهّز التتبع لإطلاق مشروع جديد.</p>
         </div>
         <a className="axh-cta-btn" href={`mailto:${SUPPORT_EMAIL}`}>
-          Contact support
+          تواصل مع الدعم
         </a>
       </section>
 
-      <p className="axh-foot">AXIS Studio · Help Center</p>
+      <p className="axh-foot">AXIS Studio · مركز المساعدة</p>
     </section>
   );
 }

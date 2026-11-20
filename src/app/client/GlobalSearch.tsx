@@ -16,6 +16,7 @@ export type SearchHit = {
 };
 
 const GROUP_ORDER: SearchGroup[] = ["Pages", "Projects", "Villas", "Contacts"];
+const GROUP_LABEL: Record<SearchGroup, string> = { Pages: "الصفحات", Projects: "المشاريع", Villas: "الفلل", Contacts: "العملاء" };
 /** results kept per group; only ~5 are visible at once, the list scrolls */
 const PER_GROUP = 15;
 
@@ -160,8 +161,8 @@ export default function GlobalSearch({ items }: { items: SearchHit[] }) {
         ref={inputRef}
         type="search"
         value={q}
-        placeholder="Search anything..."
-        aria-label="Search anything"
+        placeholder="ابحث عن أي شيء..."
+        aria-label="ابحث عن أي شيء"
         role="combobox"
         aria-expanded={open && nq.length > 0}
         aria-controls="axd-search-list"
@@ -182,7 +183,7 @@ export default function GlobalSearch({ items }: { items: SearchHit[] }) {
               lastGroup = hit.group;
               return (
                 <div key={hit.key}>
-                  {head ? <p className="axd-search-group">{head}</p> : null}
+                  {head ? <p className="axd-search-group">{GROUP_LABEL[head]}</p> : null}
                   <button
                     type="button"
                     id={`axd-hit-${i}`}
@@ -203,7 +204,7 @@ export default function GlobalSearch({ items }: { items: SearchHit[] }) {
               );
             })
           ) : (
-            <p className="axd-search-empty">Nothing found for “{q.trim()}”</p>
+            <p className="axd-search-empty">لا توجد نتائج لـ «{q.trim()}»</p>
           )}
         </div>
       ) : null}

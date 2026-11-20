@@ -133,7 +133,7 @@ export function exportExcel(table: ExportTable) {
   const widths = t.head.map((_, i) => Math.min(60, Math.max(10, ...all.map((r) => (r[i] ?? "").length + 2))));
   const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+<sheetViews><sheetView rightToLeft="1" workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
 <cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols>
 <sheetData>${all.map((r, ri) => `<row r="${ri + 1}">${r.map((v, i) => cell(v ?? "", ri, i, ri === 0)).join("")}</row>`).join("")}</sheetData>
 ${t.rows.length ? `<autoFilter ref="A1:${colName(t.head.length - 1)}${t.rows.length + 1}"/>` : ""}
@@ -231,13 +231,13 @@ function cellHtml(v: string, col: ExportCol | undefined) {
 
 export function exportPdf(table: ExportTable) {
   const t = compact(table);
-  const date = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-  const noun = t.noun ?? "row";
-  const count = `${t.rows.length.toLocaleString("en-US")} ${noun}${t.rows.length === 1 ? "" : "s"}`;
+  const date = new Date().toLocaleDateString("ar-u-nu-latn", { month: "long", day: "numeric", year: "numeric" });
+  const noun = t.noun ?? "صف";
+  const count = `${t.rows.length.toLocaleString("en-US")} ${noun}`;
   const many = t.head.length > 7;
   const logo = `${location.origin}/branding/axis.png`;
 
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(t.title)} · ${stamp()}</title>
+  const html = `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${esc(t.title)} · ${stamp()}</title>
 <style>
   /* margin 0: leaves no room for the browser's own header/footer (site address, date, title).
      The page margins come from the .page table below: its empty head/foot rows repeat on every page. */
@@ -248,29 +248,29 @@ export function exportPdf(table: ExportTable) {
   .page > thead > tr > td { height: 14mm; padding: 0; }
   .page > tfoot > tr > td { height: 16mm; padding: 0; }
   .page > tbody > tr > td { padding: 0 14mm; }
-  body { margin: 0; font: 10px/1.45 Inter, "Segoe UI", "Noto Sans Arabic", Tahoma, Arial, sans-serif; color: #0c1323; }
+  body { margin: 0; font: 10px/1.5 "Noto Sans Arabic", Inter, "Segoe UI", Tahoma, Arial, sans-serif; color: #0c1323; }
   header { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 2px solid #0c1323; }
   header img { width: 34px; height: 44px; object-fit: contain; }
   header .t { flex: 1; }
   header h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.2px; }
   header p { margin: 2px 0 0; font-size: 10.5px; color: #64708a; }
-  header .meta { text-align: right; font-size: 9.5px; color: #64708a; line-height: 1.6; }
+  header .meta { text-align: left; font-size: 9.5px; color: #64708a; line-height: 1.6; }
   header .meta b { display: block; color: #0c1323; font-size: 10.5px; }
   .sum { display: flex; gap: 8px; margin: 16px 0 14px; }
   .sum div { flex: 1; padding: 10px 12px; border-radius: 10px; background: #f3f6fc; border: 1px solid #e3e9f5; }
-  .sum span { display: block; font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #7a86a0; }
+  .sum span { display: block; font-size: 9px; color: #7a86a0; }
   .sum b { display: block; margin-top: 3px; font-size: 17px; font-weight: 700; }
   .sum .green b { color: #15803d; } .sum .amber b { color: #b45309; } .sum .red b { color: #c62828; } .sum .blue b { color: #1d4ed8; }
   .data { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: ${t.summary?.length ? 0 : 16}px; }
   .data thead { display: table-header-group; }
-  .data th { padding: 8px 9px; background: #0c1323; color: #fff; font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; white-space: nowrap; }
-  .data th:first-child { border-radius: 7px 0 0 7px; } .data th:last-child { border-radius: 0 7px 7px 0; }
-  .data th.r { text-align: right; }
+  .data th { padding: 8px 9px; background: #0c1323; color: #fff; font-size: 9px; font-weight: 600; text-align: right; white-space: nowrap; }
+  .data th:first-child { border-radius: 0 7px 7px 0; } .data th:last-child { border-radius: 7px 0 0 7px; }
+  .data th.r { text-align: left; }
   .data td { padding: 7px 9px; border-bottom: 1px solid #edf1f7; vertical-align: top; white-space: nowrap; }
   .data tbody tr:nth-child(even) td { background: #f8faff; }
   .data tr { break-inside: avoid; }
   .data td:first-child { font-weight: 600; }
-  .data td.r { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .data td.r { text-align: left; direction: ltr; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .data td.wide { min-width: 140px; max-width: 260px; color: #3f4c69; white-space: normal; }
   .data td.empty { color: #c3cad8; }
   .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 8.5px; font-weight: 600; white-space: nowrap; }
@@ -288,7 +288,7 @@ ${t.summary?.length ? `<div class="sum">${t.summary.map((s) => `<div class="${s.
 ${t.rows.length
     ? `<table class="data"><thead><tr>${t.head.map((h, i) => `<th${t.cols?.[i]?.format ? ' class="r"' : ""}>${esc(h)}</th>`).join("")}</tr></thead>
 <tbody>${t.rows.map((r) => `<tr>${r.map((c, i) => cellHtml(c ?? "", t.cols?.[i])).join("")}</tr>`).join("")}</tbody></table>`
-    : `<p class="none">Nothing to export.</p>`}
+    : `<p class="none">لا يوجد ما يمكن تصديره.</p>`}
 </td></tr></tbody></table>
 </body></html>`;
 

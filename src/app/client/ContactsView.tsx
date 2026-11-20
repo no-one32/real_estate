@@ -24,11 +24,11 @@ import {
 const PAGE = 10;
 const NOTE_PREVIEW = 18;
 
-const STATUS_LABEL: Record<LeadStatus, string> = { new: "New", in_progress: "In Progress", sold: "Sold" };
+const STATUS_LABEL: Record<LeadStatus, string> = { new: "جديد", in_progress: "قيد المتابعة", sold: "تم البيع" };
 const STATUS_ORDER: LeadStatus[] = ["new", "in_progress", "sold"];
 
 /* the tour's contact form stores the Arabic title */
-const GENDER: Record<string, string> = { "السيد": "Male", "السيدة": "Female", "لا": "None" };
+const GENDER: Record<string, string> = { "السيد": "السيد", "السيدة": "السيدة", "لا": "—" };
 
 /** One person per project: all their requests merged into a single line. */
 export type Contact = {
@@ -52,7 +52,7 @@ type SortKey = "name" | "gender" | "email" | "phone" | "note" | "model" | "proje
 type Sort = { key: SortKey; dir: "asc" | "desc" } | null;
 
 const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  new Date(iso).toLocaleDateString("ar-u-nu-latn", { month: "short", day: "numeric", year: "numeric" });
 
 function personName(l: LeadRow) {
   let nom = (l.nom || "").trim();
@@ -81,7 +81,7 @@ export function buildContacts(leads: LeadRow[], complexes: ComplexRow[]): Contac
         leadIds: [],
         name,
         initials: initialsOf(name),
-        gender: GENDER[(l.gender || "").trim()] || "None",
+        gender: GENDER[(l.gender || "").trim()] || "—",
         email: l.email || "",
         phone: l.tel && l.tel !== "-" ? l.tel : "",
         note: "",
@@ -125,7 +125,7 @@ export default function ContactsView({
   /** from "Search anything": show this contact (clears filters, opens its page, flashes the row) */
   focus?: { id: string; n: number } | null;
 }) {
-  const { confirm, dialog } = useConfirm();
+  const { confirm, dialog } = useConfirm({ cancel: "إلغاء", ok: "تأكيد", title: "هل أنت متأكد؟" });
   const [q, setQ] = useState("");
   const [project, setProject] = useState("");
   const [status, setStatus] = useState<"" | LeadStatus>("");
@@ -288,19 +288,19 @@ export default function ContactsView({
     if (!res.ok) {
       const old = new Map(before);
       onLeads((prev) => prev.map((l) => (old.has(l.id) ? { ...l, status: old.get(l.id) } : l)));
-      setErr((await res.json().catch(() => ({}))).error || "Could not change the status");
+      setErr((await res.json().catch(() => ({}))).error || "تعذر تغيير الحالة");
     }
   };
 
   const remove = async (c: Contact) => {
-    if (!(await confirm(`Delete ${c.name || "this contact"}? This cannot be undone.`, "Delete contact"))) return;
+    if (!(await confirm(`حذف ${c.name || "هذا العميل"}؟ لا يمكن التراجع عن ذلك.`, "حذف العميل"))) return;
     const res = await fetch("/api/client/leads", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: c.leadIds }),
     });
     if (!res.ok) {
-      setErr((await res.json().catch(() => ({}))).error || "Could not delete");
+      setErr((await res.json().catch(() => ({}))).error || "تعذر الحذف");
       return;
     }
     const ids = new Set(c.leadIds);
@@ -315,31 +315,31 @@ export default function ContactsView({
   const exportAs = (format: "excel" | "pdf") => {
     setExportOpen(false);
     const list = selected.size ? filtered.filter((c) => selected.has(c.key)) : filtered;
-    const head = ["Full Name", "Gender", "Email", "Phone", "Note from client", "Villas", ...(scope ? [] : ["Project"]), "Date", "Status"];
+    const head = ["الاسم الكامل", "اللقب", "البريد الإلكتروني", "الهاتف", "ملاحظة العميل", "الفلل", ...(scope ? [] : ["المشروع"]), "التاريخ", "الحالة"];
     const rows = list.map((c) => [
       c.name,
       c.gender,
       c.email,
       c.phone,
       c.note,
-      c.villas.map((v) => `${v}${model(c.complexId, v) ? ` (${model(c.complexId, v)})` : ""}`).join(", "),
+      c.villas.map((v) => `${v}${model(c.complexId, v) ? ` (${model(c.complexId, v)})` : ""}`).join("، "),
       ...(scope ? [] : [c.project]),
       fmtDate(c.date),
       STATUS_LABEL[c.status],
     ]);
     const by = (st: LeadStatus) => list.filter((c) => c.status === st).length;
     const table: ExportTable = {
-      title: scope ? `${scope.name} · Contacts` : "All Contacts",
-      subtitle: selected.size ? "Selected contacts" : scope ? "Everyone who asked about a villa in this project" : "Everyone who asked about a villa, all projects",
-      noun: "contact",
+      title: scope ? `${scope.name} · العملاء` : "جميع العملاء",
+      subtitle: selected.size ? "العملاء المحددون" : scope ? "كل من استفسر عن فيلا في هذا المشروع" : "كل من استفسر عن فيلا، في جميع المشاريع",
+      noun: "عميل",
       head,
       rows,
-      cols: [{}, {}, {}, {}, { wide: true }, { wide: true }, ...(scope ? [] : [{}]), {}, { tones: { New: "blue", "In Progress": "amber", Sold: "green" } }],
+      cols: [{}, {}, {}, {}, { wide: true }, { wide: true }, ...(scope ? [] : [{}]), {}, { tones: { "جديد": "blue", "قيد المتابعة": "amber", "تم البيع": "green" } }],
       summary: [
-        { label: "Contacts", value: String(list.length) },
-        { label: "New", value: String(by("new")), tone: "blue" },
-        { label: "In progress", value: String(by("in_progress")), tone: "amber" },
-        { label: "Sold", value: String(by("sold")), tone: "green" },
+        { label: "العملاء", value: String(list.length) },
+        { label: "جديد", value: String(by("new")), tone: "blue" },
+        { label: "قيد المتابعة", value: String(by("in_progress")), tone: "amber" },
+        { label: "تم البيع", value: String(by("sold")), tone: "green" },
       ],
     };
     if (format === "excel") exportExcel(table);
@@ -405,7 +405,7 @@ export default function ContactsView({
         className={`axc-th${on ? " on" : ""}`}
         onClick={() => cycleSort(k)}
         aria-sort={on === "asc" ? "ascending" : on === "desc" ? "descending" : "none"}
-        title={on === "asc" ? "Sorted A→Z (click for Z→A)" : on === "desc" ? "Sorted Z→A (click to reset)" : "Sort"}
+        title={on === "asc" ? "مرتب تصاعدياً (اضغط للترتيب التنازلي)" : on === "desc" ? "مرتب تنازلياً (اضغط لإلغاء الترتيب)" : "ترتيب"}
       >
         {label}
         {on === "asc" ? <IcSortFlipped size={13} /> : <IcSortNone size={13} />}
@@ -428,8 +428,8 @@ export default function ContactsView({
       <header className="axc-head">
         <span className="axc-emblem"><IcUsersRound size={45} stroke={1.9} /></span>
         <div>
-          <h1>{scope ? `${scope.name} Contacts` : "All Contacts"}</h1>
-          <p>{scope ? "Leads collected for this project" : "Leads collected across all projects"}</p>
+          <h1>{scope ? `عملاء ${scope.name}` : "جميع العملاء"}</h1>
+          <p>{scope ? "العملاء المهتمون بهذا المشروع" : "العملاء المهتمون في جميع المشاريع"}</p>
         </div>
         {tabs}
       </header>
@@ -437,7 +437,7 @@ export default function ContactsView({
       <div className="axc-filters">
         <div className="axc-filters-title">
           <span className="axc-filter-emblem"><IcFilter size={18} /></span>
-          Filters
+          التصفية
         </div>
         <div className="axc-controls">
           <label className="axc-search">
@@ -446,34 +446,34 @@ export default function ContactsView({
               type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search by name, email, or phone..."
-              aria-label="Search contacts"
+              placeholder="ابحث بالاسم أو البريد أو الهاتف..."
+              aria-label="البحث في العملاء"
             />
           </label>
           {scope ? null : (
             <DashSelect
               className="axc-select wide"
-              ariaLabel="Project"
+              ariaLabel="المشروع"
               value={project}
               onChange={setProject}
-              options={[{ value: "", label: "All Projects" }, ...complexes.map((c) => ({ value: c.id, label: c.name }))]}
+              options={[{ value: "", label: "جميع المشاريع" }, ...complexes.map((c) => ({ value: c.id, label: c.name }))]}
             />
           )}
           <DashSelect<"" | LeadStatus>
-            ariaLabel="Status"
+            ariaLabel="الحالة"
             value={status}
             onChange={setStatus}
-            options={[{ value: "", label: scope ? "All Status" : "Status" }, ...STATUS_ORDER.map((s) => ({ value: s, label: STATUS_LABEL[s] }))]}
+            options={[{ value: "", label: scope ? "كل الحالات" : "الحالة" }, ...STATUS_ORDER.map((s) => ({ value: s, label: STATUS_LABEL[s] }))]}
           />
           <DashSelect<typeof range>
-            ariaLabel="Date"
+            ariaLabel="التاريخ"
             value={range}
             onChange={setRange}
             options={[
-              { value: "", label: "All time" },
-              { value: "7", label: "Last 7 days" },
-              { value: "30", label: "Last 30 days" },
-              { value: "90", label: "Last 90 days" },
+              { value: "", label: "كل الفترة" },
+              { value: "7", label: "آخر 7 أيام" },
+              { value: "30", label: "آخر 30 يوماً" },
+              { value: "90", label: "آخر 90 يوماً" },
             ]}
           />
           <span className="axc-spacer" />
@@ -484,15 +484,15 @@ export default function ContactsView({
               aria-haspopup="menu"
               aria-expanded={exportOpen}
               onClick={() => setExportOpen((v) => !v)}
-              title={selected.size ? `Export the ${selected.size} selected` : "Export the list"}
+              title={selected.size ? `تصدير ${selected.size} محدد` : "تصدير القائمة"}
             >
               <IcExport size={18} />
-              Export{selected.size ? ` (${selected.size})` : ""}
+              تصدير{selected.size ? ` (${selected.size})` : ""}
             </button>
             {exportOpen ? (
               <div className="axc-pop axc-export-menu" role="menu">
                 <button type="button" role="menuitem" onClick={() => exportAs("excel")}>
-                  <b className="xls">XLS</b> Excel
+                  <b className="xls">XLS</b> إكسل
                 </button>
                 <button type="button" role="menuitem" onClick={() => exportAs("pdf")}>
                   <b className="pdf">PDF</b> PDF
@@ -502,7 +502,7 @@ export default function ContactsView({
           </div>
           <button type="button" className="axc-btn" onClick={clearFilters}>
             <IcRotate size={18} />
-            Clear Filters
+            مسح التصفية
           </button>
         </div>
       </div>
@@ -513,18 +513,18 @@ export default function ContactsView({
         <div className="axc-scroll" ref={scrollRef} style={pages > 1 && pageH ? { minHeight: pageH } : undefined}>
           <div className="axc-grid axc-headrow" role="row">
             <span className="axc-check-cell">
-              <input type="checkbox" className="axc-check" checked={allOnPage} onChange={toggleAll} aria-label="Select all on this page" />
+              <input type="checkbox" className="axc-check" checked={allOnPage} onChange={toggleAll} aria-label="تحديد الكل في هذه الصفحة" />
             </span>
-            <span className="axc-name-head">{head("name", "Full Name")}</span>
-            {head("gender", "Gender")}
-            {head("email", "Email")}
-            {head("phone", "Phone")}
-            {head("note", "Note from client")}
-            {head("model", "Model")}
-            {scope ? null : head("project", "Project")}
-            {head("date", "Date")}
-            {head("status", "status")}
-            <span className="axc-th plain">Actions</span>
+            <span className="axc-name-head">{head("name", "الاسم الكامل")}</span>
+            {head("gender", "اللقب")}
+            {head("email", "البريد الإلكتروني")}
+            {head("phone", "الهاتف")}
+            {head("note", "ملاحظة العميل")}
+            {head("model", "النموذج")}
+            {scope ? null : head("project", "المشروع")}
+            {head("date", "التاريخ")}
+            {head("status", "الحالة")}
+            <span className="axc-th plain">إجراءات</span>
           </div>
 
           {rows.map((c) => {
@@ -534,7 +534,7 @@ export default function ContactsView({
               <Fragment key={c.key}>
                 <div className={`axc-grid axc-row${selected.has(c.key) ? " sel" : ""}${flash === c.key ? " flash" : ""}`} role="row" data-row={c.key}>
                   <span className="axc-check-cell">
-                    <input type="checkbox" className="axc-check" checked={selected.has(c.key)} onChange={() => toggleOne(c.key)} aria-label={`Select ${c.name}`} />
+                    <input type="checkbox" className="axc-check" checked={selected.has(c.key)} onChange={() => toggleOne(c.key)} aria-label={`تحديد ${c.name}`} />
                   </span>
                   <span className="axc-identity">
                     <span className="axc-avatar">{c.initials}</span>
@@ -545,7 +545,7 @@ export default function ContactsView({
                         className={`axc-expand${expanded ? " open" : ""}`}
                         onClick={() => toggleOpen(c.key)}
                         aria-expanded={expanded}
-                        title={expanded ? "Hide the other villas" : `${more.length} more liked villa${more.length > 1 ? "s" : ""}`}
+                        title={expanded ? "إخفاء الفلل الأخرى" : `${more.length} فلل أخرى أعجبته`}
                       >
                         <IcChevronDown size={14} />
                         <i>{more.length}</i>
@@ -554,7 +554,7 @@ export default function ContactsView({
                   </span>
                   <span className="axc-cell">{c.gender}</span>
                   <span className="axc-cell">
-                    {c.email ? <a className="axc-email" href={`mailto:${c.email}`} title={c.email}>{c.email}</a> : "—"}
+                    {c.email ? <a className="axc-email" dir="ltr" href={`mailto:${c.email}`} title={c.email}>{c.email}</a> : "—"}
                   </span>
                   <span className="axc-cell" dir="ltr">{c.phone || "—"}</span>
                   <span className="axc-cell">
@@ -567,12 +567,12 @@ export default function ContactsView({
                             setStatusPop(null);
                             setNotePop(notePop?.key === c.key ? null : anchor(e, c.key));
                           }}
-                          title="Read the full note"
+                          title="قراءة الملاحظة كاملة"
                         >
                           {c.note.slice(0, NOTE_PREVIEW).trimEnd()}...
                         </button>
                       ) : (
-                        <span>{c.note}</span>
+                        <span dir="auto">{c.note}</span>
                       )
                     ) : "—"}
                   </span>
@@ -595,7 +595,7 @@ export default function ContactsView({
                     </button>
                   </span>
                   <span className="axc-cell axc-actions">
-                    <button type="button" className="axc-trash" onClick={() => void remove(c)} title="Delete contact" aria-label={`Delete ${c.name}`}>
+                    <button type="button" className="axc-trash" onClick={() => void remove(c)} title="حذف العميل" aria-label={`حذف ${c.name}`}>
                       <IcTrash size={17} />
                     </button>
                   </span>
@@ -613,23 +613,23 @@ export default function ContactsView({
               </Fragment>
             );
           })}
-          {!rows.length ? <p className="axc-empty">No contacts match these filters.</p> : null}
+          {!rows.length ? <p className="axc-empty">لا يوجد عملاء يطابقون هذه التصفية.</p> : null}
         </div>
 
         <footer className="axc-foot">
-          <span>{filtered.length} found</span>
+          <span>{filtered.length} نتيجة</span>
           {pages > 1 ? (
-            <nav className="axc-pages" aria-label="Pages">
-              <button type="button" className="axc-page arrow" disabled={current === 1} onClick={() => setPage(current - 1)} aria-label="Previous page">
-                <IcArrowLeft size={19} />
+            <nav className="axc-pages" aria-label="الصفحات">
+              <button type="button" className="axc-page arrow" disabled={current === 1} onClick={() => setPage(current - 1)} aria-label="الصفحة السابقة">
+                <IcArrowRight size={19} />
               </button>
               {pageButtons.map((n) => (
                 <button key={n} type="button" className={`axc-page${n === current ? " on" : ""}`} onClick={() => setPage(n)} aria-current={n === current ? "page" : undefined}>
                   {n}
                 </button>
               ))}
-              <button type="button" className="axc-page arrow" disabled={current === pages} onClick={() => setPage(current + 1)} aria-label="Next page">
-                <IcArrowRight size={19} />
+              <button type="button" className="axc-page arrow" disabled={current === pages} onClick={() => setPage(current + 1)} aria-label="الصفحة التالية">
+                <IcArrowLeft size={19} />
               </button>
             </nav>
           ) : null}
@@ -641,10 +641,10 @@ export default function ContactsView({
           ref={popRef}
           className="axc-pop axc-note-pop"
           role="dialog"
-          aria-label={`Note from ${notePopContact.name}`}
+          aria-label={`ملاحظة من ${notePopContact.name}`}
           style={{ left: clampX(notePop.x, 320), top: notePop.y }}
         >
-          <button type="button" className="axc-pop-x" onClick={() => setNotePop(null)} aria-label="Close">
+          <button type="button" className="axc-pop-x" onClick={() => setNotePop(null)} aria-label="إغلاق">
             <IcX size={16} />
           </button>
           <strong>{notePopContact.name}</strong>
@@ -675,7 +675,7 @@ export default function ContactsView({
 
 function VillaCell({ model, villa }: { model: string; villa: string }) {
   return (
-    <span className="axc-villa" title={`Villa ${villa}${model ? ` · model ${model}` : ""}`}>
+    <span className="axc-villa" title={`فيلا ${villa}${model ? ` · نموذج ${model}` : ""}`}>
       {model ? <>{model} <small>· {villa}</small></> : villa}
     </span>
   );

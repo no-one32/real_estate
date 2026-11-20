@@ -11,6 +11,9 @@ type Props = {
   required?: boolean;
   minLength?: number;
   disabled?: boolean;
+  /** screen-reader text of the eye button (the client pages pass Arabic) */
+  showLabel?: string;
+  hideLabel?: string;
 };
 
 export default function PasswordField({
@@ -21,6 +24,8 @@ export default function PasswordField({
   required,
   minLength,
   disabled,
+  showLabel = "Show password",
+  hideLabel = "Hide password",
 }: Props) {
   const [visible, setVisible] = useState(false);
   return (
@@ -40,7 +45,7 @@ export default function PasswordField({
           className="pw-toggle"
           type="button"
           tabIndex={-1}
-          aria-label={visible ? "Hide password" : "Show password"}
+          aria-label={visible ? hideLabel : showLabel}
           onClick={() => setVisible((v) => !v)}
         >
           {visible ? <IconEyeOff size={18} /> : <IconEye size={18} />}

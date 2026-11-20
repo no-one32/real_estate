@@ -22,14 +22,14 @@ export default function ClientLoginForm() {
     setErr("");
     const sb = createBrowserSupabase();
     if (!sb) {
-      setErr("Sign-in isn’t available yet.");
+      setErr("تسجيل الدخول غير متاح حالياً.");
       return;
     }
     setBusy(true);
     const { error } = await sb.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) {
-      setErr(error.message);
+      setErr(error.message === "Invalid login credentials" ? "البريد الإلكتروني أو كلمة المرور غير صحيحة." : error.message);
       return;
     }
     router.replace("/client");
@@ -37,18 +37,18 @@ export default function ClientLoginForm() {
   };
 
   return (
-    <div className="gate">
+    <div className="gate" dir="rtl" lang="ar">
       <form className="gate-card" onSubmit={submit}>
         <AxisMark size={56} />
-        <h1>Welcome</h1>
-        <p className="lede">Sign in to follow your project.</p>
-        {setup && <p className="muted">This page isn’t ready yet.</p>}
-        {denied && <p className="err">This account doesn’t have access.</p>}
-        <label>Email <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" /></label>
-        <PasswordField label="Password" value={password} onChange={setPassword} required />
+        <h1>مرحباً بك</h1>
+        <p className="lede">سجّل الدخول لمتابعة مشروعك.</p>
+        {setup && <p className="muted">هذه الصفحة غير جاهزة بعد.</p>}
+        {denied && <p className="err">هذا الحساب لا يملك صلاحية الدخول.</p>}
+        <label>البريد الإلكتروني <input type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" /></label>
+        <PasswordField label="كلمة المرور" value={password} onChange={setPassword} required showLabel="إظهار كلمة المرور" hideLabel="إخفاء كلمة المرور" />
         {err && <p className="err">{err}</p>}
-        <button className="btn wide" type="submit" disabled={busy}>{busy ? "…" : "Sign in"}</button>
-        <a href="/client/forgot">Forgot password?</a>
+        <button className="btn wide" type="submit" disabled={busy}>{busy ? "…" : "تسجيل الدخول"}</button>
+        <a href="/client/forgot">نسيت كلمة المرور؟</a>
       </form>
     </div>
   );

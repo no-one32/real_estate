@@ -22,13 +22,13 @@ type ProjectTab = "apartments" | "qr" | "analytics" | "contacts";
 /** Pill tabs at the top right of a project page. */
 function ProjectTabs({ tab, onTab }: { tab: ProjectTab; onTab: (t: ProjectTab) => void }) {
   const items: [ProjectTab, string, React.ReactNode][] = [
-    ["apartments", "Apartments", <IcDoor key="d" size={16} stroke={1.6} />],
-    ["analytics", "Analytics", <IcChart key="c" size={17} stroke={1.8} />],
-    ["contacts", "Contacts", <IcUsers key="u" size={17} stroke={2} />],
-    ["qr", "QR", <IcQr key="q" size={17} stroke={1.7} />],
+    ["apartments", "الوحدات", <IcDoor key="d" size={16} stroke={1.6} />],
+    ["analytics", "الإحصائيات", <IcChart key="c" size={17} stroke={1.8} />],
+    ["contacts", "العملاء", <IcUsers key="u" size={17} stroke={2} />],
+    ["qr", "رمز QR", <IcQr key="q" size={17} stroke={1.7} />],
   ];
   return (
-    <nav className="axp-tabs" aria-label="Project sections">
+    <nav className="axp-tabs" aria-label="أقسام المشروع">
       {items.map(([key, label, icon]) => (
         <button key={key} type="button" className={tab === key ? "on" : ""} aria-current={tab === key ? "page" : undefined} onClick={() => onTab(key)}>
           {icon}
@@ -39,7 +39,7 @@ function ProjectTabs({ tab, onTab }: { tab: ProjectTab; onTab: (t: ProjectTab) =
   );
 }
 const fmtDate = (iso?: string) =>
-  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+  iso ? new Date(iso).toLocaleDateString("ar-u-nu-latn", { month: "long", day: "numeric", year: "numeric" }) : "";
 
 function ProjectCard({
   cx,
@@ -59,9 +59,9 @@ function ProjectCard({
   const available = units.filter((u) => u.status === "available").length;
   const badge = stats?.badge ?? 0;
   return (
-    <button type="button" className="axd-card" onClick={onOpen} aria-label={`Open ${cx.name}`}>
+    <button type="button" className="axd-card" onClick={onOpen} aria-label={`فتح ${cx.name}`}>
       {badge > 0 ? (
-        <span className="axd-badge" title={`${stats?.newVisitors ?? 0} new visitors, ${stats?.newLeads ?? 0} new interested`}>
+        <span className="axd-badge" title={`${stats?.newVisitors ?? 0} زائر جديد، ${stats?.newLeads ?? 0} مهتم جديد`}>
           {badge > 99 ? "99+" : badge}
         </span>
       ) : null}
@@ -72,8 +72,8 @@ function ProjectCard({
         <span className="axd-cat"><IcBuilding size={28} stroke={2.1} /></span>
         <span className="axd-visitors">
           <IcEye size={17} />
-          <span>{fmt(stats?.visitors ?? 0)} Visitors</span>
-          {stats?.newVisitors ? <b>(+{fmt(stats.newVisitors)} new)</b> : null}
+          <span>{fmt(stats?.visitors ?? 0)} زائر</span>
+          {stats?.newVisitors ? <b>(+{fmt(stats.newVisitors)} جديد)</b> : null}
         </span>
       </span>
       <span className="axd-card-name">{cx.name}</span>
@@ -87,9 +87,9 @@ function ProjectCard({
         ) : null}
       </span>
       <span className="axd-pills">
-        <span className="axd-pill sold">{fmt(sold)} Villas Sold</span>
-        <span className="axd-pill reserved">{fmt(reserved)} Villas Reserved</span>
-        <span className="axd-pill available">{fmt(available)} Villas Available</span>
+        <span className="axd-pill sold">{fmt(sold)} فيلا مباعة</span>
+        <span className="axd-pill reserved">{fmt(reserved)} فيلا محجوزة</span>
+        <span className="axd-pill available">{fmt(available)} فيلا متاحة</span>
       </span>
     </button>
   );
@@ -97,7 +97,7 @@ function ProjectCard({
 
 function NextProjectCard() {
   return (
-    <div className="axd-next" aria-label="Looking forward to our next project">
+    <div className="axd-next" aria-label="نتطلع إلى مشروعنا القادم">
       <span className="axd-next-glow a" />
       <span className="axd-next-glow b" />
       <svg className="axd-next-deco" viewBox="0 0 245 230" aria-hidden="true">
@@ -121,15 +121,15 @@ function NextProjectCard() {
 
       <span className="axd-next-icon"><IcHandshake size={30} stroke={1.8} /></span>
       <h2 className="axd-next-title">
-        Looking Forward
+        نتطلع إلى
         <br />
-        to Our <span className="blue">Next <span className="underlined">Project</span></span>
+        <span className="blue">مشروعنا <span className="underlined">القادم</span></span>
       </h2>
-      <p className="axd-next-text">We&apos;re always here and excited to work with you again on your next project.</p>
+      <p className="axd-next-text">نحن هنا دائماً ومتحمسون للعمل معك مجدداً في مشروعك القادم.</p>
       <span className="axd-next-callout">
         <IcClock size={16} stroke={1.8} />
         <i aria-hidden="true" />
-        Let&apos;s create something great together.
+        لنصنع معاً شيئاً رائعاً.
       </span>
     </div>
   );
@@ -156,7 +156,7 @@ export default function ClientHome() {
     const res = await fetch("/api/client/dashboard");
     const json = await res.json();
     if (!res.ok) {
-      setErr(json.error || "Could not load");
+      setErr(json.error || "تعذر التحميل");
       setReady(true);
       return;
     }
@@ -239,18 +239,18 @@ export default function ClientHome() {
       setProjectTab(tab);
     };
     items.push(
-      { key: "p:projects", group: "Pages", title: "My Projects", terms: ["home", "projects", "dashboard"], go: () => setView("projects") },
-      { key: "p:contacts", group: "Pages", title: "All Contacts", terms: ["leads", "clients", "contacts", "interested"], go: () => setView("contacts") },
-      { key: "p:analytics", group: "Pages", title: "Analytics", terms: ["stats", "statistics", "charts"], go: () => setView("analytics") },
-      { key: "p:notifications", group: "Pages", title: "Notifications", terms: ["alerts", "new", "visitors", "interested"], go: () => setView("notifications") },
-      { key: "p:assistant", group: "Pages", title: "Assistant", terms: ["ai", "chat", "ask", "question", "assistant"], go: () => setView("assistant") },
-      { key: "p:help", group: "Pages", title: "Help Center", terms: ["help", "faq", "support", "guide"], go: () => setView("help") },
+      { key: "p:projects", group: "Pages", title: "مشاريعي", terms: ["home", "projects", "dashboard", "الرئيسية", "المشاريع"], go: () => setView("projects") },
+      { key: "p:contacts", group: "Pages", title: "جميع العملاء", terms: ["leads", "clients", "contacts", "interested", "العملاء", "المهتمين"], go: () => setView("contacts") },
+      { key: "p:analytics", group: "Pages", title: "الإحصائيات", terms: ["stats", "statistics", "charts", "analytics", "إحصائيات", "زوار"], go: () => setView("analytics") },
+      { key: "p:notifications", group: "Pages", title: "الإشعارات", terms: ["alerts", "new", "notifications", "إشعارات", "تنبيهات"], go: () => setView("notifications") },
+      { key: "p:assistant", group: "Pages", title: "المساعد", terms: ["ai", "chat", "ask", "assistant", "مساعد", "سؤال"], go: () => setView("assistant") },
+      { key: "p:help", group: "Pages", title: "مركز المساعدة", terms: ["help", "faq", "support", "مساعدة", "دليل"], go: () => setView("help") },
     );
     const label: Record<ProjectTab, [string, string[]]> = {
-      apartments: ["Apartments", ["villas", "units", "prices", "status"]],
-      qr: ["QR Code", ["qr", "code", "scan", "print"]],
-      analytics: ["Analytics", ["stats", "interest"]],
-      contacts: ["Contacts", ["leads", "clients"]],
+      apartments: ["الوحدات", ["villas", "units", "prices", "status", "فلل", "أسعار"]],
+      qr: ["رمز QR", ["qr", "code", "scan", "print", "رمز"]],
+      analytics: ["الإحصائيات", ["stats", "interest", "analytics", "إحصائيات"]],
+      contacts: ["العملاء", ["leads", "clients", "contacts", "عملاء"]],
     };
     for (const c of complexes) {
       items.push({
@@ -276,13 +276,13 @@ export default function ClientHome() {
       const c = names.get(u.complex_id);
       if (!c) continue;
       const model = u.model || `${u.type}A`;
-      const status = u.status === "available" ? "Available" : u.status === "reserved" ? "Reserved" : "Sold";
+      const status = u.status === "available" ? "متاحة" : u.status === "reserved" ? "محجوزة" : "مباعة";
       items.push({
         key: `u:${u.id}`,
         group: "Villas",
-        title: `Villa ${u.display_id}`,
-        sub: `${c.name} · Model ${model} · ${status} · SAR ${priceOf(u).toLocaleString("en-US")}`,
-        terms: [String(priceOf(u)), `${u.rooms} bed`, `${u.surface} m2`],
+        title: `فيلا ${u.display_id}`,
+        sub: `${c.name} · نموذج ${model} · ${status} · ${priceOf(u).toLocaleString("en-US")} ر.س`,
+        terms: [String(priceOf(u)), `${u.rooms} bed`, `${u.surface} m2`, `villa ${u.display_id}`, "فيلا"],
         go: () => {
           goProject(c, "apartments")();
           setFocus({ id: u.id, n: Date.now() });
@@ -293,9 +293,9 @@ export default function ClientHome() {
       items.push({
         key: `l:${ct.key}`,
         group: "Contacts",
-        title: ct.name || ct.email || "Contact",
+        title: ct.name || ct.email || "عميل",
         sub: [ct.email, ct.project].filter(Boolean).join(" · "),
-        terms: [ct.phone, ct.note, ...ct.villas.map((v) => `villa ${v}`)],
+        terms: [ct.phone, ct.note, ...ct.villas.map((v) => `villa ${v}`), ...ct.villas.map((v) => `فيلا ${v}`)],
         go: () => {
           setView("contacts");
           setFocus({ id: ct.key, n: Date.now() });
@@ -321,13 +321,13 @@ export default function ClientHome() {
           <header className="axd-head">
             <span className="axd-accent" aria-hidden="true" />
             <div>
-              <h1>My Projects</h1>
-              <p>Select a project to manage apartments and view analytics</p>
+              <h1>مشاريعي</h1>
+              <p>اختر مشروعاً لإدارة الوحدات وعرض الإحصائيات</p>
             </div>
           </header>
           {err ? <p className="axd-err">{err}</p> : null}
           {!ready ? (
-            <p className="axd-muted">Loading…</p>
+            <p className="axd-muted">جارٍ التحميل…</p>
           ) : (
             <div className="axd-grid">
               {complexes.map((c) => (
@@ -372,7 +372,7 @@ export default function ClientHome() {
         <AnalyticsView cx={cx} complexes={complexes} onPick={setActive} />
       ) : (
         <section className="axd-page">
-          <p className="axd-muted">{ready ? "No project is linked to this account yet." : "Loading…"}</p>
+          <p className="axd-muted">{ready ? "لا يوجد مشروع مرتبط بهذا الحساب بعد." : "جارٍ التحميل…"}</p>
         </section>
       )}
     </ClientShell>

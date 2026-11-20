@@ -71,7 +71,7 @@ export function Donut({ slices, total, unit }: { slices: Slice[]; total: number;
                 transform={`rotate(-90 ${size / 2} ${size / 2})`}
                 onMouseMove={(e) => {
                   const box = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect();
-                  setTip({ x: toUi(e.clientX - box.left) + 12, y: toUi(e.clientY - box.top) + 12, title: s.label, lines: [[unit, fmtN(s.value)], ["Share", `${s.pct}%`]] });
+                  setTip({ x: toUi(e.clientX - box.left) + 12, y: toUi(e.clientY - box.top) + 12, title: s.label, lines: [[unit, fmtN(s.value)], ["النسبة", `${s.pct}%`]] });
                 }}
               />
             );
@@ -140,7 +140,7 @@ export function LineChart({ points, labelA, labelB, colorA, colorB, bucketDays }
   const y = (v: number) => padT + ih - (v / max) * ih;
   const path = (k: "a" | "b") => points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p[k]).toFixed(1)}`).join("");
   const area = points.length ? `${path("a")}L${x(points.length - 1)},${y(0)}L${x(0)},${y(0)}Z` : "";
-  const fmtDay = (t: string) => new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const fmtDay = (t: string) => new Date(t).toLocaleDateString("ar-u-nu-latn", { month: "short", day: "numeric" });
   const labelEvery = Math.max(1, Math.ceil(points.length / Math.max(2, Math.floor(iw / 90))));
   const hp = hover !== null ? points[hover] : null;
 
@@ -186,7 +186,7 @@ export function LineChart({ points, labelA, labelB, colorA, colorB, bucketDays }
           tip={{
             x: Math.min(x(hover) + 12, Math.max(0, w - 170)),
             y: 8,
-            title: bucketDays > 1 ? `Week of ${fmtDay(hp.t)}` : new Date(hp.t).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
+            title: bucketDays > 1 ? `أسبوع ${fmtDay(hp.t)}` : new Date(hp.t).toLocaleDateString("ar-u-nu-latn", { weekday: "long", month: "short", day: "numeric" }),
             lines: [[labelA, fmtN(hp.a)], [labelB, fmtN(hp.b)]],
           }}
         />
@@ -212,7 +212,7 @@ export function VBars({ rows, unit }: { rows: { key: string; label: string; valu
   return (
     <div className="axn-vbars" ref={ref} onMouseLeave={() => setHover(null)}>
       {w > 0 ? (
-        <svg width={w} height={h} role="img" aria-label={`${unit} per villa`}>
+        <svg width={w} height={h} role="img" aria-label={`${unit} لكل فيلا`}>
           <defs>
             <linearGradient id="axnFav" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor="#ff8a97" />
@@ -240,7 +240,7 @@ export function VBars({ rows, unit }: { rows: { key: string; label: string; valu
         </svg>
       ) : null}
       {hover !== null && rows[hover] ? (
-        <Tooltip tip={{ x: Math.min(slot * hover + slot / 2 + 10, Math.max(0, w - 140)), y: 4, title: `Villa ${rows[hover].label}`, lines: [[unit, fmtN(rows[hover].value)]] }} />
+        <Tooltip tip={{ x: Math.min(slot * hover + slot / 2 + 10, Math.max(0, w - 140)), y: 4, title: `فيلا ${rows[hover].label}`, lines: [[unit, fmtN(rows[hover].value)]] }} />
       ) : null}
     </div>
   );

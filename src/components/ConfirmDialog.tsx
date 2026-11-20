@@ -2,12 +2,14 @@
 
 import { useCallback, useState } from "react";
 
-export function useConfirm() {
+/** labels: the buttons' text (the client dashboard passes Arabic; admin keeps the English defaults) */
+export function useConfirm(labels: { cancel?: string; ok?: string; title?: string } = {}) {
   const [box, setBox] = useState<{ title: string; message: string; resolve: (ok: boolean) => void } | null>(null);
 
-  const confirm = useCallback((message: string, title = "Are you sure?") => {
+  const defaultTitle = labels.title ?? "Are you sure?";
+  const confirm = useCallback((message: string, title = defaultTitle) => {
     return new Promise<boolean>((resolve) => setBox({ title, message, resolve }));
-  }, []);
+  }, [defaultTitle]);
 
   const close = (ok: boolean) => {
     box?.resolve(ok);
@@ -20,8 +22,8 @@ export function useConfirm() {
         <h3>{box.title}</h3>
         <p>{box.message}</p>
         <div className="warn-actions">
-          <button type="button" className="btn ghost" onClick={() => close(false)}>Cancel</button>
-          <button type="button" className="btn" onClick={() => close(true)}>OK</button>
+          <button type="button" className="btn ghost" onClick={() => close(false)}>{labels.cancel ?? "Cancel"}</button>
+          <button type="button" className="btn" onClick={() => close(true)}>{labels.ok ?? "OK"}</button>
         </div>
       </div>
     </div>

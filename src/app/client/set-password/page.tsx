@@ -20,7 +20,7 @@ function SetPasswordForm() {
   useEffect(() => {
     const sb = createBrowserSupabase();
     if (!sb) {
-      setErr("Sign-in isn’t available yet.");
+      setErr("تسجيل الدخول غير متاح حالياً.");
       return;
     }
     void completeAuthFromUrl(sb).then(({ session, error }) => {
@@ -33,18 +33,18 @@ function SetPasswordForm() {
         return;
       }
       setReady(false);
-      setErr(error || params.get("error") || "This link has expired. Ask for a new invitation.");
+      setErr(error || params.get("error") || "انتهت صلاحية هذا الرابط. اطلب دعوة جديدة.");
     });
   }, [params]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 8) {
-      setErr("Use at least 8 characters.");
+      setErr("استخدم 8 أحرف على الأقل.");
       return;
     }
     if (password !== confirm) {
-      setErr("Passwords do not match.");
+      setErr("كلمتا المرور غير متطابقتين.");
       return;
     }
     const sb = createBrowserSupabase();
@@ -61,15 +61,15 @@ function SetPasswordForm() {
   };
 
   return (
-    <div className="gate">
+    <div className="gate" dir="rtl" lang="ar">
       <form className="gate-card" onSubmit={submit}>
         <AxisMark size={56} />
-        <h1>Create a password</h1>
-        <p className="lede">Then you’ll see your project.</p>
+        <h1>أنشئ كلمة مرور</h1>
+        <p className="lede">بعدها ستتمكن من رؤية مشروعك.</p>
         {err && <p className="err">{err}</p>}
-        <PasswordField label="New password" value={password} onChange={setPassword} required minLength={8} autoComplete="new-password" disabled={!ready} />
-        <PasswordField label="Confirm" value={confirm} onChange={setConfirm} required minLength={8} autoComplete="new-password" disabled={!ready} />
-        <button className="btn wide" type="submit" disabled={busy || !ready}>{busy ? "Saving…" : "Continue"}</button>
+        <PasswordField showLabel="إظهار كلمة المرور" hideLabel="إخفاء كلمة المرور" label="كلمة المرور الجديدة" value={password} onChange={setPassword} required minLength={8} autoComplete="new-password" disabled={!ready} />
+        <PasswordField showLabel="إظهار كلمة المرور" hideLabel="إخفاء كلمة المرور" label="تأكيد كلمة المرور" value={confirm} onChange={setConfirm} required minLength={8} autoComplete="new-password" disabled={!ready} />
+        <button className="btn wide" type="submit" disabled={busy || !ready}>{busy ? "جارٍ الحفظ…" : "متابعة"}</button>
       </form>
     </div>
   );

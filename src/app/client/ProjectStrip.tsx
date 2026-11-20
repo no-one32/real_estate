@@ -31,10 +31,10 @@ export default function ProjectStrip({ cx, complexes, onPick }: { cx: ComplexRow
       </div>
       {complexes.length > 1 ? (
         <button type="button" className="axq-overview" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-          Project overview <IcChevronDown size={12} />
+          نظرة عامة على المشروع <IcChevronDown size={12} />
         </button>
       ) : (
-        <span className="axq-overview static">Project overview</span>
+        <span className="axq-overview static">نظرة عامة على المشروع</span>
       )}
       {open ? (
         <div className="axc-pop axq-pick" role="listbox">

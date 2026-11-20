@@ -111,10 +111,10 @@ export default function ClientShell({ children, view, onView, notifications, nam
       form.append("file", blob, blob.type === "image/webp" ? "avatar.webp" : "avatar.jpg");
       const res = await fetch("/api/client/avatar", { method: "POST", body: form });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error || "Upload failed");
+      if (!res.ok) throw new Error(json.error || "تعذر رفع الصورة");
       onAvatar(json.avatarUrl);
     } catch (e) {
-      setPhotoErr(e instanceof Error ? e.message : "Upload failed");
+      setPhotoErr(e instanceof Error ? e.message : "تعذر رفع الصورة");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -122,13 +122,13 @@ export default function ClientShell({ children, view, onView, notifications, nam
   };
 
   const nav: [ClientView, string, React.ReactNode][] = [
-    ["projects", "Projects", <IcGrid key="g" size={24} />],
-    ["analytics", "Analytics", <IcChart key="c" size={24} />],
-    ["contacts", "Contacts", <IcUsers key="u" size={26} />],
+    ["projects", "المشاريع", <IcGrid key="g" size={24} />],
+    ["analytics", "الإحصائيات", <IcChart key="c" size={24} />],
+    ["contacts", "العملاء", <IcUsers key="u" size={26} />],
   ];
 
   return (
-    <div className={`axd axd-view-${view}${topBar ? " axd-top" : ""}`} style={{ zoom: scale, ["--axd-h" as string]: `${viewH / scale}px` }}>
+    <div dir="rtl" lang="ar" className={`axd axd-view-${view}${topBar ? " axd-top" : ""}`} style={{ zoom: scale, ["--axd-h" as string]: `${viewH / scale}px` }}>
       <AxisWatermark className="axd-watermark" />
 
       <aside className="axd-side">
@@ -136,7 +136,7 @@ export default function ClientShell({ children, view, onView, notifications, nam
           <img src="/branding/axis.png" alt="AXIS Studio" width={76} height={99} />
         </div>
 
-        <nav className="axd-nav" aria-label="Main">
+        <nav className="axd-nav" aria-label="القائمة الرئيسية">
           {nav.map(([key, label, icon]) => (
             <button
               key={key}
@@ -156,7 +156,7 @@ export default function ClientShell({ children, view, onView, notifications, nam
             onClick={() => onView("assistant")}
           >
             <IcAssistant size={24} />
-            <span className="axd-label">Assistant</span>
+            <span className="axd-label">المساعد</span>
           </button>
         </nav>
         <div className="axd-divider" />
@@ -172,7 +172,7 @@ export default function ClientShell({ children, view, onView, notifications, nam
               <IcBell size={22} />
               {notifications > 0 ? <span className="axd-dot">{notifications > 99 ? "99+" : notifications}</span> : null}
             </span>
-            <span className="axd-label">Notifications</span>
+            <span className="axd-label">الإشعارات</span>
           </button>
           <button
             type="button"
@@ -181,15 +181,15 @@ export default function ClientShell({ children, view, onView, notifications, nam
             onClick={() => onView("help")}
           >
             <IcHelp size={22} />
-            <span className="axd-label">Help</span>
+            <span className="axd-label">المساعدة</span>
           </button>
 
           <div className="axd-account" ref={accountRef}>
             <button
               type="button"
               className={`axd-avatar${uploading ? " busy" : ""}`}
-              title="Change profile photo"
-              aria-label="Change profile photo"
+              title="تغيير صورة الملف الشخصي"
+              aria-label="تغيير صورة الملف الشخصي"
               onClick={() => fileRef.current?.click()}
               disabled={uploading}
             >
@@ -211,8 +211,8 @@ export default function ClientShell({ children, view, onView, notifications, nam
               onClick={() => setMenuOpen((v) => !v)}
             >
               <span className="axd-account-text">
-                <span className="axd-account-name">{name || "My account"}</span>
-                <span className="axd-account-role">Studio User</span>
+                <span className="axd-account-name">{name || "حسابي"}</span>
+                <span className="axd-account-role">مستخدم الاستوديو</span>
               </span>
               <span className={`axd-chev${menuOpen ? " up" : ""}`}><IcChevronDown size={15} /></span>
             </button>
@@ -220,7 +220,7 @@ export default function ClientShell({ children, view, onView, notifications, nam
               <div className="axd-menu" role="menu">
                 <button type="button" role="menuitem" onClick={() => void signOut()}>
                   <IcLogout size={18} />
-                  Log out
+                  تسجيل الخروج
                 </button>
               </div>
             ) : null}

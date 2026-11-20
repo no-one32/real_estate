@@ -928,3 +928,10 @@ a.admin-card:hover {
 @media (max-width: 900px) {
   .chart-hero header { flex-direction: column; align-items: stretch; }
 }
+
+/* client login pages are in Arabic (right to left) */
+.gate[dir="rtl"] { font-family: var(--font-noto-arabic), system-ui, sans-serif; }
+.gate[dir="rtl"] .gate-card label { text-align: right; }
+.gate[dir="rtl"] .pw-wrap input { padding-right: 14px; padding-left: 46px; }
+.gate[dir="rtl"] .pw-toggle { right: auto; left: 6px; }
+.gate[dir="rtl"] input[type="email"] { text-align: right; }

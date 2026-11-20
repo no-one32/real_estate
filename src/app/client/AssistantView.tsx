@@ -15,7 +15,8 @@ const SUGGESTIONS = [
   "ما هي الفيلات الأكثر إضافة إلى المفضلة؟",
 ];
 
-const GENERIC_ERROR = "The assistant is not available right now. Please try again later.";
+const GENERIC_ERROR = "المساعد غير متاح حالياً. يرجى المحاولة لاحقاً.";
+const TOO_MANY = "أسئلة كثيرة في وقت قصير. انتظر دقيقة ثم حاول مجدداً.";
 
 const isArabic = (s: string) => /[؀-ۿ]/.test(s);
 
@@ -57,11 +58,11 @@ export default function AssistantView() {
       });
       const json = await res.json().catch(() => ({}));
       // never show technical server errors to the client
-      if (res.status === 429) throw new Error("Too many questions in a short time. Wait a minute and try again.");
+      if (res.status === 429) throw new Error(TOO_MANY);
       if (!res.ok || !json.answer) throw new Error(GENERIC_ERROR);
       setMsgs((m) => [...m, { role: "assistant", content: json.answer }]);
     } catch (e) {
-      setErr(e instanceof Error && e.message.startsWith("Too many") ? e.message : GENERIC_ERROR);
+      setErr(e instanceof Error && e.message === TOO_MANY ? e.message : GENERIC_ERROR);
     } finally {
       setBusy(false);
       inputRef.current?.focus();
@@ -78,12 +79,12 @@ export default function AssistantView() {
       <header className="axd-head">
         <span className="axd-accent" aria-hidden="true" />
         <div className="axas-headtext">
-          <h1>Assistant</h1>
-          <p>Ask about your visitors, villas, contacts and QR codes</p>
+          <h1>المساعد</h1>
+          <p>اسأل عن زوارك وفللك وعملائك ورموز QR</p>
         </div>
         {msgs.length ? (
           <button type="button" className="axas-clear" onClick={clear}>
-            New chat
+            محادثة جديدة
           </button>
         ) : null}
       </header>
@@ -93,8 +94,8 @@ export default function AssistantView() {
           {!msgs.length ? (
             <div className="axas-empty">
               <span className="axas-ico"><IcAssistant size={26} stroke={1.8} /></span>
-              <b>How can I help?</b>
-              <span>I read the data of your projects. Ask in English, French or Arabic.</span>
+              <b>كيف يمكنني مساعدتك؟</b>
+              <span>أقرأ بيانات مشاريعك. اسأل بالعربية أو الإنجليزية أو الفرنسية.</span>
               <div className="axas-sugs">
                 {SUGGESTIONS.map((s) => (
                   <button key={s} type="button" dir="auto" onClick={() => send(s)}>
@@ -111,7 +112,7 @@ export default function AssistantView() {
             ))
           )}
           {busy ? (
-            <div className="axas-msg assistant axas-typing" aria-label="The assistant is writing">
+            <div className="axas-msg assistant axas-typing" aria-label="المساعد يكتب">
               <i /><i /><i />
             </div>
           ) : null}
@@ -132,8 +133,8 @@ export default function AssistantView() {
             dir="auto"
             rows={1}
             maxLength={1500}
-            placeholder="Ask a question…"
-            aria-label="Your question"
+            placeholder="اكتب سؤالك…"
+            aria-label="سؤالك"
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -143,10 +144,10 @@ export default function AssistantView() {
             }}
           />
           <button type="submit" disabled={busy || !text.trim()}>
-            Send
+            إرسال
           </button>
         </form>
-        <p className="axas-note">Answers come from an AI and can contain mistakes. Check important numbers in Analytics and Contacts.</p>
+        <p className="axas-note">الإجابات من الذكاء الاصطناعي وقد تحتوي على أخطاء. تحقّق من الأرقام المهمة في الإحصائيات والعملاء.</p>
       </div>
     </section>
   );

@@ -9,9 +9,9 @@ import DashSelect from "./DashSelect";
 import { useConfirm } from "@/components/ConfirmDialog";
 
 const SIZES = [
-  { px: 512, label: "Small · 512 px (screens)" },
-  { px: 1024, label: "Medium · 1024 px (flyers)" },
-  { px: 2048, label: "Large · 2048 px (posters)" },
+  { px: 512, label: "صغير · 512 px (للشاشات)" },
+  { px: 1024, label: "متوسط · 1024 px (للمطويات)" },
+  { px: 2048, label: "كبير · 2048 px (للملصقات)" },
 ];
 
 type Spec = {
@@ -47,7 +47,7 @@ const fromRow = (r: Row): Saved => ({ id: r.id, label: r.label, url: r.url, size
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "qr";
 
 const fmtWhen = (iso: string) =>
-  new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  new Date(iso).toLocaleString("ar-u-nu-latn", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 function validUrl(s: string) {
   try {
@@ -136,7 +136,7 @@ async function renderPng(spec: Spec) {
   ctx.fillRect(0, 0, out.width, out.height);
   ctx.drawImage(qr, 0, 0);
   ctx.fillStyle = "#0b1220";
-  ctx.font = `700 ${Math.round(spec.size * 0.055)}px Inter, "Segoe UI", Arial, sans-serif`;
+  ctx.font = `700 ${Math.round(spec.size * 0.055)}px Inter, "Noto Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(spec.label.trim(), spec.size / 2, spec.size + band * 0.38, spec.size * 0.9);
@@ -169,7 +169,7 @@ export default function QrView({
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [rowBusy, setRowBusy] = useState("");
   const logoRef = useRef<HTMLInputElement>(null);
-  const { confirm, dialog } = useConfirm();
+  const { confirm, dialog } = useConfirm({ cancel: "إلغاء", ok: "تأكيد", title: "هل أنت متأكد؟" });
 
   // this project's saved codes
   useEffect(() => {
@@ -181,9 +181,9 @@ export default function QrView({
       .then(({ ok, j }) => {
         if (!alive) return;
         if (ok) setHistory(((j.codes ?? []) as Row[]).map(fromRow));
-        else setErr(j.error || "Could not load the saved codes");
+        else setErr(j.error || "تعذر تحميل الرموز المحفوظة");
       })
-      .catch(() => alive && setErr("Could not load the saved codes"))
+      .catch(() => alive && setErr("تعذر تحميل الرموز المحفوظة"))
       .finally(() => alive && setLoadingList(false));
     return () => {
       alive = false;
@@ -223,7 +223,7 @@ export default function QrView({
     });
     const j = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setErr(j.error || "Could not save this code");
+      setErr(j.error || "تعذر حفظ هذا الرمز");
       return null;
     }
     const saved = fromRow(j.code as Row);
@@ -232,7 +232,7 @@ export default function QrView({
   };
 
   const forget = async (h: Saved) => {
-    if (!(await confirm(`Remove “${h.label || "Untitled"}” from the generated codes? Printed copies keep working.`, "Remove code"))) return;
+    if (!(await confirm(`إزالة «${h.label || "بدون اسم"}» من الرموز المنشأة؟ النسخ المطبوعة ستبقى تعمل.`, "إزالة الرمز"))) return;
     const res = await fetch("/api/client/qr", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -240,7 +240,7 @@ export default function QrView({
     });
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
-      setErr(j.error || "Could not remove this code");
+      setErr(j.error || "تعذرت إزالة هذا الرمز");
       return;
     }
     setHistory((prev) => prev.filter((x) => x.id !== h.id));
@@ -253,7 +253,7 @@ export default function QrView({
       const logo = await shrinkLogo(file);
       setDraft((d) => ({ ...d, logo }));
     } catch {
-      setErr("This image could not be read. Try a PNG or JPG.");
+      setErr("تعذرت قراءة هذه الصورة. جرّب PNG أو JPG.");
     } finally {
       if (logoRef.current) logoRef.current.value = "";
     }
@@ -283,7 +283,7 @@ export default function QrView({
   const generate = async () => {
     const url = draft.url.trim();
     if (!validUrl(url)) {
-      setErr("Enter a full link starting with https://");
+      setErr("أدخل رابطاً كاملاً يبدأ بـ https://");
       return;
     }
     setErr("");
@@ -311,7 +311,7 @@ export default function QrView({
       if (saved) setSpec(saved);
       await save(saved ?? spec);
     } catch {
-      setErr("Could not create the image");
+      setErr("تعذر إنشاء الصورة");
     } finally {
       setBusy(false);
     }
@@ -322,7 +322,7 @@ export default function QrView({
     try {
       await save(h);
     } catch {
-      setErr("Could not create the image");
+      setErr("تعذر إنشاء الصورة");
     } finally {
       setRowBusy("");
     }
@@ -335,8 +335,8 @@ export default function QrView({
       <header className="axq-head">
         {tabs ? <span className="axp-emblem"><IcQr size={40} stroke={1.8} /></span> : null}
         <div>
-          <h1>QR Codes</h1>
-          <p>Create and share scannable codes that open your virtual maquette</p>
+          <h1>رموز QR</h1>
+          <p>أنشئ وشارك رموزاً قابلة للمسح تفتح مجسمك الافتراضي</p>
         </div>
         {tabs}
       </header>
@@ -347,17 +347,18 @@ export default function QrView({
         <div className="axq-section">
           <div className="axq-section-head">
             <div>
-              <h2>QR Code Generator</h2>
-              <p>Point the code to any link, then download it for print or screen</p>
+              <h2>إنشاء رمز QR</h2>
+              <p>وجّه الرمز إلى أي رابط، ثم حمّله للطباعة أو للشاشة</p>
             </div>
-            <span className="axq-pill blue">Live preview</span>
+            <span className="axq-pill blue">معاينة مباشرة</span>
           </div>
 
           <div className="axq-form">
             <label className="axq-field full">
-              <span>Destination URL</span>
+              <span>رابط الوجهة</span>
               <input
                 type="url"
+                dir="ltr"
                 value={draft.url}
                 onChange={(e) => setDraft({ ...draft, url: e.target.value })}
                 onKeyDown={(e) => e.key === "Enter" && void generate()}
@@ -365,34 +366,34 @@ export default function QrView({
               />
             </label>
             <label className="axq-field">
-              <span>Size</span>
+              <span>الحجم</span>
               <DashSelect
                 className="axq-select"
                 chevron={14}
-                ariaLabel="Size"
+                ariaLabel="الحجم"
                 value={draft.size}
                 onChange={(size) => setDraft({ ...draft, size })}
                 options={SIZES.map((s) => ({ value: s.px, label: s.label }))}
               />
             </label>
             <label className="axq-field">
-              <span>Label</span>
+              <span>الاسم</span>
               <input value={draft.label} maxLength={40} onChange={(e) => setDraft({ ...draft, label: e.target.value })} onKeyDown={(e) => e.key === "Enter" && void generate()} />
             </label>
             <div className="axq-field full">
-              <span>Center image (optional)</span>
+              <span>صورة في الوسط (اختياري)</span>
               <div className="axq-logo">
                 {draft.logo ? (
                   <>
                     <span className="axq-logo-thumb"><img src={draft.logo} alt="" /></span>
-                    <span className="axq-logo-text">Shown in the middle of the code</span>
-                    <button type="button" className="axq-logo-btn" onClick={() => logoRef.current?.click()}>Change</button>
-                    <button type="button" className="axq-logo-btn danger" onClick={() => setDraft({ ...draft, logo: undefined })}>Remove</button>
+                    <span className="axq-logo-text">تظهر في وسط الرمز</span>
+                    <button type="button" className="axq-logo-btn" onClick={() => logoRef.current?.click()}>تغيير</button>
+                    <button type="button" className="axq-logo-btn danger" onClick={() => setDraft({ ...draft, logo: undefined })}>إزالة</button>
                   </>
                 ) : (
                   <button type="button" className="axq-logo-add" onClick={() => logoRef.current?.click()}>
                     <span aria-hidden>+</span>
-                    Add a small image or logo (PNG, JPG, SVG)
+                    أضف صورة صغيرة أو شعاراً (PNG، JPG، SVG)
                   </button>
                 )}
                 <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden onChange={(e) => void pickLogo(e.target.files?.[0])} />
@@ -400,15 +401,15 @@ export default function QrView({
             </div>
             {err ? <p className="axd-err full" role="alert">{err}</p> : null}
             {!cx.published && pointsToTour ? (
-              <p className="axq-note full">This project is not live yet: the code will open the tour once it is published.</p>
+              <p className="axq-note full">هذا المشروع غير منشور بعد: سيفتح الرمز الجولة بمجرد نشرها.</p>
             ) : null}
             <button type="button" className="axq-dark full" onClick={() => void generate()} disabled={saving}>
               <IcRotate size={15} stroke={1.6} />
-              Generate QR code
+              إنشاء رمز QR
             </button>
             {draft.url !== tourUrl ? (
               <button type="button" className="axq-reset full" onClick={() => setDraft({ ...draft, url: tourUrl })}>
-                Use this project&apos;s tour link
+                استخدم رابط جولة هذا المشروع
               </button>
             ) : null}
           </div>
@@ -417,22 +418,22 @@ export default function QrView({
         <div className="axq-section">
           <div className="axq-section-head">
             <div>
-              <h2>Preview</h2>
-              <p>Scan with any phone camera</p>
+              <h2>المعاينة</h2>
+              <p>امسحه بكاميرا أي جوال</p>
             </div>
-            <span className={`axq-pill ${changed ? "amber" : "green"}`}>{changed ? "Not generated" : "Ready"}</span>
+            <span className={`axq-pill ${changed ? "amber" : "green"}`}>{changed ? "لم يُنشأ بعد" : "جاهز"}</span>
           </div>
           <div className="axq-preview">
             <div className="axq-code">
-              {preview ? <img src={preview} alt={`QR code to ${spec.url}`} width={220} height={220} /> : <span className="axq-code-empty" />}
+              {preview ? <img src={preview} alt={`رمز QR إلى ${spec.url}`} width={220} height={220} /> : <span className="axq-code-empty" />}
             </div>
             {spec.label ? <strong>{spec.label}</strong> : null}
-            <a className="axq-url" href={encodedUrl(spec)} target="_blank" rel="noreferrer">{encodedUrl(spec)}</a>
+            <a className="axq-url" dir="ltr" href={encodedUrl(spec)} target="_blank" rel="noreferrer">{encodedUrl(spec)}</a>
             <button type="button" className="axq-dark" onClick={() => void download()} disabled={busy || !preview}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
               </svg>
-              {busy ? "Preparing…" : "Download PNG"}
+              {busy ? "جارٍ التحضير…" : "تحميل PNG"}
             </button>
           </div>
         </div>
@@ -441,32 +442,32 @@ export default function QrView({
       <div className="axq-section axq-history">
         <div className="axq-section-head">
           <div>
-            <h2>Generated codes</h2>
-            <p>Every code you generate for this project, ready to download again</p>
+            <h2>الرموز المنشأة</h2>
+            <p>كل رمز تنشئه لهذا المشروع، جاهز للتحميل مجدداً</p>
           </div>
-          <span className="axq-pill blue">{history.length} code{history.length === 1 ? "" : "s"}</span>
+          <span className="axq-pill blue">{history.length} {history.length === 1 ? "رمز" : "رموز"}</span>
         </div>
         {history.length ? (
           <div className="axq-table-wrap">
             <table className="axq-table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Date</th>
-                  <th className="center">QR</th>
-                  <th className="center">Download</th>
+                  <th>الاسم</th>
+                  <th>التاريخ</th>
+                  <th className="center">الرمز</th>
+                  <th className="center">تحميل</th>
                 </tr>
               </thead>
               <tbody>
                 {history.map((h) => (
                   <tr key={h.id}>
                     <td>
-                      <span className="axq-t-name">{h.label.trim() || "Untitled"}</span>
-                      <span className="axq-t-url" title={encodedUrl(h)}>{encodedUrl(h)}</span>
+                      <span className="axq-t-name">{h.label.trim() || "بدون اسم"}</span>
+                      <span className="axq-t-url" dir="ltr" title={encodedUrl(h)}>{encodedUrl(h)}</span>
                     </td>
                     <td className="axq-t-date">{fmtWhen(h.at)}</td>
                     <td className="center">
-                      <span className="axq-t-qr">{thumbs[h.id] ? <img src={thumbs[h.id]} alt={`QR code ${h.label}`} /> : null}</span>
+                      <span className="axq-t-qr">{thumbs[h.id] ? <img src={thumbs[h.id]} alt={`رمز QR ${h.label}`} /> : null}</span>
                     </td>
                     <td className="center">
                       <span className="axq-t-actions">
@@ -476,7 +477,7 @@ export default function QrView({
                           </svg>
                           {rowBusy === h.id ? "…" : "PNG"}
                         </button>
-                        <button type="button" className="axq-t-del" onClick={() => void forget(h)} aria-label={`Remove ${h.label || "code"} from the list`} title="Remove from the list">
+                        <button type="button" className="axq-t-del" onClick={() => void forget(h)} aria-label={`إزالة ${h.label || "الرمز"} من القائمة`} title="إزالة من القائمة">
                           <IcTrash size={15} stroke={1.8} />
                         </button>
                       </span>
@@ -487,12 +488,12 @@ export default function QrView({
             </table>
           </div>
         ) : (
-          <p className="axq-t-empty">{loadingList ? "Loading…" : "No codes yet. Click “Generate QR code” and it will appear here."}</p>
+          <p className="axq-t-empty">{loadingList ? "جارٍ التحميل…" : "لا توجد رموز بعد. اضغط «إنشاء رمز QR» وسيظهر هنا."}</p>
         )}
       </div>
 
       {dialog}
-      <p className="axq-foot">AXIS Studio · Codes are generated on this page and never expire</p>
+      <p className="axq-foot">AXIS Studio · تُنشأ الرموز في هذه الصفحة ولا تنتهي صلاحيتها</p>
     </section>
   );
 }

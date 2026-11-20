@@ -22,7 +22,7 @@ import {
 } from "./DashIcons";
 
 const PAGE = 10;
-const STATUS: Record<UnitStatus, string> = { available: "Available", reserved: "Reserved", sold: "Sold" };
+const STATUS: Record<UnitStatus, string> = { available: "متاحة", reserved: "محجوزة", sold: "مباعة" };
 const STATUSES = Object.keys(STATUS) as UnitStatus[];
 
 /** Same fallback as the public maquette when no price was entered. */
@@ -30,10 +30,10 @@ export function priceOf(u: UnitRow) {
   const model = (u.model || `${u.type}A`).toUpperCase();
   return u.price || COMPLEX.defaultPriceByModel[model] || COMPLEX.defaultPriceByType[u.type] || 0;
 }
-const fmtPrice = (n: number) => `SAR ${Math.round(n).toLocaleString("en-US")}`;
+const fmtPrice = (n: number) => `${Math.round(n).toLocaleString("en-US")} ر.س`;
 const modelOf = (u: UnitRow) => u.model || `${u.type}A`;
 const details = (u: UnitRow) =>
-  [`${u.rooms} bed`, `${u.surface} m²`, `${u.floor} floor${u.floor === 1 ? "" : "s"}`].join(" | ");
+  [`${u.rooms} غرف`, `${u.surface} م²`, `${u.floor} ${u.floor === 1 ? "طابق" : "طوابق"}`].join(" | ");
 
 /** Minimal CSV reader (quotes, commas or semicolons). */
 function parseCsv(text: string): string[][] {
@@ -87,7 +87,7 @@ export default function ApartmentsView({
   /** from "Search anything": show this villa (clears filters, opens its page, flashes the row) */
   focus?: { id: string; n: number } | null;
 }) {
-  const { confirm, dialog } = useConfirm();
+  const { confirm, dialog } = useConfirm({ cancel: "إلغاء", ok: "تأكيد", title: "هل أنت متأكد؟" });
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"" | UnitStatus>("");
   const [model, setModel] = useState("");
@@ -114,6 +114,7 @@ export default function ApartmentsView({
         if (!needle) return true;
         return (
           `villa ${u.display_id}`.toLowerCase().includes(needle) ||
+          `فيلا ${u.display_id}`.toLowerCase().includes(needle) ||
           modelOf(u).toLowerCase().includes(needle) ||
           STATUS[u.status].toLowerCase().includes(needle) ||
           (digits.length > 2 && String(priceOf(u)).includes(digits))
@@ -197,7 +198,7 @@ export default function ApartmentsView({
     if (!edit) return;
     const price = Number(edit.price.replace(/[^\d.]/g, ""));
     if (!Number.isFinite(price) || price < 0) {
-      setErr("Enter a valid price");
+      setErr("أدخل سعراً صحيحاً");
       return;
     }
     setSaving(true);
@@ -208,7 +209,7 @@ export default function ApartmentsView({
     });
     setSaving(false);
     if (!res.ok) {
-      setErr((await res.json().catch(() => ({}))).error || "Could not save");
+      setErr((await res.json().catch(() => ({}))).error || "تعذر الحفظ");
       return;
     }
     onUnits((prev) => prev.map((u) => (u.id === edit.id ? { ...u, status: edit.status, price: Math.round(price) } : u)));
@@ -218,8 +219,8 @@ export default function ApartmentsView({
 
   const remove = async (u: UnitRow) => {
     const ok = await confirm(
-      `Remove villa ${u.display_id} from this project? It will no longer be listed or selectable in the tour.`,
-      "Remove villa",
+      `إزالة الفيلا ${u.display_id} من هذا المشروع؟ لن تظهر بعد ذلك في القائمة ولن يمكن اختيارها في الجولة.`,
+      "إزالة الفيلا",
     );
     if (!ok) return;
     const res = await fetch("/api/client/units", {
@@ -228,7 +229,7 @@ export default function ApartmentsView({
       body: JSON.stringify({ id: u.id }),
     });
     if (!res.ok) {
-      setErr((await res.json().catch(() => ({}))).error || "Could not delete");
+      setErr((await res.json().catch(() => ({}))).error || "تعذر الحذف");
       return;
     }
     onUnits((prev) => prev.filter((x) => x.id !== u.id));
@@ -238,17 +239,17 @@ export default function ApartmentsView({
     setExportOpen(false);
     const by = (st: UnitStatus) => filtered.filter((u) => u.status === st).length;
     const table: ExportTable = {
-      title: `${cx.name} · Apartments`,
-      subtitle: "Villas, status and prices",
-      noun: "villa",
-      cols: [{}, {}, { tones: { Available: "green", Reserved: "amber", Sold: "red" } }, { format: "money" }, { format: "number" }, { format: "number" }, { format: "number" }],
+      title: `${cx.name} · الوحدات`,
+      subtitle: "الفلل وحالاتها وأسعارها",
+      noun: "فيلا",
+      cols: [{}, {}, { tones: { "متاحة": "green", "محجوزة": "amber", "مباعة": "red" } }, { format: "money" }, { format: "number" }, { format: "number" }, { format: "number" }],
       summary: [
-        { label: "Villas", value: String(filtered.length) },
-        { label: "Available", value: String(by("available")), tone: "green" },
-        { label: "Reserved", value: String(by("reserved")), tone: "amber" },
-        { label: "Sold", value: String(by("sold")), tone: "red" },
+        { label: "الفلل", value: String(filtered.length) },
+        { label: "متاحة", value: String(by("available")), tone: "green" },
+        { label: "محجوزة", value: String(by("reserved")), tone: "amber" },
+        { label: "مباعة", value: String(by("sold")), tone: "red" },
       ],
-      head: ["Villa", "Model", "Status", "Price (SAR)", "Bedrooms", "Area (m²)", "Floors"],
+      head: ["الفيلا", "النموذج", "الحالة", "السعر (ر.س)", "غرف النوم", "المساحة (م²)", "الطوابق"],
       rows: filtered.map((u) => [
         u.display_id,
         modelOf(u),
@@ -271,14 +272,14 @@ export default function ApartmentsView({
     setMsg("");
     const isXlsx = /\.xlsx$/i.test(file.name);
     if (!isXlsx && !/\.(csv|txt)$/i.test(file.name)) {
-      setErr("Import an Excel (.xlsx) or .csv file. Tip: use Export → Excel as a template.");
+      setErr("استورد ملف إكسل (.xlsx) أو ‎.csv. نصيحة: استخدم تصدير ← إكسل كنموذج.");
       return;
     }
     let table: string[][];
     try {
       table = isXlsx ? await readXlsx(file) : parseCsv((await file.text()).replace(/^﻿/, ""));
     } catch {
-      setErr("This file could not be read. Save it again as Excel (.xlsx) and retry.");
+      setErr("تعذرت قراءة هذا الملف. احفظه مجدداً بصيغة إكسل (.xlsx) وحاول مرة أخرى.");
       return;
     }
     const head = (table[0] ?? []).map((h) => h.trim().toLowerCase());
@@ -287,11 +288,11 @@ export default function ApartmentsView({
     const iStatus = col(/^(status|الحالة)/);
     const iPrice = col(/^(price|السعر)/);
     if (iVilla < 0 || (iStatus < 0 && iPrice < 0)) {
-      setErr("The file needs a Villa column and a Status and/or Price column.");
+      setErr("يجب أن يحتوي الملف على عمود «الفيلا» وعمود «الحالة» و/أو «السعر».");
       return;
     }
     const body = table.slice(1).map((r) => ({
-      villa: (r[iVilla] ?? "").replace(/^villa\s+/i, "").trim(),
+      villa: (r[iVilla] ?? "").replace(/^(villa|فيلا)\s+/i, "").trim(),
       status: iStatus >= 0 ? statusFromText(r[iStatus] ?? "") : undefined,
       price: iPrice >= 0 && (r[iPrice] ?? "").replace(/[^\d.]/g, "") ? Number((r[iPrice] ?? "").replace(/[^\d.]/g, "")) : undefined,
     }));
@@ -302,7 +303,7 @@ export default function ApartmentsView({
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setErr(json.error || "Import failed");
+      setErr(json.error || "فشل الاستيراد");
       return;
     }
     // reflect the changes locally
@@ -316,8 +317,8 @@ export default function ApartmentsView({
       }),
     );
     setMsg(
-      `${json.updated} villa${json.updated === 1 ? "" : "s"} updated` +
-        (json.missingCount ? ` · ${json.missingCount} not found (${json.missing.join(", ")}${json.missingCount > json.missing.length ? "…" : ""})` : ""),
+      `تم تحديث ${json.updated} فيلا` +
+        (json.missingCount ? ` · ${json.missingCount} غير موجودة (${json.missing.join("، ")}${json.missingCount > json.missing.length ? "…" : ""})` : ""),
     );
   };
 
@@ -333,7 +334,7 @@ export default function ApartmentsView({
         <span className="axa-emblem"><IcBuilding size={46} stroke={2.2} /></span>
         <div>
           <h1>{cx.name}</h1>
-          <p className="axa-sub">{cx.description || "Apartments of this project"}</p>
+          <p className="axa-sub">{cx.description || "وحدات هذا المشروع"}</p>
         </div>
         {tabs}
       </header>
@@ -341,47 +342,47 @@ export default function ApartmentsView({
       <div className="axc-filters">
         <div className="axc-filters-title">
           <span className="axc-filter-emblem"><IcFilter size={18} /></span>
-          Filters
+          التصفية
         </div>
         <div className="axc-controls">
           <label className="axc-search">
             <IcSearch size={19} />
-            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name , price , status" aria-label="Search villas" />
+            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث بالاسم أو السعر أو الحالة" aria-label="البحث في الفلل" />
           </label>
           <DashSelect
             className="axc-select wide"
-            ariaLabel="Model"
+            ariaLabel="النموذج"
             value={model}
             onChange={setModel}
-            options={[{ value: "", label: "All Models" }, ...models.map((m) => ({ value: m, label: `Model ${m}` }))]}
+            options={[{ value: "", label: "كل النماذج" }, ...models.map((m) => ({ value: m, label: `نموذج ${m}` }))]}
           />
           <DashSelect<"" | UnitStatus>
-            ariaLabel="Status"
+            ariaLabel="الحالة"
             value={status}
             onChange={setStatus}
-            options={[{ value: "", label: "Status" }, ...STATUSES.map((s) => ({ value: s, label: STATUS[s] }))]}
+            options={[{ value: "", label: "الحالة" }, ...STATUSES.map((s) => ({ value: s, label: STATUS[s] }))]}
           />
           <span className="axc-spacer" />
-          <button type="button" className="axc-btn" onClick={() => fileRef.current?.click()} title="Update status / price of many villas from an Excel file">
+          <button type="button" className="axc-btn" onClick={() => fileRef.current?.click()} title="تحديث حالة / سعر عدة فلل من ملف إكسل">
             <IcImport size={18} stroke={1.8} />
-            Import
+            استيراد
           </button>
           <input ref={fileRef} type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={(e) => void importFile(e.target.files?.[0])} />
           <div className="axc-export" ref={exportRef}>
             <button type="button" className="axc-btn" aria-haspopup="menu" aria-expanded={exportOpen} onClick={() => setExportOpen((v) => !v)}>
               <IcExport size={18} />
-              Export
+              تصدير
             </button>
             {exportOpen ? (
               <div className="axc-pop axc-export-menu" role="menu">
-                <button type="button" role="menuitem" onClick={() => exportAs("excel")}><b className="xls">XLS</b> Excel</button>
+                <button type="button" role="menuitem" onClick={() => exportAs("excel")}><b className="xls">XLS</b> إكسل</button>
                 <button type="button" role="menuitem" onClick={() => exportAs("pdf")}><b className="pdf">PDF</b> PDF</button>
               </div>
             ) : null}
           </div>
           <button type="button" className="axc-btn" onClick={() => { setQ(""); setStatus(""); setModel(""); }}>
             <IcRotate size={18} />
-            Clear Filters
+            مسح التصفية
           </button>
         </div>
       </div>
@@ -405,29 +406,29 @@ export default function ApartmentsView({
             </colgroup>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Status</th>
-                <th>Price</th>
-                <th>Details</th>
-                <th className="right">Actions</th>
+                <th>الاسم</th>
+                <th>الحالة</th>
+                <th>السعر</th>
+                <th>التفاصيل</th>
+                <th className="right">إجراءات</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((u) => (
                 <tr key={u.id} data-row={u.id} className={flash === u.id ? "flash" : undefined}>
                   <td>
-                    <span className="axa-name">Villa {u.display_id}</span>
-                    <span className="axa-desc">Model {modelOf(u)}</span>
+                    <span className="axa-name">فيلا {u.display_id}</span>
+                    <span className="axa-desc">نموذج {modelOf(u)}</span>
                   </td>
                   <td><span className={`axa-badge ${u.status}`}>{STATUS[u.status]}</span></td>
                   <td className="axa-price">{fmtPrice(priceOf(u))}</td>
                   <td className="axa-details-cell">{details(u)}</td>
                   <td className="right">
                     <span className="axa-actions">
-                      <button type="button" onClick={(e) => openEdit(e, u)} title="Edit status and price" aria-label={`Edit villa ${u.display_id}`}>
+                      <button type="button" onClick={(e) => openEdit(e, u)} title="تعديل الحالة والسعر" aria-label={`تعديل الفيلا ${u.display_id}`}>
                         <IcPencil size={14} stroke={1.6} />
                       </button>
-                      <button type="button" className="danger" onClick={() => void remove(u)} title="Remove villa" aria-label={`Remove villa ${u.display_id}`}>
+                      <button type="button" className="danger" onClick={() => void remove(u)} title="إزالة الفيلا" aria-label={`إزالة الفيلا ${u.display_id}`}>
                         <IcTrash size={14} stroke={1.6} />
                       </button>
                     </span>
@@ -436,27 +437,27 @@ export default function ApartmentsView({
               ))}
             </tbody>
           </table>
-          {!rows.length ? <p className="axc-empty">{list.length ? "No villas match these filters." : "No villas in this project yet."}</p> : null}
+          {!rows.length ? <p className="axc-empty">{list.length ? "لا توجد فلل تطابق هذه التصفية." : "لا توجد فلل في هذا المشروع بعد."}</p> : null}
         </div>
         <footer className="axc-foot">
-          <span>{filtered.length} found</span>
+          <span>{filtered.length} نتيجة</span>
           {pages > 1 ? (
-            <nav className="axc-pages" aria-label="Pages">
-              <button type="button" className="axc-page arrow" disabled={current === 1} onClick={() => setPage(current - 1)} aria-label="Previous page"><IcArrowLeft size={19} /></button>
+            <nav className="axc-pages" aria-label="الصفحات">
+              <button type="button" className="axc-page arrow" disabled={current === 1} onClick={() => setPage(current - 1)} aria-label="الصفحة السابقة"><IcArrowRight size={19} /></button>
               {pageButtons.map((n) => (
                 <button key={n} type="button" className={`axc-page${n === current ? " on" : ""}`} onClick={() => setPage(n)} aria-current={n === current ? "page" : undefined}>{n}</button>
               ))}
-              <button type="button" className="axc-page arrow" disabled={current === pages} onClick={() => setPage(current + 1)} aria-label="Next page"><IcArrowRight size={19} /></button>
+              <button type="button" className="axc-page arrow" disabled={current === pages} onClick={() => setPage(current + 1)} aria-label="الصفحة التالية"><IcArrowLeft size={19} /></button>
             </nav>
           ) : null}
         </footer>
       </div>
 
       {edit ? (
-        <div ref={popRef} className="axc-pop axa-edit" role="dialog" aria-label="Edit villa" style={{ left: edit.x, top: edit.y }}>
-          <button type="button" className="axc-pop-x" onClick={() => setEdit(null)} aria-label="Close"><IcX size={16} /></button>
-          <strong>Villa {list.find((u) => u.id === edit.id)?.display_id}</strong>
-          <span className="axa-edit-label">Status</span>
+        <div ref={popRef} className="axc-pop axa-edit" role="dialog" aria-label="تعديل الفيلا" style={{ left: edit.x, top: edit.y }}>
+          <button type="button" className="axc-pop-x" onClick={() => setEdit(null)} aria-label="إغلاق"><IcX size={16} /></button>
+          <strong>فيلا {list.find((u) => u.id === edit.id)?.display_id}</strong>
+          <span className="axa-edit-label">الحالة</span>
           <div className="axa-edit-status">
             {STATUSES.map((s) => (
               <button key={s} type="button" className={`axa-badge ${s}${edit.status === s ? " on" : ""}`} aria-pressed={edit.status === s} onClick={() => setEdit({ ...edit, status: s })}>
@@ -464,9 +465,10 @@ export default function ApartmentsView({
               </button>
             ))}
           </div>
-          <label className="axa-edit-label" htmlFor="axa-price">Price (SAR)</label>
+          <label className="axa-edit-label" htmlFor="axa-price">السعر (ر.س)</label>
           <input
             id="axa-price"
+            dir="ltr"
             className="axa-edit-input"
             inputMode="numeric"
             value={edit.price}
@@ -474,8 +476,8 @@ export default function ApartmentsView({
             onKeyDown={(e) => e.key === "Enter" && void saveEdit()}
           />
           <div className="axa-edit-actions">
-            <button type="button" className="ghost" onClick={() => setEdit(null)}>Cancel</button>
-            <button type="button" className="primary" disabled={saving} onClick={() => void saveEdit()}>{saving ? "Saving…" : "Save"}</button>
+            <button type="button" className="ghost" onClick={() => setEdit(null)}>إلغاء</button>
+            <button type="button" className="primary" disabled={saving} onClick={() => void saveEdit()}>{saving ? "جارٍ الحفظ…" : "حفظ"}</button>
           </div>
         </div>
       ) : null}

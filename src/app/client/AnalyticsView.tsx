@@ -10,15 +10,15 @@ import { Donut, HBars, LineChart, VBars, fmtDur, fmtN, type Slice } from "./Anal
 /* Categorical order validated for colour-blind safety (blue · green · amber · red · indigo); colour follows the source. */
 const C = { blue: "#3978F6", green: "#10B981", amber: "#F59E0B", red: "#EF5362", indigo: "#7C83C9" };
 const SOURCE: Record<string, { label: string; color: string }> = {
-  direct: { label: "Direct Link", color: C.blue },
-  qr: { label: "QR Code", color: C.green },
-  instagram: { label: "Instagram", color: C.amber },
-  facebook: { label: "Facebook", color: C.red },
+  direct: { label: "رابط مباشر", color: C.blue },
+  qr: { label: "رمز QR", color: C.green },
+  instagram: { label: "إنستغرام", color: C.amber },
+  facebook: { label: "فيسبوك", color: C.red },
 };
 const DEVICE: Record<string, { label: string; color: string }> = {
-  mobile: { label: "Mobile", color: "linear-gradient(90deg, #3978F6 0%, #78A5FF 100%)" },
-  desktop: { label: "Desktop", color: C.green },
-  tablet: { label: "Tablet", color: C.amber },
+  mobile: { label: "الجوال", color: "linear-gradient(90deg, #3978F6 0%, #78A5FF 100%)" },
+  desktop: { label: "الكمبيوتر", color: C.green },
+  tablet: { label: "الجهاز اللوحي", color: C.amber },
 };
 
 type Data = {
@@ -57,7 +57,7 @@ function loadAnalytics(complexId: string, days: number): Promise<Data> {
   const job = fetch(`/api/client/analytics?complexId=${encodeURIComponent(complexId)}&days=${days}`)
     .then(async (r) => {
       const j = await r.json();
-      if (!r.ok) throw new Error(j.error || "Could not load analytics");
+      if (!r.ok) throw new Error(j.error || "تعذر تحميل الإحصائيات");
       dataCache.set(key, j as Data);
       return j as Data;
     })
@@ -71,13 +71,13 @@ export function prefetchAnalytics(complexId: string) {
   if (!dataCache.has(`${complexId}:30`)) void loadAnalytics(complexId, 30).catch(() => {});
 }
 
-const PERIODS: [number, string][] = [[7, "Last 7 days"], [30, "1 Month"], [90, "3 Months"], [0, "All time"]];
+const PERIODS: [number, string][] = [[7, "آخر 7 أيام"], [30, "شهر"], [90, "3 أشهر"], [0, "كل الفترة"]];
 
 function Delta({ v, all }: { v: number | null; all?: boolean }) {
-  if (all) return <span className="axn-delta muted">Since the tour went live</span>;
-  if (v === null) return <span className="axn-delta muted">No data for the previous period</span>;
+  if (all) return <span className="axn-delta muted">منذ إطلاق الجولة</span>;
+  if (v === null) return <span className="axn-delta muted">لا توجد بيانات للفترة السابقة</span>;
   const up = v >= 0;
-  return <span className={`axn-delta ${up ? "up" : "down"}`}>{up ? "↑" : "↓"} {Math.abs(v)}% vs previous period</span>;
+  return <span className={`axn-delta ${up ? "up" : "down"}`}>{up ? "↑" : "↓"} {Math.abs(v)}% مقارنة بالفترة السابقة</span>;
 }
 
 function Stat({ label, value, sub, icon, tint }: { label: string; value: ReactNode; sub: ReactNode; icon: string; tint: string }) {
@@ -113,11 +113,15 @@ const when = (iso: string) => {
   const today = new Date();
   const yest = new Date(Date.now() - 864e5);
   const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-  if (d.toDateString() === today.toDateString()) return `Today, ${time}`;
-  if (d.toDateString() === yest.toDateString()) return `Yesterday, ${time}`;
-  return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${time}`;
+  if (d.toDateString() === today.toDateString()) return `اليوم، ${time}`;
+  if (d.toDateString() === yest.toDateString()) return `أمس، ${time}`;
+  return `${d.toLocaleDateString("ar-u-nu-latn", { month: "short", day: "numeric" })}، ${time}`;
 };
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+/** interest level, device and location names shown in Arabic */
+const LEVEL: Record<string, string> = { high: "مرتفع", medium: "متوسط", low: "منخفض" };
+const DEVICE_AR: Record<string, string> = { mobile: "جوال", desktop: "كمبيوتر", tablet: "جهاز لوحي" };
+const place = (s: string) => (s === "Unknown" ? "غير معروف" : s);
 
 export default function AnalyticsView({
   cx,
@@ -211,7 +215,7 @@ export default function AnalyticsView({
     for (const k of Object.keys(SOURCE)) {
       if (!out.some((x) => x.key === k)) out.push({ key: k, label: SOURCE[k].label, value: 0, pct: 0, color: SOURCE[k].color });
     }
-    if (other) out.push({ key: "other", label: "Other", value: other, pct: Math.round((other / Math.max(1, t.sessions)) * 1000) / 10, color: C.indigo });
+    if (other) out.push({ key: "other", label: "أخرى", value: other, pct: Math.round((other / Math.max(1, t.sessions)) * 1000) / 10, color: C.indigo });
     // fixed order, so a colour always means the same source
     const order = ["direct", "qr", "facebook", "instagram", "other"];
     return out.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
@@ -221,43 +225,43 @@ export default function AnalyticsView({
   const selected = units.find((u) => u.villa === picked) ?? [...units].sort((a, b) => b.views - a.views)[0];
   const top = (k: "viewers" | "favorites" | "inquiries", n: number) => [...units].filter((u) => u[k] > 0).sort((a, b) => b[k] - a[k] || b.views - a.views).slice(0, n);
   const maxModel = Math.max(1, ...(p?.byModel ?? []).map((m) => m.avgTime));
-  const periodLabel = days ? `Showing last ${days} days` : "Showing all time";
+  const periodLabel = days ? `عرض آخر ${days} يوماً` : "عرض كل الفترة";
 
   const exportAs = (format: "excel" | "pdf") => {
     setExportOpen(false);
     if (!data) return;
-    const period = days ? `Last ${days} days` : "All time";
+    const period = days ? `آخر ${days} يوماً` : "كل الفترة";
     const pdf = format === "pdf";
     const table: ExportTable =
       sub === "traffic"
         ? {
-            title: `${cx.name} · Traffic`,
-            subtitle: `${period} · ${data.period.bucketDays > 1 ? "weekly" : "daily"} visits`,
-            noun: data.period.bucketDays > 1 ? "week" : "day",
-            head: [data.period.bucketDays > 1 ? "Week of" : "Date", "Visits", "Unique visitors"],
+            title: `${cx.name} · الزيارات`,
+            subtitle: `${period} · الزيارات ${data.period.bucketDays > 1 ? "الأسبوعية" : "اليومية"}`,
+            noun: data.period.bucketDays > 1 ? "أسبوع" : "يوم",
+            head: [data.period.bucketDays > 1 ? "أسبوع" : "التاريخ", "الزيارات", "الزوار الفريدون"],
             rows: data.traffic.series.map((x) => [x.t.slice(0, 10), String(x.sessions), String(x.unique)]),
             cols: [{}, { format: "number" }, { format: "number" }],
             summary: [
-              { label: "Visits", value: fmtN(data.traffic.sessions) },
-              { label: "Unique visitors", value: fmtN(data.traffic.unique), tone: "blue" },
-              { label: "Returning", value: fmtN(data.traffic.returning), tone: "amber" },
-              { label: "From QR codes", value: `${data.traffic.sources.find((x) => x.key === "qr")?.pct ?? 0}%`, tone: "green" },
+              { label: "الزيارات", value: fmtN(data.traffic.sessions) },
+              { label: "الزوار الفريدون", value: fmtN(data.traffic.unique), tone: "blue" },
+              { label: "الزوار العائدون", value: fmtN(data.traffic.returning), tone: "amber" },
+              { label: "من رموز QR", value: `${data.traffic.sources.find((x) => x.key === "qr")?.pct ?? 0}%`, tone: "green" },
             ],
           }
         : {
-            title: `${cx.name} · Property interest`,
+            title: `${cx.name} · الاهتمام بالعقارات`,
             subtitle: `${period} · villas from most to least viewed`,
-            noun: "villa",
-            head: ["Villa", "Model", "Interest", "Unique viewers", "Views", "Favorites", "Inquiries", pdf ? "Avg. time" : "Avg. time (s)"],
+            noun: "فيلا",
+            head: ["الفيلا", "النموذج", "الاهتمام", "المشاهدون الفريدون", "المشاهدات", "المفضلة", "الاستفسارات", pdf ? "متوسط الوقت" : "متوسط الوقت (ث)"],
             rows: [...units]
               .sort((x, y) => y.views - x.views || x.villa.localeCompare(y.villa, undefined, { numeric: true }))
-              .map((u) => [u.villa, u.model, cap(u.level), String(u.viewers), String(u.views), String(u.favorites), String(u.inquiries), pdf ? (u.views ? fmtDur(u.avgTime) : "") : String(u.avgTime)]),
-            cols: [{}, {}, { tones: { High: "green", Medium: "amber", Low: "grey" } }, { format: "number" }, { format: "number" }, { format: "number" }, { format: "number" }, {}],
+              .map((u) => [u.villa, u.model, LEVEL[u.level] ?? u.level, String(u.viewers), String(u.views), String(u.favorites), String(u.inquiries), pdf ? (u.views ? fmtDur(u.avgTime) : "") : String(u.avgTime)]),
+            cols: [{}, {}, { tones: { مرتفع: "green", متوسط: "amber", منخفض: "grey" } }, { format: "number" }, { format: "number" }, { format: "number" }, { format: "number" }, {}],
             summary: [
-              { label: "Villa views", value: fmtN(data.property.views) },
-              { label: "Favorites", value: fmtN(data.property.favorites), tone: "red" },
-              { label: "Inquiries", value: fmtN(data.property.inquiries), tone: "green" },
-              { label: "Villas viewed", value: `${data.property.viewedUnits} / ${data.property.totalUnits}`, tone: "blue" },
+              { label: "مشاهدات الفلل", value: fmtN(data.property.views) },
+              { label: "المفضلة", value: fmtN(data.property.favorites), tone: "red" },
+              { label: "الاستفسارات", value: fmtN(data.property.inquiries), tone: "green" },
+              { label: "الفلل التي تمت مشاهدتها", value: `${data.property.viewedUnits} / ${data.property.totalUnits}`, tone: "blue" },
             ],
           };
     if (pdf) exportPdf(table);
@@ -269,11 +273,11 @@ export default function AnalyticsView({
       <header className="axn-head">
         {tabs ? <span className="axp-emblem"><IcChart size={42} stroke={2} /></span> : null}
         <div className="axn-title">
-          <h1>{sub === "traffic" ? "Traffic Analytics" : "Property Analytics"}</h1>
+          <h1>{sub === "traffic" ? "إحصائيات الزيارات" : "إحصائيات العقارات"}</h1>
           <p>
             {sub === "traffic"
-              ? "Understand where visitors come from and how they interact with your virtual maquette."
-              : "Discover which properties attract attention, generate interest and drive inquiries."}
+              ? "اعرف من أين يأتي الزوار وكيف يتفاعلون مع مجسمك الافتراضي."
+              : "اكتشف العقارات التي تجذب الانتباه وتثير الاهتمام وتجلب الاستفسارات."}
           </p>
         </div>
         {tabs}
@@ -281,27 +285,27 @@ export default function AnalyticsView({
 
       <ProjectStrip cx={cx} complexes={complexes} onPick={onPick} />
 
-      <nav className="axn-subnav" aria-label="Analytics sections">
-        <button type="button" className={sub === "traffic" ? "on" : ""} onClick={() => setSub("traffic")}>Traffic Analytics</button>
-        <button type="button" className={sub === "property" ? "on" : ""} onClick={() => setSub("property")}>Property Analytics</button>
+      <nav className="axn-subnav" aria-label="أقسام الإحصائيات">
+        <button type="button" className={sub === "traffic" ? "on" : ""} onClick={() => setSub("traffic")}>إحصائيات الزيارات</button>
+        <button type="button" className={sub === "property" ? "on" : ""} onClick={() => setSub("property")}>إحصائيات العقارات</button>
       </nav>
 
       <div className="axn-period">
-        <span className="axn-period-label">PERIOD</span>
-        <div className="axn-seg" role="radiogroup" aria-label="Period">
+        <span className="axn-period-label">الفترة</span>
+        <div className="axn-seg" role="radiogroup" aria-label="الفترة">
           {PERIODS.map(([d, label]) => (
             <button key={d} type="button" role="radio" aria-checked={days === d} className={days === d ? "on" : ""} onClick={() => setDays(d)}>{label}</button>
           ))}
         </div>
         <span className="axn-spacer" />
-        <span className="axn-period-note">{loading ? "Loading…" : periodLabel}</span>
+        <span className="axn-period-note">{loading ? "جارٍ التحميل…" : periodLabel}</span>
         <div className="axc-export" ref={exportRef}>
           <button type="button" className="axn-btn" aria-haspopup="menu" aria-expanded={exportOpen} onClick={() => setExportOpen((v) => !v)} disabled={!data}>
-            ↓ Export
+            ↓ تصدير
           </button>
           {exportOpen ? (
             <div className="axc-pop axc-export-menu" role="menu">
-              <button type="button" role="menuitem" onClick={() => exportAs("excel")}><b className="xls">XLS</b> Excel</button>
+              <button type="button" role="menuitem" onClick={() => exportAs("excel")}><b className="xls">XLS</b> إكسل</button>
               <button type="button" role="menuitem" onClick={() => exportAs("pdf")}><b className="pdf">PDF</b> PDF</button>
             </div>
           ) : null}
@@ -315,36 +319,36 @@ export default function AnalyticsView({
       ) : sub === "traffic" && t ? (
         <div className={`axn-body${loading ? " stale" : ""}`}>
           <div className="axn-stats three">
-            <Stat label="Total Visitors" value={fmtN(t.sessions)} sub={<Delta v={t.sessionsDelta} all={!days} />} icon="♙" tint="#EAF1FF" />
-            <Stat label="Unique Visitors" value={fmtN(t.unique)} sub={<Delta v={t.uniqueDelta} all={!days} />} icon="◎" tint="#E7FBF3" />
-            <Stat label="Returning Visitors" value={fmtN(t.returning)} sub={<Delta v={t.returningDelta} all={!days} />} icon="◷" tint="#FFF4DF" />
+            <Stat label="إجمالي الزوار" value={fmtN(t.sessions)} sub={<Delta v={t.sessionsDelta} all={!days} />} icon="♙" tint="#EAF1FF" />
+            <Stat label="الزوار الفريدون" value={fmtN(t.unique)} sub={<Delta v={t.uniqueDelta} all={!days} />} icon="◎" tint="#E7FBF3" />
+            <Stat label="الزوار العائدون" value={fmtN(t.returning)} sub={<Delta v={t.returningDelta} all={!days} />} icon="◷" tint="#FFF4DF" />
           </div>
 
           <div className="axn-row half">
-            <Card title="Traffic Sources" sub="Where visitors discovered this maquette" pill={`${fmtN(t.sessions)} sessions`}>
+            <Card title="مصادر الزيارات" sub="أين اكتشف الزوار هذا المجسم" pill={`${fmtN(t.sessions)} زيارة`}>
               {/* donut and the per-QR list side by side, so the card stays as short as Device Distribution */}
               <div className="axn-src">
-                {t.sessions ? <Donut slices={sources} total={t.sessions} unit="Sessions" /> : <p className="axn-empty">No visits in this period yet.</p>}
+                {t.sessions ? <Donut slices={sources} total={t.sessions} unit="الزيارات" /> : <p className="axn-empty">لا توجد زيارات في هذه الفترة بعد.</p>}
                 <QrBox rows={t.qr ?? []} />
               </div>
-              <p className="axn-note">Codes made on the QR tab are counted one by one. Add ?src=facebook (or instagram…) to links you post to see them here.</p>
+              <p className="axn-note">تُحتسب الرموز المنشأة في تبويب رمز QR كلٌّ على حدة. أضف <bdi dir="ltr">?src=facebook</bdi> (أو instagram…) إلى الروابط التي تنشرها لتظهر هنا.</p>
             </Card>
-            <Card title="Device Distribution" sub="Devices used to access the virtual tour">
+            <Card title="توزيع الأجهزة" sub="الأجهزة المستخدمة لدخول الجولة الافتراضية">
               <HBars
                 rows={["mobile", "desktop", "tablet"].map((k) => {
                   const d = t.devices.find((x) => x.key === k);
                   return { key: k, label: DEVICE[k].label, value: d?.pct ?? 0, max: 100, color: DEVICE[k].color, text: `${d?.pct ?? 0}%` };
                 })}
               />
-              {t.os.length ? <p className="axn-note">Operating systems: {t.os.slice(0, 4).map((o) => `${o.key} ${o.pct}%`).join(" · ")}</p> : null}
+              {t.os.length ? <p className="axn-note">أنظمة التشغيل: {t.os.slice(0, 4).map((o) => `${o.key} ${o.pct}%`).join(" · ")}</p> : null}
             </Card>
           </div>
 
-          <Card title="Visitors & Sessions Over Time" sub={data.period.bucketDays > 1 ? "Weekly activity across the selected period" : "Daily activity across the selected period"}>
+          <Card title="الزوار والزيارات عبر الزمن" sub={data.period.bucketDays > 1 ? "النشاط الأسبوعي خلال الفترة المحددة" : "النشاط اليومي خلال الفترة المحددة"}>
             <LineChart
               points={t.series.map((s) => ({ t: s.t, a: s.sessions, b: s.unique }))}
-              labelA="Visits"
-              labelB="Unique Visitors"
+              labelA="الزيارات"
+              labelB="الزوار الفريدون"
               colorA={C.blue}
               colorB={C.green}
               bucketDays={data.period.bucketDays}
@@ -352,90 +356,90 @@ export default function AnalyticsView({
           </Card>
 
           <div className="axn-row wide">
-            <Card title="Visitor Geography" sub="Top locations by visitor count" pill={`${t.locations} location${t.locations === 1 ? "" : "s"}`}>
+            <Card title="مواقع الزوار" sub="أكثر المواقع حسب عدد الزوار" pill={`${t.locations} ${t.locations === 1 ? "موقع" : "مواقع"}`}>
               <table className="axn-table">
-                <thead><tr><th>Location</th><th>Visitors</th><th>Sessions</th><th>Avg. time</th></tr></thead>
+                <thead><tr><th>الموقع</th><th>الزوار</th><th>الزيارات</th><th>متوسط الوقت</th></tr></thead>
                 <tbody>
                   {t.geo.map((g) => (
-                    <tr key={g.location}><td className="strong">{g.location}</td><td>{fmtN(g.visitors)}</td><td>{fmtN(g.sessions)}</td><td>{fmtDur(g.avg)}</td></tr>
+                    <tr key={g.location}><td className="strong">{place(g.location)}</td><td>{fmtN(g.visitors)}</td><td>{fmtN(g.sessions)}</td><td>{fmtDur(g.avg)}</td></tr>
                   ))}
                 </tbody>
               </table>
-              {!t.geo.length ? <p className="axn-empty">No visits in this period yet.</p> : null}
-              {t.geo.some((g) => g.location === "Unknown") ? <p className="axn-note">Locations are filled in on the live site (the host provides the city); local tests show “Unknown”.</p> : null}
+              {!t.geo.length ? <p className="axn-empty">لا توجد زيارات في هذه الفترة بعد.</p> : null}
+              {t.geo.some((g) => g.location === "Unknown") ? <p className="axn-note">تُحدَّد المواقع تقريبياً على الموقع المباشر (من مزوّد الاستضافة)؛ وتظهر «غير معروف» في الاختبارات المحلية.</p> : null}
             </Card>
-            <Card title="Engagement Summary" sub="Quality of visitor sessions">
+            <Card title="ملخص التفاعل" sub="جودة زيارات الزوار">
               <HBars
                 rows={[
-                  { key: "e", label: "Engaged sessions", value: t.engagement.engaged, max: 100, color: "linear-gradient(90deg, #3978F6 0%, #78A5FF 100%)", text: `${t.engagement.engaged}%` },
-                  { key: "r", label: "Returning visitors", value: t.engagement.returning, max: 100, color: C.green, text: `${t.engagement.returning}%` },
-                  { key: "q", label: "Quick exits", value: t.engagement.quick, max: 100, color: C.amber, text: `${t.engagement.quick}%` },
+                  { key: "e", label: "زيارات متفاعلة", value: t.engagement.engaged, max: 100, color: "linear-gradient(90deg, #3978F6 0%, #78A5FF 100%)", text: `${t.engagement.engaged}%` },
+                  { key: "r", label: "زوار عائدون", value: t.engagement.returning, max: 100, color: C.green, text: `${t.engagement.returning}%` },
+                  { key: "q", label: "خروج سريع", value: t.engagement.quick, max: 100, color: C.amber, text: `${t.engagement.quick}%` },
                 ]}
               />
-              <p className="axn-note">Engaged = stayed 1 minute or more, or opened a villa. Quick exit = left within 10 seconds without opening a villa.</p>
+              <p className="axn-note">متفاعلة = بقي دقيقة أو أكثر، أو فتح فيلا. خروج سريع = غادر خلال 10 ثوانٍ دون فتح أي فيلا.</p>
             </Card>
           </div>
 
-          <Card title="Recent Sessions" sub="Latest anonymized visitor activity" pill="Privacy-safe visitor IDs" pillTone="green">
+          <Card title="أحدث الزيارات" sub="آخر نشاط للزوار دون كشف هويتهم" pill="معرّفات زوار تحفظ الخصوصية" pillTone="green">
             <div className="axn-scroll">
               <table className="axn-table">
-                <thead><tr><th>Visitor</th><th>Source</th><th>Device</th><th>Location</th><th>Properties viewed</th><th>Duration</th><th>Date</th></tr></thead>
+                <thead><tr><th>الزائر</th><th>المصدر</th><th>الجهاز</th><th>الموقع</th><th>العقارات التي شاهدها</th><th>المدة</th><th>التاريخ</th></tr></thead>
                 <tbody>
                   {t.recent.map((r, i) => (
                     <tr key={`${r.visitor}-${i}`}>
-                      <td className="strong">{r.visitor}</td>
+                      <td className="strong"><bdi>{r.visitor}</bdi></td>
                       <td>{SOURCE[r.source]?.label ?? cap(r.source)}</td>
-                      <td>{cap(r.device)}</td>
-                      <td>{r.location}</td>
-                      <td>{r.properties.length ? r.properties.slice(0, 4).map((v) => `Villa ${v}`).join(", ") + (r.properties.length > 4 ? ` +${r.properties.length - 4}` : "") : "—"}</td>
+                      <td>{DEVICE_AR[r.device] ?? cap(r.device)}</td>
+                      <td>{place(r.location)}</td>
+                      <td>{r.properties.length ? r.properties.slice(0, 4).map((v) => `فيلا ${v}`).join("، ") + (r.properties.length > 4 ? ` +${r.properties.length - 4}` : "") : "—"}</td>
                       <td>{fmtDur(r.duration)}</td>
                       <td>{when(r.at)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {!t.recent.length ? <p className="axn-empty">No visits in this period yet.</p> : null}
+              {!t.recent.length ? <p className="axn-empty">لا توجد زيارات في هذه الفترة بعد.</p> : null}
             </div>
           </Card>
         </div>
       ) : p ? (
         <div className={`axn-body${loading ? " stale" : ""}`}>
           <div className="axn-stats four">
-            <Stat label="Properties Viewed" value={<>{fmtN(p.viewedUnits)} <small>/ {fmtN(p.totalUnits)}</small></>} sub={<span className="axn-delta muted">Unique units viewed</span>} icon="⌂" tint="#EAF1FF" />
-            <Stat label="Total Property Views" value={fmtN(p.views)} sub={<Delta v={p.viewsDelta} all={!days} />} icon="◉" tint="#F1EBFF" />
-            <Stat label="Favorites" value={fmtN(p.favorites)} sub={<Delta v={p.favoritesDelta} all={!days} />} icon="♡" tint="#FFEAED" />
-            <Stat label="Property Inquiries" value={fmtN(p.inquiries)} sub={<span className="axn-delta muted">{p.inquiryRate}% of maquette visitors</span>} icon="✉" tint="#E7FBF3" />
+            <Stat label="العقارات المشاهدة" value={<bdi dir="ltr">{fmtN(p.viewedUnits)} <small>/ {fmtN(p.totalUnits)}</small></bdi>} sub={<span className="axn-delta muted">وحدات فريدة تمت مشاهدتها</span>} icon="⌂" tint="#EAF1FF" />
+            <Stat label="إجمالي مشاهدات العقارات" value={fmtN(p.views)} sub={<Delta v={p.viewsDelta} all={!days} />} icon="◉" tint="#F1EBFF" />
+            <Stat label="المفضلة" value={fmtN(p.favorites)} sub={<Delta v={p.favoritesDelta} all={!days} />} icon="♡" tint="#FFEAED" />
+            <Stat label="استفسارات العقارات" value={fmtN(p.inquiries)} sub={<span className="axn-delta muted">{p.inquiryRate}% من زوار المجسم</span>} icon="✉" tint="#E7FBF3" />
           </div>
 
           <div className="axn-row half">
-            <Card title="Most Viewed Properties" sub="Ranked by unique visitors" pill="Top 5">
-              <RankTable rows={top("viewers", 5).map((u) => [u.villa, fmtN(u.viewers), fmtN(u.views)])} head={["Unique viewers", "Total views"]} onPick={setPicked} />
+            <Card title="العقارات الأكثر مشاهدة" sub="مرتبة حسب الزوار الفريدين" pill="أفضل 5">
+              <RankTable rows={top("viewers", 5).map((u) => [u.villa, fmtN(u.viewers), fmtN(u.views)])} head={["المشاهدون الفريدون", "إجمالي المشاهدات"]} onPick={setPicked} />
             </Card>
-            <Card title="Most Liked Apartments" sub="Top 20 units by favorites" pill="Top 20" pillTone="red">
+            <Card title="الوحدات الأكثر إعجاباً" sub="أفضل 20 وحدة حسب المفضلة" pill="أفضل 20" pillTone="red">
               {top("favorites", 20).length ? (
                 <>
-                  <VBars rows={top("favorites", 20).map((u) => ({ key: u.villa, label: u.villa, value: u.favorites }))} unit="Favorites" />
-                  <p className="axn-note">Peak: {fmtN(top("favorites", 1)[0]?.favorites ?? 0)} likes · {top("favorites", 20).length} units shown</p>
+                  <VBars rows={top("favorites", 20).map((u) => ({ key: u.villa, label: u.villa, value: u.favorites }))} unit="المفضلة" />
+                  <p className="axn-note">الأعلى: {fmtN(top("favorites", 1)[0]?.favorites ?? 0)} إعجاب · {top("favorites", 20).length} وحدة معروضة</p>
                 </>
-              ) : <p className="axn-empty">No favorites in this period yet.</p>}
+              ) : <p className="axn-empty">لا توجد إضافات إلى المفضلة في هذه الفترة بعد.</p>}
             </Card>
           </div>
 
           <div className={`axn-row wide${heatView === "top" && plan ? " top-view" : ""}`}>
             <Card
-              title="Property Interest Heatmap"
-              sub="Click a unit to inspect its metrics"
+              title="خريطة الاهتمام بالعقارات"
+              sub="اضغط على وحدة لعرض أرقامها"
               actions={
-                <div className="axn-seg small" role="radiogroup" aria-label="Heatmap view">
-                  <button type="button" role="radio" aria-checked={heatView === "list"} className={heatView === "list" ? "on" : ""} onClick={() => setHeatView("list")}>List</button>
-                  <button type="button" role="radio" aria-checked={heatView === "top"} className={heatView === "top" ? "on" : ""} onClick={() => setHeatView("top")} disabled={!plan} title={plan ? undefined : "No top view for this project yet"}>Top view</button>
+                <div className="axn-seg small" role="radiogroup" aria-label="طريقة العرض">
+                  <button type="button" role="radio" aria-checked={heatView === "list"} className={heatView === "list" ? "on" : ""} onClick={() => setHeatView("list")}>قائمة</button>
+                  <button type="button" role="radio" aria-checked={heatView === "top"} className={heatView === "top" ? "on" : ""} onClick={() => setHeatView("top")} disabled={!plan} title={plan ? undefined : "لا يوجد مسقط علوي لهذا المشروع بعد"}>مسقط علوي</button>
                 </div>
               }
             >
               {heatView === "top" && plan ? (
                 <PlanView plan={plan} base={`/complexes/${cx.slug}/plan/`} units={units} selected={selected?.villa ?? null} onPick={setPicked} />
               ) : (
-              <div className="axn-heat" role="listbox" aria-label="Villas by interest">
+              <div className="axn-heat" role="listbox" aria-label="الفلل حسب الاهتمام">
                 {units.map((u) => (
                   <button
                     key={u.villa}
@@ -444,68 +448,68 @@ export default function AnalyticsView({
                     aria-selected={selected?.villa === u.villa}
                     className={`axn-tile ${u.level}${selected?.villa === u.villa ? " on" : ""}`}
                     onClick={() => setPicked(u.villa)}
-                    title={`Villa ${u.villa}: ${u.views} views, ${u.favorites} favorites`}
+                    title={`فيلا ${u.villa}: ${u.views} مشاهدة، ${u.favorites} مفضلة`}
                   >
                     <b>{u.villa}</b>
-                    <small>{cap(u.level)}</small>
+                    <small>{LEVEL[u.level]}</small>
                   </button>
                 ))}
               </div>
               )}
               <div className="axn-legend-row">
-                <span><i style={{ background: "#34c58a" }} />High interest</span>
-                <span><i style={{ background: "#f5b740" }} />Medium</span>
-                <span><i style={{ background: "#c3ccda" }} />Low</span>
+                <span><i style={{ background: "#34c58a" }} />اهتمام مرتفع</span>
+                <span><i style={{ background: "#f5b740" }} />متوسط</span>
+                <span><i style={{ background: "#c3ccda" }} />منخفض</span>
               </div>
             </Card>
             <Card
-              title="Selected Property"
-              sub={selected ? `Villa ${selected.villa} · Model ${selected.model}` : "Pick a villa in the heatmap"}
-              pill={selected ? `${cap(selected.level)} interest` : undefined}
+              title="العقار المحدد"
+              sub={selected ? `فيلا ${selected.villa} · نموذج ${selected.model}` : "اختر فيلا من خريطة الاهتمام"}
+              pill={selected ? `اهتمام ${LEVEL[selected.level]}` : undefined}
               pillTone={selected?.level === "high" ? "green" : "blue"}
             >
               {selected ? (
                 <>
                   <div className="axn-selected">
-                    <span>Unique Viewers</span>
+                    <span>المشاهدون الفريدون</span>
                     <strong>{fmtN(selected.viewers)}</strong>
-                    <small>During selected period</small>
+                    <small>خلال الفترة المحددة</small>
                   </div>
                   <dl className="axn-kv">
-                    <dt>Total views</dt><dd>{fmtN(selected.views)}</dd>
-                    <dt>Favorites</dt><dd>{fmtN(selected.favorites)}</dd>
-                    <dt>Inquiries</dt><dd>{fmtN(selected.inquiries)}</dd>
-                    <dt>Avg. time</dt><dd>{fmtDur(selected.avgTime)}</dd>
+                    <dt>إجمالي المشاهدات</dt><dd>{fmtN(selected.views)}</dd>
+                    <dt>المفضلة</dt><dd>{fmtN(selected.favorites)}</dd>
+                    <dt>الاستفسارات</dt><dd>{fmtN(selected.inquiries)}</dd>
+                    <dt>متوسط الوقت</dt><dd>{fmtDur(selected.avgTime)}</dd>
                   </dl>
                 </>
-              ) : <p className="axn-empty">No villas in this project.</p>}
+              ) : <p className="axn-empty">لا توجد فلل في هذا المشروع.</p>}
             </Card>
           </div>
 
           <div className="axn-row half">
-            <Card title="Most Contacted Properties" sub="Units generating the most inquiry actions" pill="Top 5" pillTone="green">
-              <RankTable rows={top("inquiries", 5).map((u) => [u.villa, fmtN(u.inquiries), `${u.rate}%`])} head={["Inquiries", "Inquiry rate"]} onPick={setPicked} />
+            <Card title="العقارات الأكثر تواصلاً" sub="الوحدات التي جلبت أكثر الاستفسارات" pill="أفضل 5" pillTone="green">
+              <RankTable rows={top("inquiries", 5).map((u) => [u.villa, fmtN(u.inquiries), `${u.rate}%`])} head={["الاستفسارات", "نسبة الاستفسار"]} onPick={setPicked} />
             </Card>
-            <Card title="Average Engagement by Property Type" sub="Average active time per viewed unit">
+            <Card title="متوسط التفاعل حسب نوع العقار" sub="متوسط الوقت الفعلي لكل وحدة تمت مشاهدتها">
               {p.byModel.some((m) => m.views) ? (
                 <HBars
                   rows={p.byModel.filter((m) => m.views).slice(0, 6).map((m, i) => ({
                     key: m.model,
-                    label: `Model ${m.model}`,
+                    label: `نموذج ${m.model}`,
                     value: m.avgTime,
                     max: maxModel,
                     color: [C.blue, C.green, C.amber, C.red, C.indigo, C.blue][i],
                     text: fmtDur(m.avgTime),
                   }))}
                 />
-              ) : <p className="axn-empty">No villa views in this period yet.</p>}
-              <p className="axn-note">Active time is counted only while the villa is open and the page is visible.</p>
+              ) : <p className="axn-empty">لا توجد مشاهدات للفلل في هذه الفترة بعد.</p>}
+              <p className="axn-note">يُحتسب الوقت فقط أثناء فتح الفيلا وظهور الصفحة.</p>
             </Card>
           </div>
         </div>
       ) : null}
 
-      <p className="axn-foot">AXIS Studio · Analytics · anonymous visitor data</p>
+      <p className="axn-foot">AXIS Studio · الإحصائيات · بيانات زوار مجهولة الهوية</p>
     </section>
   );
 }
@@ -518,58 +522,58 @@ function AnalyticsSkeleton({ sub }: { sub: "traffic" | "property" }) {
   );
   if (sub === "traffic")
     return (
-      <div className="axn-body" aria-busy="true" aria-label="Loading analytics">
+      <div className="axn-body" aria-busy="true" aria-label="جارٍ تحميل الإحصائيات">
         <div className="axn-stats three">
-          {stat("Total Visitors", "♙", "#EAF1FF")}
-          {stat("Unique Visitors", "◎", "#E7FBF3")}
-          {stat("Returning Visitors", "◷", "#FFF4DF")}
+          {stat("إجمالي الزوار", "♙", "#EAF1FF")}
+          {stat("الزوار الفريدون", "◎", "#E7FBF3")}
+          {stat("الزوار العائدون", "◷", "#FFF4DF")}
         </div>
         <div className="axn-row half">
-          <Card title="Traffic Sources" sub="Where visitors discovered this maquette">{bar(200)}</Card>
-          <Card title="Device Distribution" sub="Devices used to access the virtual tour">{bar(200)}</Card>
+          <Card title="مصادر الزيارات" sub="أين اكتشف الزوار هذا المجسم">{bar(200)}</Card>
+          <Card title="توزيع الأجهزة" sub="الأجهزة المستخدمة لدخول الجولة الافتراضية">{bar(200)}</Card>
         </div>
-        <Card title="Visitors & Sessions Over Time" sub="Activity across the selected period">{bar(240)}</Card>
+        <Card title="الزوار والزيارات عبر الزمن" sub="النشاط خلال الفترة المحددة">{bar(240)}</Card>
         <div className="axn-row wide">
-          <Card title="Visitor Geography" sub="Top locations by visitor count">{bar(160)}</Card>
-          <Card title="Engagement Summary" sub="Quality of visitor sessions">{bar(160)}</Card>
+          <Card title="مواقع الزوار" sub="أكثر المواقع حسب عدد الزوار">{bar(160)}</Card>
+          <Card title="ملخص التفاعل" sub="جودة زيارات الزوار">{bar(160)}</Card>
         </div>
-        <Card title="Recent Sessions" sub="Latest anonymized visitor activity">{bar(180)}</Card>
+        <Card title="أحدث الزيارات" sub="آخر نشاط للزوار دون كشف هويتهم">{bar(180)}</Card>
       </div>
     );
   return (
-    <div className="axn-body" aria-busy="true" aria-label="Loading analytics">
+    <div className="axn-body" aria-busy="true" aria-label="جارٍ تحميل الإحصائيات">
       <div className="axn-stats four">
-        {stat("Properties Viewed", "⌂", "#EAF1FF")}
-        {stat("Total Property Views", "◉", "#F1EBFF")}
-        {stat("Favorites", "♡", "#FFEAED")}
-        {stat("Property Inquiries", "✉", "#E7FBF3")}
+        {stat("العقارات المشاهدة", "⌂", "#EAF1FF")}
+        {stat("إجمالي مشاهدات العقارات", "◉", "#F1EBFF")}
+        {stat("المفضلة", "♡", "#FFEAED")}
+        {stat("استفسارات العقارات", "✉", "#E7FBF3")}
       </div>
       <div className="axn-row half">
-        <Card title="Most Viewed Properties" sub="Ranked by unique visitors">{bar(200)}</Card>
-        <Card title="Most Liked Apartments" sub="Top 20 units by favorites">{bar(200)}</Card>
+        <Card title="العقارات الأكثر مشاهدة" sub="مرتبة حسب الزوار الفريدين">{bar(200)}</Card>
+        <Card title="الوحدات الأكثر إعجاباً" sub="أفضل 20 وحدة حسب المفضلة">{bar(200)}</Card>
       </div>
       <div className="axn-row wide">
-        <Card title="Property Interest Heatmap" sub="Click a unit to inspect its metrics">{bar(260)}</Card>
-        <Card title="Selected Property" sub="Pick a villa in the heatmap">{bar(260)}</Card>
+        <Card title="خريطة الاهتمام بالعقارات" sub="اضغط على وحدة لعرض أرقامها">{bar(260)}</Card>
+        <Card title="العقار المحدد" sub="اختر فيلا من خريطة الاهتمام">{bar(260)}</Card>
       </div>
       <div className="axn-row half">
-        <Card title="Most Contacted Properties" sub="Units generating the most inquiry actions">{bar(180)}</Card>
-        <Card title="Average Engagement by Property Type" sub="Average active time per viewed unit">{bar(180)}</Card>
+        <Card title="العقارات الأكثر تواصلاً" sub="الوحدات التي جلبت أكثر الاستفسارات">{bar(180)}</Card>
+        <Card title="متوسط التفاعل حسب نوع العقار" sub="متوسط الوقت الفعلي لكل وحدة تمت مشاهدتها">{bar(180)}</Card>
       </div>
     </div>
   );
 }
 
 function RankTable({ rows, head, onPick }: { rows: [string, string, string][]; head: [string, string]; onPick: (villa: string) => void }) {
-  if (!rows.length) return <p className="axn-empty">Nothing in this period yet.</p>;
+  if (!rows.length) return <p className="axn-empty">لا شيء في هذه الفترة بعد.</p>;
   return (
     <table className="axn-table">
-      <thead><tr><th>Rank</th><th>Property</th><th>{head[0]}</th><th>{head[1]}</th></tr></thead>
+      <thead><tr><th>الترتيب</th><th>العقار</th><th>{head[0]}</th><th>{head[1]}</th></tr></thead>
       <tbody>
         {rows.map(([villa, a, b], i) => (
           <tr key={villa} className="clickable" onClick={() => onPick(villa)}>
             <td>{String(i + 1).padStart(2, "0")}</td>
-            <td className="strong">Villa {villa}</td>
+            <td className="strong">فيلا {villa}</td>
             <td>{a}</td>
             <td>{b}</td>
           </tr>
@@ -610,7 +614,7 @@ function PlanView({ plan, base, units, selected, onPick }: { plan: Plan; base: s
         setPos(null);
       }}
     >
-      <svg viewBox={`0 0 ${plan.width} ${plan.height}`} role="listbox" aria-label="Villas on the site plan">
+      <svg viewBox={`0 0 ${plan.width} ${plan.height}`} role="listbox" aria-label="الفلل على المخطط">
         <defs>
           <filter id="axn-plan-lift" x="-50%" y="-50%" width="200%" height="200%">
             <feDropShadow dx="0" dy="1.5" stdDeviation="2.2" floodColor="#0b1220" floodOpacity="0.35" />
@@ -628,7 +632,7 @@ function PlanView({ plan, base, units, selected, onPick }: { plan: Plan; base: s
               d={d}
               role="option"
               aria-selected={on}
-              aria-label={`Villa ${u.villa}, ${u.level} interest`}
+              aria-label={`فيلا ${u.villa}، اهتمام ${LEVEL[u.level]}`}
               tabIndex={0}
               className={`axn-plan-unit${on ? " on" : ""}`}
               fill={HEAT[u.level]}
@@ -653,18 +657,18 @@ function PlanView({ plan, base, units, selected, onPick }: { plan: Plan; base: s
           style={pos ? { left: pos.x, top: pos.y } : undefined}
         >
           <span className="axn-plan-tip-head">
-            <b>Villa {hover.u.villa}</b>
+            <b>فيلا {hover.u.villa}</b>
             <span className={`axn-plan-lvl ${hover.u.level}`}>
               <i style={{ background: HEAT[hover.u.level] }} />
-              {hover.u.level === "high" ? "High interest" : hover.u.level === "medium" ? "Medium" : "Low"}
+              {hover.u.level === "high" ? "اهتمام مرتفع" : hover.u.level === "medium" ? "متوسط" : "منخفض"}
             </span>
           </span>
           <span className="axn-plan-tip-stats">
-            <span><b>{fmtN(hover.u.views)}</b> views</span>
-            <span><b>{fmtN(hover.u.favorites)}</b> favorites</span>
-            <span><b>{fmtN(hover.u.inquiries)}</b> inquiries</span>
+            <span><b>{fmtN(hover.u.views)}</b> مشاهدة</span>
+            <span><b>{fmtN(hover.u.favorites)}</b> مفضلة</span>
+            <span><b>{fmtN(hover.u.inquiries)}</b> استفسار</span>
           </span>
-          {hover.u.model ? <span className="axn-plan-tip-model">Model {hover.u.model}</span> : null}
+          {hover.u.model ? <span className="axn-plan-tip-model">نموذج {hover.u.model}</span> : null}
         </div>
       ) : null}
     </div>
@@ -678,13 +682,13 @@ function QrBox({ rows }: { rows: { id: string; label: string; n: number }[] }) {
   return (
     <div className="axn-qrbox">
       <div className="axn-qrbox-head">
-        <b>Visits by QR code</b>
-        <span>{fmtN(total)} total</span>
+        <b>الزيارات حسب رمز QR</b>
+        <span>{fmtN(total)} إجمالاً</span>
       </div>
       {rows.length ? (
         <ul>
           {rows.map((r, i) => (
-            <li key={r.id} title={`${r.label}: ${r.n} visits`}>
+            <li key={r.id} title={`${r.label}: ${r.n} زيارة`}>
               <span className="axn-qrbox-tag">QR{i + 1}</span>
               <span className="axn-qrbox-name">{r.label}</span>
               <span className="axn-qrbox-bar"><i style={{ width: `${r.n ? Math.max(3, (r.n / max) * 100) : 0}%` }} /></span>
@@ -693,7 +697,7 @@ function QrBox({ rows }: { rows: { id: string; label: string; n: number }[] }) {
           ))}
         </ul>
       ) : (
-        <p>No QR codes yet. Make one on the QR tab to follow its scans here.</p>
+        <p>لا توجد رموز QR بعد. أنشئ رمزاً في تبويب رمز QR لمتابعة عمليات المسح هنا.</p>
       )}
     </div>
   );

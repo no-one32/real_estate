@@ -22,26 +22,26 @@ export default function ForgotPage() {
     });
     setBusy(false);
     if (!res.ok) {
-      setErr("We couldn’t send the email.");
+      setErr("تعذر إرسال البريد الإلكتروني.");
       return;
     }
     setOk(true);
   };
 
   return (
-    <div className="gate">
+    <div className="gate" dir="rtl" lang="ar">
       <form className="gate-card" onSubmit={submit}>
         <AxisMark size={56} />
-        <h1>Reset password</h1>
-        <p className="lede">We’ll send a link to choose a new one.</p>
-        {ok ? <p className="ok">If that email is registered, a link is on its way.</p> : (
+        <h1>إعادة تعيين كلمة المرور</h1>
+        <p className="lede">سنرسل لك رابطاً لاختيار كلمة مرور جديدة.</p>
+        {ok ? <p className="ok">إذا كان هذا البريد مسجلاً، فالرابط في طريقه إليك.</p> : (
           <>
-            <label>Email <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" /></label>
+            <label>البريد الإلكتروني <input type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" /></label>
             {err && <p className="err">{err}</p>}
-            <button className="btn wide" type="submit" disabled={busy}>{busy ? "…" : "Send link"}</button>
+            <button className="btn wide" type="submit" disabled={busy}>{busy ? "…" : "إرسال الرابط"}</button>
           </>
         )}
-        <Link href="/client/login">Back to sign in</Link>
+        <Link href="/client/login">العودة إلى تسجيل الدخول</Link>
       </form>
     </div>
   );

@@ -24,18 +24,18 @@ type Item = {
 const fmt = (n: number) => n.toLocaleString("en-US");
 
 function ago(iso: string | null) {
-  if (!iso) return "Since your last visit";
+  if (!iso) return "منذ زيارتك الأخيرة";
   const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
-  if (s < 60) return "Just now";
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
-  if (s < 86400 * 7) return `${Math.floor(s / 86400)} d ago`;
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  if (s < 60) return "الآن";
+  if (s < 3600) return `منذ ${Math.floor(s / 60)} دقيقة`;
+  if (s < 86400) return `منذ ${Math.floor(s / 3600)} ساعة`;
+  if (s < 86400 * 7) return `منذ ${Math.floor(s / 86400)} يوم`;
+  return new Date(iso).toLocaleDateString("ar-u-nu-latn", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function leadName(l: LeadRow) {
   const nom = (l.nom || "").replace(/^(السيد|السيدة|لا)\s+/, "").trim();
-  return [l.prenom?.trim(), nom].filter(Boolean).join(" ") || l.email || "Someone";
+  return [l.prenom?.trim(), nom].filter(Boolean).join(" ") || l.email || "شخص ما";
 }
 
 export default function NotificationsView({
@@ -62,10 +62,10 @@ export default function NotificationsView({
           kind: "visitors",
           title: (
             <>
-              <b>{fmt(s.newVisitors)} new visitor{s.newVisitors > 1 ? "s" : ""}</b> opened the tour of <b>{c.name}</b>
+              <b>{fmt(s.newVisitors)} {s.newVisitors > 1 ? "زوار جدد" : "زائر جديد"}</b> فتحوا جولة <b>{c.name}</b>
             </>
           ),
-          sub: `${c.name} · Analytics`,
+          sub: `${c.name} · الإحصائيات`,
           at: null,
           unread: true,
           target: { kind: "visitors", complexId: c.id },
@@ -86,13 +86,13 @@ export default function NotificationsView({
           <>
             <b>{leadName(l)}</b>
             {villa
-              ? <> is interested in <b>Villa {villa}</b></>
+              ? <> مهتم بـ<b>الفيلا {villa}</b></>
               : favs.length
-                ? <> shared {favs.length} favorite villa{favs.length > 1 ? "s" : ""}</>
-                : <> sent a contact request</>}
+                ? <> شارك {favs.length} {favs.length > 1 ? "فلل مفضلة" : "فيلا مفضلة"}</>
+                : <> أرسل طلب تواصل</>}
           </>
         ),
-        sub: `${names.get(cid)} · Contacts`,
+        sub: `${names.get(cid)} · العملاء`,
         at: l.created_at,
         unread,
         target: { kind: "lead", complexId: cid, leadId: l.id },
@@ -116,7 +116,7 @@ export default function NotificationsView({
             {it.sub} · {ago(it.at)}
           </span>
         </span>
-        {it.unread ? <span className="axnt-dot" aria-label="Unread" /> : null}
+        {it.unread ? <span className="axnt-dot" aria-label="غير مقروء" /> : null}
         <span className="axnt-go" aria-hidden>
           <IcChevronDown size={16} stroke={2} />
         </span>
@@ -129,12 +129,12 @@ export default function NotificationsView({
       <header className="axd-head">
         <span className="axd-accent" aria-hidden="true" />
         <div className="axnt-headtext">
-          <h1>Notifications</h1>
-          <p>New visitors and interested buyers across your projects</p>
+          <h1>الإشعارات</h1>
+          <p>الزوار الجدد والمشترون المهتمون في جميع مشاريعك</p>
         </div>
         {fresh.length ? (
           <button type="button" className="axnt-readall" onClick={onReadAll}>
-            Mark all as read
+            تحديد الكل كمقروء
           </button>
         ) : null}
       </header>
@@ -142,20 +142,20 @@ export default function NotificationsView({
       {!fresh.length && !earlier.length ? (
         <div className="axnt-empty">
           <span className="axnt-ico"><IcBell size={22} stroke={1.8} /></span>
-          <b>No notifications yet</b>
-          <span>You will see new visitors and interested buyers here.</span>
+          <b>لا توجد إشعارات بعد</b>
+          <span>ستظهر هنا الزيارات الجديدة والمشترون المهتمون.</span>
         </div>
       ) : (
         <>
           {fresh.length ? (
             <>
-              <h2 className="axnt-group">New <span>{fresh.length}</span></h2>
+              <h2 className="axnt-group">جديد <span>{fresh.length}</span></h2>
               <ul className="axnt-list">{fresh.map(row)}</ul>
             </>
           ) : null}
           {earlier.length ? (
             <>
-              <h2 className="axnt-group">Earlier</h2>
+              <h2 className="axnt-group">سابقاً</h2>
               <ul className="axnt-list">{earlier.map(row)}</ul>
             </>
           ) : null}
