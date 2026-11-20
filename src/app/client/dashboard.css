@@ -2846,9 +2846,13 @@ html:has(.axd) { scrollbar-gutter: stable; }
 }
 
 /* ======================= Arabic (RTL) ======================= */
-.axd { font-family: var(--font-noto-arabic), var(--font-inter), Inter, system-ui, sans-serif; }
+/* Inter first: numbers and Latin text keep exactly the design's font and sizes; Inter has no Arabic letters,
+   so the browser draws only those with Noto Sans Arabic */
+.axd { font-family: var(--font-inter), Inter, var(--font-noto-arabic), system-ui, sans-serif; }
 /* Arabic letters must stay joined: no letter-spacing on Arabic text */
 .axd :is(h1, h2, h3, b, strong, button, span, p, th) { letter-spacing: 0; }
+/* the big numbers are not Arabic text: they keep the design's tight spacing */
+.axd :is(.axn-stat strong, .axn-selected strong) { letter-spacing: -0.8px; }
 /* charts are drawn in SVG with left-to-right maths (time runs left → right) */
 .axd svg { direction: ltr; }
 /* numbers, emails, phones, links read left to right inside Arabic text */
