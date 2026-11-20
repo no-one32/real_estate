@@ -79,8 +79,6 @@ export default function RecommendPanel({
   const [answers, setAnswers] = useState<Answers>({});
   /** "my answers" summary open */
   const [review, setReview] = useState(false);
-  /** a question opened from the summary: once answered, go straight back to the results */
-  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -220,31 +218,30 @@ export default function RecommendPanel({
     return scored.sort((a, b) => b.score - a.score || priceOf(a.unit) - priceOf(b.unit)).slice(0, 3);
   }, [done, pool, answers, bands, priceOf]);
 
+  /** where to go after an answer: the first question still unanswered, or the results when all are done.
+   *  So changing question 1 while on question 4 brings the user straight back to question 4. */
+  const firstOpen = (a: Answers) => {
+    const i = questions.findIndex((x) => a[x.key] === undefined);
+    return i === -1 ? questions.length : i;
+  };
   const choose = (key: Key, value: Answers[Key]) => {
     const next = { ...answers, [key]: value };
     setAnswers(next);
-    const all = questions.every((x) => next[x.key] !== undefined);
-    window.setTimeout(() => {
-      if (editing && all) {
-        setEditing(false);
-        setStep(questions.length);
-      } else setStep((s) => s + 1);
-    }, 160);
+    window.setTimeout(() => setStep(firstOpen(next)), 160);
   };
   const restart = () => {
     setAnswers({});
     setStep(0);
     setReview(false);
-    setEditing(false);
   };
   const back = () => {
     if (review) return setReview(false);
-    setEditing(false);
     setStep((s) => Math.max(0, s - 1));
   };
+  /** forward without changing the answer (after going back) */
+  const forward = () => setStep((s) => (answers[questions[s]?.key] !== undefined ? Math.min(questions.length, s + 1) : s));
   const edit = (i: number) => {
     setReview(false);
-    setEditing(true);
     setStep(i);
   };
   const answered = questions.filter((x) => answers[x.key] !== undefined).length;
@@ -285,8 +282,36 @@ export default function RecommendPanel({
           إجاباتي
           {answered ? <i>{answered}</i> : null}
         </button>
-        {!done && cur && !review ? <span className="reco-step">السؤال {step + 1} من {questions.length}</span> : null}
+        {!done && cur && !review && answers[cur.key] !== undefined ? (
+          <button type="button" className="reco-tool" onClick={forward} title="السؤال التالي">
+            التالي
+            <Ico d={<path d="M15 6l-6 6 6 6" />} size={16} />
+          </button>
+        ) : null}
       </div>
+
+      {!review ? (
+        <nav className="reco-dots" aria-label="الأسئلة">
+          {questions.map((x, i) => {
+            const ok = answers[x.key] !== undefined;
+            const reachable = ok || i === firstOpen(answers);
+            return (
+              <button
+                key={x.key}
+                type="button"
+                className={`reco-dot${i === step ? " cur" : ""}${ok ? " ok" : ""}`}
+                onClick={() => edit(i)}
+                disabled={!reachable}
+                aria-current={i === step ? "step" : undefined}
+                title={ok ? `تغيير إجابة السؤال ${i + 1}` : `السؤال ${i + 1}`}
+              >
+                {i + 1}
+              </button>
+            );
+          })}
+          {done ? null : <span className="reco-step">السؤال {step + 1} من {questions.length}</span>}
+        </nav>
+      ) : null}
 
       {review ? (
         <div className="reco-body reco-review">
@@ -311,7 +336,7 @@ export default function RecommendPanel({
           </ol>
           <div className="reco-review-foot">
             {answered === questions.length ? (
-              <button type="button" className="reco-go" onClick={() => { setReview(false); setEditing(false); setStep(questions.length); }}>
+              <button type="button" className="reco-go" onClick={() => { setReview(false); setStep(questions.length); }}>
                 عرض النتائج
               </button>
             ) : (

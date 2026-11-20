@@ -6834,6 +6834,27 @@ html:not(.phone-layout) .app:has(.panel.open) .reco { left: calc(min(382px, 86vw
   font-weight: 700;
 }
 .reco-tools + .reco-body { padding-top: 12px; }
+/* numbered questions: tap any answered one to change it, then continue where you were */
+.reco-dots { display: flex; align-items: center; gap: 6px; padding: 10px 18px 0; }
+.reco-dots .reco-step { margin-inline-start: auto; }
+.reco-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #dbe4f0;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a8794;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.reco-dot.ok { background: #eef4ff; border-color: #9cc0f2; color: #3b7dd8; }
+.reco-dot.cur { background: #3b7dd8; border-color: #3b7dd8; color: #fff; }
+.reco-dot:hover:not(:disabled):not(.cur) { border-color: #3b7dd8; }
+.reco-dot:disabled { opacity: 0.4; cursor: default; }
+.reco-dots + .reco-body { padding-top: 12px; }
 .reco-answers { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .reco-answers button {
   display: flex;

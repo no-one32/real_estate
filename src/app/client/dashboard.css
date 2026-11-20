@@ -1743,6 +1743,16 @@ button.axc-status:hover { filter: brightness(0.97); }
 .axn-loading { min-height: 300px; display: grid; place-items: center; color: var(--axn-muted); }
 .axn-body { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; transition: opacity 0.2s ease; }
 .axn-body.stale { opacity: 0.55; }
+/* placeholders shown in the boxes until the numbers arrive */
+.axn-skel {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eef2f8 0%, #f7f9fc 50%, #eef2f8 100%) 0 0 / 200% 100%;
+  animation: axn-skel 1.2s ease-in-out infinite;
+}
+.axn-skel.num { display: inline-block; width: 70px; height: 28px; vertical-align: middle; }
+.axn-skel.line { width: 60%; height: 11px; margin-top: 4px; }
+@keyframes axn-skel { to { background-position: -200% 0; } }
 
 .axn-stats { display: grid; gap: 10px; }
 .axn-stats.three { grid-template-columns: repeat(3, 1fr); }

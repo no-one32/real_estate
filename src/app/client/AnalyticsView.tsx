@@ -311,7 +311,7 @@ export default function AnalyticsView({
       {err ? <p className="axd-err" role="alert">{err}</p> : null}
 
       {!data ? (
-        <div className="axn-loading">{loading ? "Loading analytics…" : null}</div>
+        <AnalyticsSkeleton sub={sub} />
       ) : sub === "traffic" && t ? (
         <div className={`axn-body${loading ? " stale" : ""}`}>
           <div className="axn-stats three">
@@ -507,6 +507,56 @@ export default function AnalyticsView({
 
       <p className="axn-foot">AXIS Studio · Analytics · anonymous visitor data</p>
     </section>
+  );
+}
+
+/** The page's boxes, drawn at once with their titles while the numbers load; the real ones replace them in place. */
+function AnalyticsSkeleton({ sub }: { sub: "traffic" | "property" }) {
+  const bar = (h: number) => <div className="axn-skel" style={{ height: h }} />;
+  const stat = (label: string, icon: string, tint: string) => (
+    <Stat key={label} label={label} value={<span className="axn-skel num" />} sub={<span className="axn-skel line" />} icon={icon} tint={tint} />
+  );
+  if (sub === "traffic")
+    return (
+      <div className="axn-body" aria-busy="true" aria-label="Loading analytics">
+        <div className="axn-stats three">
+          {stat("Total Visitors", "♙", "#EAF1FF")}
+          {stat("Unique Visitors", "◎", "#E7FBF3")}
+          {stat("Returning Visitors", "◷", "#FFF4DF")}
+        </div>
+        <div className="axn-row half">
+          <Card title="Traffic Sources" sub="Where visitors discovered this maquette">{bar(200)}</Card>
+          <Card title="Device Distribution" sub="Devices used to access the virtual tour">{bar(200)}</Card>
+        </div>
+        <Card title="Visitors & Sessions Over Time" sub="Activity across the selected period">{bar(240)}</Card>
+        <div className="axn-row wide">
+          <Card title="Visitor Geography" sub="Top locations by visitor count">{bar(160)}</Card>
+          <Card title="Engagement Summary" sub="Quality of visitor sessions">{bar(160)}</Card>
+        </div>
+        <Card title="Recent Sessions" sub="Latest anonymized visitor activity">{bar(180)}</Card>
+      </div>
+    );
+  return (
+    <div className="axn-body" aria-busy="true" aria-label="Loading analytics">
+      <div className="axn-stats four">
+        {stat("Properties Viewed", "⌂", "#EAF1FF")}
+        {stat("Total Property Views", "◉", "#F1EBFF")}
+        {stat("Favorites", "♡", "#FFEAED")}
+        {stat("Property Inquiries", "✉", "#E7FBF3")}
+      </div>
+      <div className="axn-row half">
+        <Card title="Most Viewed Properties" sub="Ranked by unique visitors">{bar(200)}</Card>
+        <Card title="Most Liked Apartments" sub="Top 20 units by favorites">{bar(200)}</Card>
+      </div>
+      <div className="axn-row wide">
+        <Card title="Property Interest Heatmap" sub="Click a unit to inspect its metrics">{bar(260)}</Card>
+        <Card title="Selected Property" sub="Pick a villa in the heatmap">{bar(260)}</Card>
+      </div>
+      <div className="axn-row half">
+        <Card title="Most Contacted Properties" sub="Units generating the most inquiry actions">{bar(180)}</Card>
+        <Card title="Average Engagement by Property Type" sub="Average active time per viewed unit">{bar(180)}</Card>
+      </div>
+    </div>
   );
 }
 
