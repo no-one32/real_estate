@@ -2708,3 +2708,88 @@ html:has(.axd) { scrollbar-gutter: stable; }
 .axq-select .dsel-list button { font-size: 12px; }
 .axc-export-menu button { gap: 10px; }
 .axc-status-pop { gap: 2px; }
+
+
+/* ======================= Phone: the sidebar becomes a bar at the top ======================= */
+/* (.axd-top is set by ClientShell on phones only; tablets and PC keep the sidebar) */
+.axd.axd-top { --axd-bar: 68px; flex-direction: column; align-items: stretch; }
+.axd-top .axd-side {
+  z-index: 20;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  height: var(--axd-bar);
+  padding: 0 16px;
+  border-radius: 0 0 22px 22px;
+}
+.axd-top .axd-logo { width: auto; height: auto; padding: 0; }
+.axd-top .axd-logo img { width: 34px; height: 44px; }
+.axd-top .axd-nav { flex-direction: row; gap: 4px; width: auto; margin-left: 12px; }
+.axd-top .axd-nav-item {
+  justify-content: center;
+  gap: 10px;
+  width: auto;
+  height: 46px;
+  padding: 0 16px;
+  border-radius: 14px;
+  font-size: 15px;
+}
+.axd-top .axd-label { display: inline; }
+.axd-top .axd-divider { display: none; }
+.axd-top .axd-side-bottom { flex-direction: row; align-items: center; gap: 4px; margin: 0 0 0 auto; }
+.axd-top .axd-nav-item.axd-small { width: 44px; height: 44px; padding: 0; }
+.axd-top .axd-small .axd-label { display: none; }
+.axd-top .axd-account {
+  width: auto;
+  height: auto;
+  margin: 0 0 0 6px;
+  padding: 4px 4px 4px 4px;
+  gap: 4px;
+  border-radius: 999px;
+}
+.axd-top .axd-avatar { width: 38px; height: 38px; font-size: 14px; }
+.axd-top .axd-account-text { display: none; }
+.axd-top .axd-account-toggle {
+  position: static;
+  flex: none;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: none;
+  box-shadow: none;
+}
+.axd-top .axd-chev { display: inline-flex; }
+/* the log-out menu opens downwards from the bar */
+.axd-top .axd-menu { top: calc(100% + 8px); bottom: auto; left: auto; right: 0; width: 170px; }
+.axd-top .axd-photo-err { left: auto; right: 0; width: 200px; text-align: right; }
+.axd-top .axd-work { width: 100%; min-height: calc(var(--axd-h, 100dvh) - var(--axd-bar)); }
+.axd-top .axas { height: calc(var(--axd-h, 100dvh) - var(--axd-bar)); }
+.axd-top .axd-watermark { left: 50%; }
+
+/* phone: icons only so everything fits on one line */
+@media (max-width: 760px) {
+  .axd.axd-top { --axd-bar: 60px; }
+  .axd-top .axd-side { gap: 4px; padding: 0 10px; border-radius: 0 0 18px 18px; }
+  .axd-top .axd-logo img { width: 26px; height: 34px; }
+  .axd-top .axd-nav { gap: 2px; margin-left: 4px; }
+  .axd-top .axd-nav-item { width: 40px; height: 40px; padding: 0; border-radius: 12px; }
+  .axd-top .axd-nav-item svg { width: 21px; height: 21px; }
+  .axd-top .axd-label { display: none; }
+  .axd-top .axd-side-bottom { gap: 0; }
+  .axd-top .axd-nav-item.axd-small { width: 38px; height: 38px; }
+  .axd-top .axd-account { position: relative; margin-left: 2px; padding: 0; background: none; box-shadow: none; }
+  .axd-top .axd-avatar { width: 34px; height: 34px; }
+  /* the menu arrow sits as a small badge on the photo */
+  .axd-top .axd-account-toggle {
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(29, 41, 64, 0.2);
+  }
+  .axd-top .axd-account-toggle svg { width: 11px; height: 11px; }
+}

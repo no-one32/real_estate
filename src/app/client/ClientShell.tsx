@@ -54,6 +54,8 @@ export default function ClientShell({ children, view, onView, notifications, nam
   // so proportions match the design on any computer screen. Phones / small windows keep the normal layout.
   const [scale, setScale] = useState(1);
   const [viewH, setViewH] = useState(1080);
+  /** phone: the menu becomes a bar at the top instead of the left sidebar (tablet and PC keep the sidebar) */
+  const [topBar, setTopBar] = useState(false);
   useLayoutEffect(() => {
     const fit = () => {
       const w = window.innerWidth;
@@ -64,6 +66,9 @@ export default function ClientShell({ children, view, onView, notifications, nam
       setUiScale(s);
       setScale(s);
       setViewH(h);
+      // phones only (portrait, or landscape: a touch screen whose short side is phone-sized); tablets and PC keep the sidebar
+      const touch = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+      setTopBar(w <= 760 || (touch && Math.min(w, h) <= 500));
     };
     fit();
     window.addEventListener("resize", fit);
@@ -123,7 +128,7 @@ export default function ClientShell({ children, view, onView, notifications, nam
   ];
 
   return (
-    <div className={`axd axd-view-${view}`} style={{ zoom: scale, ["--axd-h" as string]: `${viewH / scale}px` }}>
+    <div className={`axd axd-view-${view}${topBar ? " axd-top" : ""}`} style={{ zoom: scale, ["--axd-h" as string]: `${viewH / scale}px` }}>
       <AxisWatermark className="axd-watermark" />
 
       <aside className="axd-side">
