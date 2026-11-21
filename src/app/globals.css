@@ -6760,6 +6760,7 @@ html:not(.phone-layout) .app:has(.panel.open) .reco { left: calc(min(382px, 86vw
 .reco-body h3 { margin-top: 4px; font-size: 18px; font-weight: 700; line-height: 28px; }
 .reco-sub { font-size: 12.5px; color: #6b7a8c; }
 .reco-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.reco-options > .reco-opt:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .reco-opt {
   display: flex;
   flex-direction: column;

@@ -19,7 +19,7 @@ type Answers = {
   people?: 2 | 4 | 6 | 7;
   space?: "small" | "mid" | "large" | "any";
   mood?: "quiet" | "lively" | "middle" | "any";
-  near?: "mosque" | "school" | "road" | "any";
+  near?: "mosque" | "school" | "park" | "road" | "any";
 };
 type Key = keyof Answers;
 type Option = { value: Answers[Key]; title: string; hint?: string; icon: React.ReactNode };
@@ -44,6 +44,7 @@ const I = {
   leaf: <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10ZM2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />,
   road: <path d="M4 21 8 3M20 21 16 3M12 5v2M12 11v2M12 17v2" />,
   school: <><path d="m4 10 8-5 8 5-8 5Z" /><path d="M7 12v5c3 2 7 2 10 0v-5M20 10v6" /></>,
+  tree: <><path d="M12 22v-6" /><path d="M8 16h8l-2.5-3.5H16L12 6l-4 6.5h2.5Z" /></>,
   mosque: <><path d="M4 21V11a8 6 0 0 1 16 0v10M2 21h20M12 2v3M9.5 21v-4a2.5 2.5 0 0 1 5 0v4" /></>,
   music: <><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></>,
   target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></>,
@@ -147,7 +148,7 @@ export default function RecommendPanel({
           options: [
             { value: "quiet", title: "هادئ", hint: "بعيداً عن الطريق الرئيسي والسيارات", icon: <Ico d={I.leaf} /> },
             { value: "lively", title: "على الأطراف", hint: "قرب الطريق الرئيسي وسهولة الخروج", icon: <Ico d={I.music} /> },
-            { value: "middle", title: "في وسط المشروع", hint: "قرب المسجد والمدرسة", icon: <Ico d={I.target} /> },
+            { value: "middle", title: "في وسط المشروع", hint: "قرب المسجد والمدرسة والحديقة", icon: <Ico d={I.target} /> },
             { value: "any", title: "لا يهم", hint: "أي موقع", icon: <Ico d={I.shuffle} /> },
           ],
         },
@@ -158,6 +159,7 @@ export default function RecommendPanel({
           options: [
             { value: "mosque", title: "المسجد", hint: "في وسط المشروع", icon: <Ico d={I.mosque} /> },
             { value: "school", title: "المدرسة", hint: "في وسط المشروع، للأطفال", icon: <Ico d={I.school} /> },
+            { value: "park", title: "الحديقة", hint: "المساحة الخضراء في وسط المشروع", icon: <Ico d={I.tree} /> },
             { value: "road", title: "الطريق الرئيسي", hint: "على أطراف المشروع، سهولة التنقل", icon: <Ico d={I.road} /> },
             { value: "any", title: "لا يهم", hint: "", icon: <Ico d={I.shuffle} /> },
           ],
@@ -246,7 +248,7 @@ export default function RecommendPanel({
           if (edge) reasons.push("قريبة من الطريق الرئيسي");
         } else {
           score += 15 * (1 - t);
-          if (inner) reasons.push(n === "mosque" ? "قريبة من المسجد" : "قريبة من المدرسة");
+          if (inner) reasons.push(n === "mosque" ? "قريبة من المسجد" : n === "park" ? "قريبة من الحديقة" : "قريبة من المدرسة");
         }
       }
       return { unit: u, score: Math.round((score / Math.max(1, max)) * 100), reasons: [...new Set(reasons)].slice(0, 3) };
