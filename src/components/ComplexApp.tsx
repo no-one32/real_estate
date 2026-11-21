@@ -1441,8 +1441,8 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
     void pickUnit(u);
   };
 
-  /* ---------- villa address in the URL bar: /c/<slug>/<villa number> ---------- */
-  const basePath = `/c/${tour.slug}`;
+  /* ---------- villa address in the URL bar: /digital-twins/<slug>/<villa number> ---------- */
+  const basePath = `/digital-twins/${tour.slug}`;
   const villaPath = (u: Unit) => `${basePath}/${encodeURIComponent(u.displayId)}`;
   const villaFromPath = (path: string) => {
     if (!path.startsWith(`${basePath}/`)) return null;
@@ -1512,7 +1512,7 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [units, basePath]);
 
-  // opened directly on /c/<slug>/<villa>: show the inside of that villa straight away
+  // opened directly on /digital-twins/<slug>/<villa>: show the inside of that villa straight away
   // (no intro screen, no flight over the maquette)
   const deepLinkDone = useRef(false);
   useEffect(() => {

@@ -29,7 +29,8 @@ function encodedUrl(spec: Spec) {
   if (!spec.id) return spec.url;
   try {
     const u = new URL(spec.url);
-    if (!/^\/c\//.test(u.pathname)) return spec.url;
+    if (!/^\/(c|digital-twins)\//.test(u.pathname)) return spec.url;
+    u.pathname = u.pathname.replace(/^\/c\//, "/digital-twins/"); // codes saved before the rename
     u.searchParams.set("src", "qr");
     u.searchParams.set("qr", spec.id);
     return u.toString();
@@ -157,7 +158,7 @@ export default function QrView({
   tabs: ReactNode;
 }) {
   // ?src=qr lets Analytics count visits that came from a scanned code
-  const tourUrl = useMemo(() => (typeof window === "undefined" ? `/c/${cx.slug}?src=qr` : `${window.location.origin}/c/${cx.slug}?src=qr`), [cx.slug]);
+  const tourUrl = useMemo(() => (typeof window === "undefined" ? `/digital-twins/${cx.slug}?src=qr` : `${window.location.origin}/digital-twins/${cx.slug}?src=qr`), [cx.slug]);
   const initial: Spec = { url: tourUrl, size: 1024, label: cx.name };
   const [draft, setDraft] = useState<Spec>(initial);
   const [spec, setSpec] = useState<Spec>(initial);

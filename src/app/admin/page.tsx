@@ -93,7 +93,7 @@ export default function AdminHome() {
               <p>{n === 0 ? "No clients yet" : n === 1 ? "1 client" : `${n} clients`}</p>
               <span className="card-actions">
                 <Link className="btn ghost" href={`/admin/complexes/${c.id}`}>Open</Link>
-                <Link className="btn ghost" href={`/c/${c.slug}`}>Tour</Link>
+                <Link className="btn ghost" href={`/digital-twins/${c.slug}`}>Tour</Link>
               </span>
             </article>
           );

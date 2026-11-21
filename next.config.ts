@@ -8,7 +8,11 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "64mb" },
   },
   async redirects() {
-    return [{ source: "/", destination: "/c/villas-ajyad", permanent: false }];
+    return [
+      { source: "/", destination: "/digital-twins/villas-ajyad", permanent: false },
+      // old addresses (QR codes already printed, shared links): /c/... keeps working and lands on /digital-twins/...
+      { source: "/c/:path*", destination: "/digital-twins/:path*", permanent: false },
+    ];
   },
 };
 

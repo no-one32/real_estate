@@ -403,7 +403,7 @@ export default function ComplexAdminPage() {
         <a className={tab === "media" ? "on" : ""} href="#media" onClick={(e) => { e.preventDefault(); setTab("media"); }}>Upload</a>
         <a className={tab === "leads" ? "on" : ""} href="#leads" onClick={(e) => { e.preventDefault(); setTab("leads"); }}>Leads ({leads.length})</a>
         <a className={tab === "qr" ? "on" : ""} href="#qr" onClick={(e) => { e.preventDefault(); setTab("qr"); }}>Code</a>
-        <Link href={`/c/${cx.slug}`}>View tour</Link>
+        <Link href={`/digital-twins/${cx.slug}`}>View tour</Link>
       </div>
       {err && <p className="err">{err}</p>}
       {msg && <p className="ok">{msg}</p>}

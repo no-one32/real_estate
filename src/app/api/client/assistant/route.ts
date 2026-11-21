@@ -16,7 +16,7 @@ const MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 const MAX_TURNS = 12;
 const MAX_CHARS = 1500;
-const RECENT_LEADS = 25;
+const RECENT_LEADS = 12;
 const DAY = 864e5;
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
@@ -43,6 +43,22 @@ async function rows<T>(q: PromiseLike<{ data: unknown; error: unknown }>): Promi
   }
 }
 
+/** Supabase gives at most 1000 rows per request: page through (same as the Analytics page). */
+async function allRows<T>(make: (from: number, to: number) => PromiseLike<{ data: unknown; error: unknown }>, cap = 30000): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; from < cap; from += 1000) {
+    try {
+      const { data, error } = await make(from, from + 999);
+      if (error || !Array.isArray(data)) return out;
+      out.push(...(data as T[]));
+      if (data.length < 1000) return out;
+    } catch {
+      return out;
+    }
+  }
+  return out;
+}
+
 /** Compact snapshot of one project. Contact details (email, phone) are left out on purpose. */
 async function snapshot(sb: SupabaseClient, c: { id: string; name: string; city?: string | null }) {
   const now = Date.now();
@@ -56,16 +72,29 @@ async function snapshot(sb: SupabaseClient, c: { id: string; name: string; city?
     rows<{ prenom: string; nom: string; unit_display_id: string | null; favorite_units: string[] | null; status: string | null; subject: string | null; created_at: string }>(
       sb.from("leads").select("prenom, nom, unit_display_id, favorite_units, status, subject, created_at").eq("complex_id", c.id).order("created_at", { ascending: false }).limit(500),
     ),
-    rows<{ visitor_id: string; created_at: string; source: string | null; device: string | null; country: string | null; qr_id: string | null }>(
-      sb.from("complex_visits").select("visitor_id, created_at, source, device, country, qr_id").eq("complex_id", c.id).gte("created_at", since30).limit(5000),
+    allRows<{ visitor_id: string; created_at: string; source: string | null; device: string | null; country: string | null; qr_id: string | null }>((a, b) =>
+      sb.from("complex_visits").select("visitor_id, created_at, source, device, country, qr_id").eq("complex_id", c.id).gte("created_at", since30).order("created_at", { ascending: false }).range(a, b),
     ),
-    rows<{ unit_display_id: string; kind: string }>(
-      sb.from("unit_events").select("unit_display_id, kind").eq("complex_id", c.id).gte("created_at", since30).limit(5000),
+    // all time (not only 30 days): needed for "least viewed" and for villas never opened
+    allRows<{ unit_display_id: string; kind: string; created_at: string }>((a, b) =>
+      sb.from("unit_events").select("unit_display_id, kind, created_at").eq("complex_id", c.id).order("created_at", { ascending: false }).range(a, b),
     ),
     rows<{ id: string; label: string | null; created_at: string }>(sb.from("qr_codes").select("id, label, created_at").eq("complex_id", c.id)),
   ]);
 
   const prices = units.map((u) => u.price).filter((p) => p > 0);
+  const since30ms = now - 30 * DAY;
+  const events30 = events.filter((e) => Date.parse(e.created_at) >= since30ms);
+
+  /** every villa of the project with its count (0 included), fewest first: answers "least viewed / never viewed" */
+  const perVilla = (list: typeof events, kind: string) => {
+    const n = new Map<string, number>(units.map((u) => [u.display_id, 0]));
+    for (const e of list) if (e.kind === kind && e.unit_display_id) n.set(e.unit_display_id, (n.get(e.unit_display_id) ?? 0) + 1);
+    return [...n.entries()].sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0], undefined, { numeric: true }));
+  };
+  const views30 = perVilla(events30, "view");
+  const viewsAll = perVilla(events, "view");
+  const compact = (l: [string, number][]) => l.map(([id, k]) => `${id}:${k}`).join(", ");
   const byQr = tally(visits.map((v) => v.qr_id).filter(Boolean), 50);
   const leadName = (l: (typeof leads)[number]) =>
     [l.prenom?.trim(), (l.nom || "").replace(/^(السيد|السيدة|لا)\s+/, "").trim()].filter(Boolean).join(" ") || "Unnamed";
@@ -78,10 +107,13 @@ async function snapshot(sb: SupabaseClient, c: { id: string; name: string; city?
       byStatus: tally(units.map((u) => u.status)),
       byModel: tally(units.map((u) => u.model || `type ${u.type}`), 12),
       priceSAR: prices.length ? { min: Math.min(...prices), max: Math.max(...prices) } : null,
+      // short form "villa model/bedrooms/m²/SAR" keeps the prompt small (the AI service counts text per minute)
+      availableFormat: "villa model/bedrooms/m2/priceSAR",
       available: units
         .filter((u) => u.status === "available")
         .slice(0, 60)
-        .map((u) => `${u.display_id} (${u.model || `type ${u.type}`}, ${u.rooms} bd, ${u.surface} m², SAR ${u.price})`),
+        .map((u) => `${u.display_id} ${u.model || `T${u.type}`}/${u.rooms}/${u.surface}/${u.price}`)
+        .join(", "),
     },
     visitsLast30Days: {
       visits: visits.length,
@@ -92,9 +124,19 @@ async function snapshot(sb: SupabaseClient, c: { id: string; name: string; city?
       byCountry: tally(visits.map((v) => v.country)),
     },
     villaInterestLast30Days: {
-      mostViewed: tally(events.filter((e) => e.kind === "view").map((e) => e.unit_display_id), 5),
-      mostFavorited: tally(events.filter((e) => e.kind === "favorite").map((e) => e.unit_display_id), 5),
+      mostViewed: Object.fromEntries([...views30].reverse().slice(0, 10)),
+      leastViewed: Object.fromEntries(views30.slice(0, 10)),
+      neverViewed: views30.filter(([, k]) => k === 0).length,
+      mostFavorited: tally(events30.filter((e) => e.kind === "favorite").map((e) => e.unit_display_id), 5),
     },
+    villaInterestAllTime: {
+      totalViews: events.filter((e) => e.kind === "view").length,
+      mostViewed: Object.fromEntries([...viewsAll].reverse().slice(0, 10)),
+      leastViewed: Object.fromEntries(viewsAll.slice(0, 10)),
+      neverViewed: viewsAll.filter(([, k]) => k === 0).length,
+    },
+    /** "villa:views" for EVERY villa, fewest first (30 days only: keeps the prompt small for the AI service's per-minute limit) */
+    viewsPerVillaLast30Days: compact(views30),
     qrCodes: qrs.map((q, i) => ({ name: q.label || `QR${qrs.length - i}`, created: day(q.created_at), visitsLast30Days: byQr[q.id] ?? 0 })),
     contacts: {
       total: leads.length,
@@ -119,8 +161,11 @@ function systemPrompt(data: unknown, clientName: string) {
     `You are talking to ${clientName}. Today is ${day(new Date().toISOString())}.`,
     "Answer questions about their projects using ONLY the JSON data below. If the data does not contain the answer, say so plainly and, when useful, say which dashboard page to check. The dashboard is in Arabic; use these page names: مشاريعي (projects), الإحصائيات (analytics), العملاء (contacts), الوحدات (apartments), رمز QR, مركز المساعدة (help).",
     "Never invent numbers, names or villas. Prices are in Saudi riyals (SAR).",
+    "Never mention the names of the data fields (like villaInterestAllTime or leastViewed) or say \"JSON\": speak naturally, e.g. \"according to your statistics\". When you list villas by views, give the number of views next to each villa.",
     "Reply in the language of the user's last message (Arabic, French or English); when unsure, reply in Arabic. Write numbers with Western digits (0-9). Keep answers short and clear; use a short list when you give several items.",
     "Contact statuses: new = new lead, in_progress = being followed up, sold = closed.",
+    "Villa views: villaInterestLast30Days / villaInterestAllTime give the most and least viewed villas; viewsPerVillaLast30Days lists every villa as \"villa:views\" (fewest first, 0 = never opened). Use them for any question about the most, least or never viewed villas, or the views of one villa. Say which period you used (last 30 days unless the user asks otherwise); if several villas share the lowest count, say how many and list a few.",
+    "Statuses of villas: available = متاحة, reserved = محجوزة, sold = مباعة.",
     "",
     "DATA:",
     JSON.stringify(data),
@@ -154,20 +199,30 @@ export async function POST(req: Request) {
   const data = { projects: await Promise.all(complexes.map((c) => snapshot(service, c))) };
   const clientName = auth.profile?.full_name || "the client";
 
-  let res: Response;
-  try {
-    res = await fetch(GROQ_URL, {
+  const ask = () =>
+    fetch(GROQ_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
         temperature: 0.2,
-        max_tokens: 900,
+        max_tokens: 700,
         reasoning_effort: "low",
         include_reasoning: false,
         messages: [{ role: "system", content: systemPrompt(data, clientName) }, ...history],
       }),
     });
+  let res: Response;
+  try {
+    res = await ask();
+    // the AI service limits text per minute: when it says "wait a few seconds", wait once and ask again
+    if (res.status === 429) {
+      const wait = Number(res.headers.get("retry-after")) || 0;
+      if (wait > 0 && wait <= 30) {
+        await new Promise((r) => setTimeout(r, wait * 1000 + 300));
+        res = await ask();
+      }
+    }
   } catch {
     return NextResponse.json({ error: "Could not reach the assistant service. Try again." }, { status: 502 });
   }

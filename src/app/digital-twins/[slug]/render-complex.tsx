@@ -4,7 +4,7 @@ import { loadComplexPayload } from "@/lib/load-complex";
 import { buildTour } from "@/lib/tour";
 import Link from "next/link";
 
-/** Shared by /c/<slug> and /c/<slug>/<villa>. */
+/** Shared by /digital-twins/<slug> and /digital-twins/<slug>/<villa>. */
 export async function renderComplex(slug: string, villa?: string) {
   const access = await canViewComplex(slug);
   if (!access.ok) {

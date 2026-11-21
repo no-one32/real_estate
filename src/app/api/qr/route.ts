@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     if (!access.ok) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    const target = `${req.nextUrl.origin}/c/${slug}`;
+    const target = `${req.nextUrl.origin}/digital-twins/${slug}`;
     const png = await QRCode.toBuffer(target, {
       type: "png",
       width: 640,

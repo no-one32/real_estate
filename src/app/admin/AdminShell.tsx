@@ -51,7 +51,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               {toursOpen && (
                 <div className="tour-list">
                   {projects.map((p) => (
-                    <Link key={p.id} href={`/c/${p.slug}`}>{p.name}</Link>
+                    <Link key={p.id} href={`/digital-twins/${p.slug}`}>{p.name}</Link>
                   ))}
                 </div>
               )}
