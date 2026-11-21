@@ -137,7 +137,7 @@ function NextProjectCard() {
 
 /** Arabic names of the projects (keys in lower case, as saved in the database) */
 const AR_PROJECT_NAME: Record<string, string> = {
-  "villas ajyad": "فلل أجياد",
+  "villas ajyad": "فيلات أجياد",
 };
 
 export default function ClientHome() {
