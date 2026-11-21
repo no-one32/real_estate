@@ -1,13 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow, Bona_Nova, Inter, Livvic, Noto_Sans_Arabic, Saira } from "next/font/google";
+import { Barlow, Bona_Nova, Inter, Livvic, Saira } from "next/font/google";
 import "./globals.css";
 
-const notoArabic = Noto_Sans_Arabic({
-  subsets: ["arabic", "latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-noto-arabic",
-  display: "swap",
-});
+// Noto Sans Arabic is served from /public/fonts (see globals.css), not next/font/google:
+// Google Fonts sends Vercel's build machines a response for it that next/font cannot read, which failed the build.
 
 const bonaNova = Bona_Nova({
   subsets: ["latin"],
@@ -59,7 +55,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${notoArabic.variable} ${bonaNova.variable} ${saira.variable} ${inter.variable} ${livvic.variable} ${barlow.variable}`}>
+    <html lang="en" className={`${bonaNova.variable} ${saira.variable} ${inter.variable} ${livvic.variable} ${barlow.variable}`}>
       <body>{children}</body>
     </html>
   );
