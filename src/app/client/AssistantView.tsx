@@ -130,7 +130,9 @@ export default function AssistantView() {
           <textarea
             ref={inputRef}
             value={text}
-            dir="auto"
+            // empty: right to left, so the Arabic placeholder sits on the right with the "…" after it;
+            // once something is typed, the direction follows the text (an English question goes left to right)
+            dir={text.trim() ? "auto" : "rtl"}
             rows={1}
             maxLength={1500}
             placeholder="اكتب سؤالك…"
@@ -147,7 +149,7 @@ export default function AssistantView() {
             إرسال
           </button>
         </form>
-        <p className="axas-note">الإجابات من الذكاء الاصطناعي وقد تحتوي على أخطاء. تحقّق من الأرقام المهمة في الإحصائيات والعملاء.</p>
+        <p className="axas-note">هذه الإجابات آلية وقد لا تكون دقيقة بالكامل</p>
       </div>
     </section>
   );
