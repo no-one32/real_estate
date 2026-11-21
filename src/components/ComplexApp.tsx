@@ -2543,10 +2543,15 @@ function Spin360({ type, folder }: { type: number; folder: string }) {
     const h = Math.max(1, wrap.clientHeight);
     if (wrap.clientWidth < 2 || wrap.clientHeight < 2) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    canvas.style.width = `${w}px`;
-    canvas.style.height = `${h}px`;
+    // resizing a canvas reallocates it: only do it when the size really changed, not on every turn
+    const cw = Math.round(w * dpr);
+    const ch = Math.round(h * dpr);
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width = cw;
+      canvas.height = ch;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+    }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = "#E8EDF2";
     ctx.fillRect(0, 0, w, h);
@@ -2622,10 +2627,16 @@ function Spin360({ type, folder }: { type: number; folder: string }) {
         setLoading(false);
       }
     };
-    img.onload = () => finish(true);
+    // decode() unpacks the big frame off the main thread before it is drawn; without it the first
+    // drawImage of every frame decodes on the main thread and the first turn of the house stutters
+    const ready = () => {
+      const p = typeof img.decode === "function" ? img.decode() : Promise.resolve();
+      p.then(() => finish(true), () => finish(Boolean(img.naturalWidth)));
+    };
+    img.onload = ready;
     img.onerror = () => finish(false);
     if (img.src !== src) img.src = src;
-    else if (img.complete && img.naturalWidth) finish(true);
+    else if (img.complete && img.naturalWidth) ready();
     return promise;
   }, [n, tour, type, folder, draw, frameOffset]);
 

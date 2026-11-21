@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { COMPLEX } from "@/lib/complex";
 import type { ComplexRow, UnitRow, UnitStatus } from "@/lib/types";
@@ -21,6 +21,7 @@ import {
   IcX,
 } from "./DashIcons";
 
+/** rows per page on phone; on computer and tablet the page fills the screen instead (see fit below) */
 const PAGE = 10;
 const STATUS: Record<UnitStatus, string> = { available: "متاحة", reserved: "محجوزة", sold: "مباعة" };
 const STATUSES = Object.keys(STATUS) as UnitStatus[];
@@ -123,9 +124,47 @@ export default function ApartmentsView({
       .sort((a, b) => a.display_id.localeCompare(b.display_id, undefined, { numeric: true }));
   }, [list, q, status, model]);
 
-  const pages = Math.max(1, Math.ceil(filtered.length / PAGE));
+  // Computer / tablet: as many rows as fit on the screen, so the whole list page shows without scrolling
+  // (more villas go to the next pages). Phone keeps 10 rows and normal scrolling.
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [perPage, setPerPage] = useState(PAGE);
+  const [rowBox, setRowBox] = useState<{ head: number; row: number } | null>(null);
+  const fit = useCallback(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    if (window.innerWidth <= 760) {
+      setPerPage(PAGE);
+      setRowBox(null);
+      return;
+    }
+    const scroll = card.querySelector(".axa-scroll");
+    const head = card.querySelector("thead tr");
+    const row = card.querySelector("tbody tr");
+    if (!scroll || !head || !row) return;
+    const hr = head.getBoundingClientRect();
+    const rh = toUi(row.getBoundingClientRect().height);
+    if (rh < 10) return;
+    const headTop = toUi(hr.top + window.scrollY);
+    const below = toUi(card.getBoundingClientRect().bottom - scroll.getBoundingClientRect().bottom); // pages bar + card padding
+    const room = toUi(window.innerHeight) - headTop - toUi(hr.height) - below - 2 - 16;
+    setPerPage(Math.max(5, Math.min(30, Math.floor(room / rh))));
+    setRowBox({ head: toUi(hr.height), row: rh });
+  }, []);
+  const hasRows = filtered.length > 0;
+  useEffect(() => {
+    fit();
+    const t = window.setTimeout(fit, 300); // after fonts / layout settle
+    void document.fonts?.ready.then(fit);
+    window.addEventListener("resize", fit);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("resize", fit);
+    };
+  }, [fit, hasRows]);
+
+  const pages = Math.max(1, Math.ceil(filtered.length / perPage));
   const current = Math.min(page, pages);
-  const rows = filtered.slice((current - 1) * PAGE, current * PAGE);
+  const rows = filtered.slice((current - 1) * perPage, current * perPage);
   const keepPage = useRef(false);
   useEffect(() => {
     if (keepPage.current) {
@@ -146,7 +185,7 @@ export default function ApartmentsView({
     setQ("");
     setStatus("");
     setModel("");
-    setPage(Math.floor(i / PAGE) + 1);
+    setPage(Math.floor(i / perPage) + 1);
     setFlash(focus.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus?.n]);
@@ -394,8 +433,12 @@ export default function ApartmentsView({
         </div>
       ) : null}
 
-      <div className="axa-card">
-        <div className={`axa-scroll${pages > 1 ? " paged" : ""}`}>
+      <div className="axa-card" ref={cardRef}>
+        <div
+          className={`axa-scroll${pages > 1 ? " paged" : ""}`}
+          // keeps the same height on the last, shorter page so the pages bar does not jump
+          style={pages > 1 && rowBox ? { minHeight: Math.ceil(rowBox.head + perPage * rowBox.row + 2) } : undefined}
+        >
           <table className="axa-table">
             <colgroup>
               <col style={{ width: "33%" }} />

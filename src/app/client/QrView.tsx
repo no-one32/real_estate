@@ -44,7 +44,7 @@ type Saved = Spec & { id: string; at: string };
 type Row = { id: string; label: string; url: string; size: number; logo: string | null; created_at: string };
 const fromRow = (r: Row): Saved => ({ id: r.id, label: r.label, url: r.url, size: r.size, logo: r.logo || undefined, at: r.created_at });
 
-const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "qr";
+const slugify = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "qr";
 
 const fmtWhen = (iso: string) =>
   new Date(iso).toLocaleString("ar-u-nu-latn", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });

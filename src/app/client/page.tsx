@@ -135,6 +135,11 @@ function NextProjectCard() {
   );
 }
 
+/** Arabic names of the projects (keys in lower case, as saved in the database) */
+const AR_PROJECT_NAME: Record<string, string> = {
+  "villas ajyad": "فلل أجياد",
+};
+
 export default function ClientHome() {
   const [complexes, setComplexes] = useState<ComplexRow[]>([]);
   const [units, setUnits] = useState<UnitRow[]>([]);
@@ -163,7 +168,8 @@ export default function ClientHome() {
     setName(json.profile?.full_name || "");
     setEmail(json.profile?.email || "");
     setAvatar(json.profile?.avatar_url || null);
-    setComplexes(json.complexes ?? []);
+    // the dashboard is in Arabic: show the project names in Arabic too
+    setComplexes(((json.complexes ?? []) as ComplexRow[]).map((c) => ({ ...c, name: AR_PROJECT_NAME[c.name.trim().toLowerCase()] ?? c.name })));
     setUnits(json.units ?? []);
     setLeads(json.leads ?? []);
     setStats(json.stats ?? {});

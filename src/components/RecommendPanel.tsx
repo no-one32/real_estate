@@ -2,15 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { sarParts, type Unit } from "@/lib/complex";
+import { centerDistance } from "@/lib/villa-location";
 
 /**
  * "Villa finder": a few questions in Arabic, then the 3 available villas that fit best.
- * Budget, family size and space rank the villas. The two location questions (quiet / lively,
- * what is close by) are asked, but every villa gets the same fixed score for them for now:
- * the exact places (school, park, main road…) are not confirmed on the plan yet.
+ * Budget, family size and space rank the villas, and so does the location: the mosque, the school
+ * and the park are in the middle of the project, the main road (cars) runs along the edges.
+ * Each villa's distance to the middle comes from villa-location.ts.
  */
 
-/** points every villa gets for the two location questions (same for all, so they don't change the ranking) */
+/** points for the location questions when a villa is not on the plan (same for all, so they don't change the ranking) */
 const LOCATION_POINTS = 30;
 
 type Answers = {
@@ -18,7 +19,7 @@ type Answers = {
   people?: 2 | 4 | 6 | 7;
   space?: "small" | "mid" | "large" | "any";
   mood?: "quiet" | "lively" | "middle" | "any";
-  near?: "school" | "park" | "road" | "any";
+  near?: "mosque" | "school" | "road" | "any";
 };
 type Key = keyof Answers;
 type Option = { value: Answers[Key]; title: string; hint?: string; icon: React.ReactNode };
@@ -43,7 +44,7 @@ const I = {
   leaf: <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10ZM2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />,
   road: <path d="M4 21 8 3M20 21 16 3M12 5v2M12 11v2M12 17v2" />,
   school: <><path d="m4 10 8-5 8 5-8 5Z" /><path d="M7 12v5c3 2 7 2 10 0v-5M20 10v6" /></>,
-  tree: <><path d="M12 22v-6" /><path d="M8 16h8l-2.5-3.5H16L12 6l-4 6.5h2.5Z" /></>,
+  mosque: <><path d="M4 21V11a8 6 0 0 1 16 0v10M2 21h20M12 2v3M9.5 21v-4a2.5 2.5 0 0 1 5 0v4" /></>,
   music: <><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></>,
   target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></>,
   shuffle: <path d="M2 18h3.5c2 0 3.3-1 4.5-3l3-6c1.1-2 2.5-3 4.5-3H22M18 2l4 4-4 4M2 6h3.5c1.4 0 2.5.5 3.4 1.5M22 18h-4.5c-1.4 0-2.5-.5-3.4-1.5M18 14l4 4-4 4" />,
@@ -144,9 +145,9 @@ export default function RecommendPanel({
           title: "هل تفضل مكاناً هادئاً أم حيوياً؟",
           sub: "موقع الفيلا داخل المشروع",
           options: [
-            { value: "quiet", title: "هادئ", hint: "بعيداً عن الطريق الرئيسي", icon: <Ico d={I.leaf} /> },
-            { value: "lively", title: "حيوي", hint: "قرب الطريق السريع", icon: <Ico d={I.music} /> },
-            { value: "middle", title: "في الوسط", hint: "قرب المدرسة والخدمات", icon: <Ico d={I.target} /> },
+            { value: "quiet", title: "هادئ", hint: "بعيداً عن الطريق الرئيسي والسيارات", icon: <Ico d={I.leaf} /> },
+            { value: "lively", title: "على الأطراف", hint: "قرب الطريق الرئيسي وسهولة الخروج", icon: <Ico d={I.music} /> },
+            { value: "middle", title: "في وسط المشروع", hint: "قرب المسجد والمدرسة", icon: <Ico d={I.target} /> },
             { value: "any", title: "لا يهم", hint: "أي موقع", icon: <Ico d={I.shuffle} /> },
           ],
         },
@@ -155,9 +156,9 @@ export default function RecommendPanel({
           title: "ماذا تريد أن يكون قريباً منك؟",
           sub: "نختار الفيلات الأقرب إليه",
           options: [
-            { value: "school", title: "مدرسة", hint: "للأطفال", icon: <Ico d={I.school} /> },
-            { value: "park", title: "حديقة", hint: "مساحات خضراء", icon: <Ico d={I.tree} /> },
-            { value: "road", title: "طريق رئيسي", hint: "سهولة التنقل", icon: <Ico d={I.road} /> },
+            { value: "mosque", title: "المسجد", hint: "في وسط المشروع", icon: <Ico d={I.mosque} /> },
+            { value: "school", title: "المدرسة", hint: "في وسط المشروع، للأطفال", icon: <Ico d={I.school} /> },
+            { value: "road", title: "الطريق الرئيسي", hint: "على أطراف المشروع، سهولة التنقل", icon: <Ico d={I.road} /> },
             { value: "any", title: "لا يهم", hint: "", icon: <Ico d={I.shuffle} /> },
           ],
         },
@@ -167,6 +168,12 @@ export default function RecommendPanel({
   }, [bands]);
 
   const done = step >= questions.length;
+
+  // how far each villa is from the middle (0 = next to the mosque / school, 1 = on the edge, by the main road)
+  const spread = useMemo(() => {
+    const ds = pool.map((u) => centerDistance(u.id)).filter((d): d is number => d !== null);
+    return ds.length ? { lo: Math.min(...ds), hi: Math.max(...ds) } : null;
+  }, [pool]);
 
   const results: Scored[] = useMemo(() => {
     if (!done) return [];
@@ -210,13 +217,42 @@ export default function RecommendPanel({
         if (gap === 0) reasons.push(`مساحة ${fmt(u.surface)} م²`);
       }
 
-      // location (quiet / lively + close by): same fixed score for every villa
+      // location (15 + 15): middle = mosque / school, edges = main road with the cars
       max += 30;
-      score += LOCATION_POINTS;
+      const d = centerDistance(u.id);
+      if (d === null || !spread) score += LOCATION_POINTS;
+      else {
+        const t = spread.hi > spread.lo ? (d - spread.lo) / (spread.hi - spread.lo) : 0.5;
+        const inner = t < 0.34;
+        const edge = t > 0.66;
+        const m = answers.mood ?? "any";
+        if (m === "any") score += 15;
+        else if (m === "middle") {
+          score += 15 * (1 - t);
+          if (inner) reasons.push("في وسط المشروع");
+        } else if (m === "lively") {
+          score += 15 * t;
+          if (edge) reasons.push("على الأطراف قرب الطريق الرئيسي");
+        } else {
+          // quiet: away from the main road (and not right on the busy centre)
+          score += 15 * (edge ? 2 * (1 - t) : t < 0.15 ? 0.75 : 1);
+          if (!edge && !inner) reasons.push("بعيدة عن الطريق الرئيسي");
+          else if (inner) reasons.push("بعيدة عن السيارات");
+        }
+        const n = answers.near ?? "any";
+        if (n === "any") score += 15;
+        else if (n === "road") {
+          score += 15 * t;
+          if (edge) reasons.push("قريبة من الطريق الرئيسي");
+        } else {
+          score += 15 * (1 - t);
+          if (inner) reasons.push(n === "mosque" ? "قريبة من المسجد" : "قريبة من المدرسة");
+        }
+      }
       return { unit: u, score: Math.round((score / Math.max(1, max)) * 100), reasons: [...new Set(reasons)].slice(0, 3) };
     });
     return scored.sort((a, b) => b.score - a.score || priceOf(a.unit) - priceOf(b.unit)).slice(0, 3);
-  }, [done, pool, answers, bands, priceOf]);
+  }, [done, pool, answers, bands, priceOf, spread]);
 
   /** where to go after an answer: the first question still unanswered, or the results when all are done.
    *  So changing question 1 while on question 4 brings the user straight back to question 4. */
