@@ -56,6 +56,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${bonaNova.variable} ${saira.variable} ${inter.variable} ${livvic.variable} ${barlow.variable}`}>
+      <head>
+        {/* same as next/font did: start downloading the Arabic and Latin files right away */}
+        <link rel="preload" href="/fonts/noto-sans-arabic-arabic.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/noto-sans-arabic-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      </head>
       <body>{children}</body>
     </html>
   );
