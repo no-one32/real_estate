@@ -100,30 +100,28 @@ function NextProjectCard() {
     <div className="axd-next" aria-label="نتطلع إلى مشروعنا القادم">
       <span className="axd-next-glow a" />
       <span className="axd-next-glow b" />
-      {/* the design's right-hand corner art, mirrored for Arabic: faint arcs + a blue ribbon, drawn over the whole card */}
+      {/* the design's corner art, mirrored for Arabic: ONE big soft arc running the full height of the corner,
+          and a blue ribbon sweeping up along it to the side edge (like the English design) */}
       <svg className="axd-next-deco" viewBox="0 0 528 240" preserveAspectRatio="xMinYMax meet" aria-hidden="true">
         <defs>
-          <linearGradient id="axdArcOuter" x1="0" y1="0" x2="1" y2="0.2">
-            <stop offset="0.17" stopColor="#EBF1FF" stopOpacity="0.47" />
-            <stop offset="0.7" stopColor="#E2EBFF" stopOpacity="0" />
+          <linearGradient id="axdArc" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#E4ECFF" stopOpacity="0.75" />
+            <stop offset="0.75" stopColor="#EEF3FF" stopOpacity="0.35" />
+            <stop offset="1" stopColor="#F4F7FF" stopOpacity="0.1" />
           </linearGradient>
-          <linearGradient id="axdArcInner" x1="0" y1="0" x2="1" y2="0.2">
-            <stop offset="0.17" stopColor="#D7E3FF" stopOpacity="0.8" />
-            <stop offset="0.56" stopColor="#E6EDFF" stopOpacity="0.4" />
-            <stop offset="0.88" stopColor="#F7F9FF" stopOpacity="0" />
+          <linearGradient id="axdRibbon" x1="1" y1="1" x2="0" y2="0.3">
+            <stop offset="0" stopColor="#E6EDFF" stopOpacity="0" />
+            <stop offset="0.35" stopColor="#C9D9FF" stopOpacity="0.8" />
+            <stop offset="0.7" stopColor="#9DBAFF" />
+            <stop offset="1" stopColor="#B9CEFF" />
           </linearGradient>
-          <linearGradient id="axdRibbon" x1="1" y1="1" x2="0" y2="0.55">
-            <stop offset="0.17" stopColor="#E6EDFF" stopOpacity="0.13" />
-            <stop offset="0.47" stopColor="#C9D9FF" />
-            <stop offset="0.65" stopColor="#A3BFFF" />
-            <stop offset="0.79" stopColor="#C3D6FF" />
-          </linearGradient>
+          <filter id="axdSoft" x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur stdDeviation="0.8" />
+          </filter>
         </defs>
-        {/* kept inside the corner (~30% of the width) so the art never reaches the middle of the card */}
-        <path d="M150 240C150 150 96 76 0 52V240Z" fill="url(#axdArcOuter)" />
-        <path d="M92 240C92 176 57 120 0 100V240Z" fill="url(#axdArcInner)" />
-        <path d="M168 240C108 236 46 214 0 168V196C46 228 108 240 168 240Z" fill="url(#axdRibbon)" />
-        <path d="M168 240C108 238 48 220 0 182" stroke="#fff" strokeWidth="0.6" fill="none" />
+        <path d="M78 240C76 160 48 70 0 8V240Z" fill="url(#axdArc)" />
+        <path d="M150 240C86 226 30 170 0 74V116C30 196 86 234 150 240Z" fill="url(#axdRibbon)" filter="url(#axdSoft)" />
+        <path d="M150 240C86 230 32 180 0 92" stroke="#fff" strokeOpacity="0.8" strokeWidth="0.8" fill="none" />
       </svg>
 
       <span className="axd-next-icon"><IcHandshake size={30} stroke={1.8} /></span>
