@@ -105,7 +105,7 @@ function NextProjectCard() {
         <defs>
           <linearGradient id="axdArcOuter" x1="0" y1="0" x2="1" y2="0.2">
             <stop offset="0.17" stopColor="#EBF1FF" stopOpacity="0.47" />
-            <stop offset="0.83" stopColor="#E2EBFF" stopOpacity="0.05" />
+            <stop offset="0.7" stopColor="#E2EBFF" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="axdArcInner" x1="0" y1="0" x2="1" y2="0.2">
             <stop offset="0.17" stopColor="#D7E3FF" stopOpacity="0.8" />
@@ -120,8 +120,8 @@ function NextProjectCard() {
           </linearGradient>
         </defs>
         {/* kept inside the corner (~30% of the width) so the art never reaches the middle of the card */}
-        <path d="M150 240C150 150 96 76 0 52V240Z" fill="url(#axdArcOuter)" stroke="#E6EDFF" strokeWidth="0.6" />
-        <path d="M92 240C92 176 57 120 0 100V240Z" fill="url(#axdArcInner)" stroke="#fff" strokeWidth="0.6" />
+        <path d="M150 240C150 150 96 76 0 52V240Z" fill="url(#axdArcOuter)" />
+        <path d="M92 240C92 176 57 120 0 100V240Z" fill="url(#axdArcInner)" />
         <path d="M168 240C108 236 46 214 0 168V196C46 228 108 240 168 240Z" fill="url(#axdRibbon)" />
         <path d="M168 240C108 238 48 220 0 182" stroke="#fff" strokeWidth="0.6" fill="none" />
       </svg>
