@@ -151,6 +151,32 @@ const AR_PROJECT_NAME: Record<string, string> = {
   "villas ajyad": "فيلات أجياد",
 };
 
+/** City shown next to the date when the project has none saved (keys = English project name, lower case) */
+const AR_PROJECT_CITY: Record<string, string> = {
+  "villas ajyad": "خميس مشيط",
+};
+
+/** Arabic names of cities typed in English in the database */
+const AR_CITY: Record<string, string> = {
+  "khamis mushait": "خميس مشيط",
+  abha: "أبها",
+  riyadh: "الرياض",
+  jeddah: "جدة",
+  dammam: "الدمام",
+  najran: "نجران",
+  jazan: "جازان",
+  mecca: "مكة المكرمة",
+  makkah: "مكة المكرمة",
+  medina: "المدينة المنورة",
+  madinah: "المدينة المنورة",
+};
+
+function arabicCity(c: ComplexRow) {
+  const city = c.city?.trim();
+  if (city) return AR_CITY[city.toLowerCase()] ?? city;
+  return AR_PROJECT_CITY[c.name.trim().toLowerCase()] ?? null;
+}
+
 export default function ClientHome() {
   const [complexes, setComplexes] = useState<ComplexRow[]>([]);
   const [units, setUnits] = useState<UnitRow[]>([]);
@@ -180,7 +206,7 @@ export default function ClientHome() {
     setEmail(json.profile?.email || "");
     setAvatar(json.profile?.avatar_url || null);
     // the dashboard is in Arabic: show the project names in Arabic too
-    setComplexes(((json.complexes ?? []) as ComplexRow[]).map((c) => ({ ...c, name: AR_PROJECT_NAME[c.name.trim().toLowerCase()] ?? c.name })));
+    setComplexes(((json.complexes ?? []) as ComplexRow[]).map((c) => ({ ...c, city: arabicCity(c), name: AR_PROJECT_NAME[c.name.trim().toLowerCase()] ?? c.name })));
     setUnits(json.units ?? []);
     setLeads(json.leads ?? []);
     setStats(json.stats ?? {});
