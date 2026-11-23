@@ -100,28 +100,29 @@ function NextProjectCard() {
     <div className="axd-next" aria-label="نتطلع إلى مشروعنا القادم">
       <span className="axd-next-glow a" />
       <span className="axd-next-glow b" />
-      {/* the design's corner art, mirrored for Arabic: ONE big soft arc running the full height of the corner,
-          and a blue ribbon sweeping up along it to the side edge (like the English design) */}
+      {/* the design's corner art, mirrored for Arabic (measured on the design): two thin faint arc lines,
+          a soft blue fill against the side edge, and a thin blue crescent that reaches the side ~60% down */}
       <svg className="axd-next-deco" viewBox="0 0 528 240" preserveAspectRatio="xMinYMax meet" aria-hidden="true">
         <defs>
-          <linearGradient id="axdArc" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="#E4ECFF" stopOpacity="0.75" />
-            <stop offset="0.75" stopColor="#EEF3FF" stopOpacity="0.35" />
-            <stop offset="1" stopColor="#F4F7FF" stopOpacity="0.1" />
+          <linearGradient id="axdArcFill" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0" stopColor="#E3EBFF" stopOpacity="0" />
+            <stop offset="1" stopColor="#C9D9FF" stopOpacity="0.55" />
           </linearGradient>
-          <linearGradient id="axdRibbon" x1="1" y1="1" x2="0" y2="0.3">
-            <stop offset="0" stopColor="#E6EDFF" stopOpacity="0" />
-            <stop offset="0.35" stopColor="#C9D9FF" stopOpacity="0.8" />
-            <stop offset="0.7" stopColor="#9DBAFF" />
-            <stop offset="1" stopColor="#B9CEFF" />
+          <linearGradient id="axdRibbon" x1="1" y1="1" x2="0" y2="0">
+            <stop offset="0" stopColor="#C9D9FF" stopOpacity="0" />
+            <stop offset="0.45" stopColor="#8FB0FF" />
+            <stop offset="0.8" stopColor="#5B8DFF" />
+            <stop offset="1" stopColor="#9DBBFF" />
           </linearGradient>
-          <filter id="axdSoft" x="-10%" y="-10%" width="120%" height="120%">
-            <feGaussianBlur stdDeviation="0.8" />
-          </filter>
         </defs>
-        <path d="M78 240C76 160 48 70 0 8V240Z" fill="url(#axdArc)" />
-        <path d="M150 240C86 226 30 170 0 74V116C30 196 86 234 150 240Z" fill="url(#axdRibbon)" filter="url(#axdSoft)" />
-        <path d="M150 240C86 230 32 180 0 92" stroke="#fff" strokeOpacity="0.8" strokeWidth="0.8" fill="none" />
+        {/* outer arc: a thin faint line only */}
+        <path d="M172 240C172 130 100 45 0 39" stroke="#D6E2FF" strokeOpacity="0.8" strokeWidth="0.8" fill="none" />
+        {/* inner arc: soft fill, bluer against the side edge */}
+        <path d="M105 240V178C105 135 60 90 0 82V240Z" fill="url(#axdArcFill)" />
+        <path d="M105 240V178C105 135 60 90 0 82" stroke="#fff" strokeOpacity="0.9" strokeWidth="0.8" fill="none" />
+        {/* the blue crescent, its tip fading into a faint line toward the bottom */}
+        <path d="M161 220Q70 206 0 139V163Q62 214 161 220Z" fill="url(#axdRibbon)" />
+        <path d="M161 220Q205 226 250 236" stroke="#C9D9FF" strokeOpacity="0.7" strokeWidth="0.8" fill="none" />
       </svg>
 
       <span className="axd-next-icon"><IcHandshake size={30} stroke={1.8} /></span>
