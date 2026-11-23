@@ -101,7 +101,7 @@ function NextProjectCard() {
       <span className="axd-next-glow a" />
       <span className="axd-next-glow b" />
       {/* the design's right-hand corner art, mirrored for Arabic: faint arcs + a blue ribbon, drawn over the whole card */}
-      <svg className="axd-next-deco" viewBox="0 0 528 240" preserveAspectRatio="none" aria-hidden="true">
+      <svg className="axd-next-deco" viewBox="0 0 528 240" preserveAspectRatio="xMinYMax meet" aria-hidden="true">
         <defs>
           <linearGradient id="axdArcOuter" x1="0" y1="0" x2="1" y2="0.2">
             <stop offset="0.17" stopColor="#EBF1FF" stopOpacity="0.47" />
@@ -119,10 +119,11 @@ function NextProjectCard() {
             <stop offset="0.79" stopColor="#C3D6FF" />
           </linearGradient>
         </defs>
-        <path d="M172 240C172 140 104 62 0 41V240Z" fill="url(#axdArcOuter)" stroke="#E6EDFF" strokeWidth="0.6" />
-        <path d="M106 240C106 168 64 102 0 81V240Z" fill="url(#axdArcInner)" stroke="#fff" strokeWidth="0.6" />
-        <path d="M245 240C150 233 62 203 0 136V178C62 220 150 240 245 240Z" fill="url(#axdRibbon)" />
-        <path d="M245 240C150 236 64 212 0 155" stroke="#fff" strokeWidth="0.6" fill="none" />
+        {/* kept inside the corner (~30% of the width) so the art never reaches the middle of the card */}
+        <path d="M150 240C150 150 96 76 0 52V240Z" fill="url(#axdArcOuter)" stroke="#E6EDFF" strokeWidth="0.6" />
+        <path d="M92 240C92 176 57 120 0 100V240Z" fill="url(#axdArcInner)" stroke="#fff" strokeWidth="0.6" />
+        <path d="M168 240C108 236 46 214 0 168V196C46 228 108 240 168 240Z" fill="url(#axdRibbon)" />
+        <path d="M168 240C108 238 48 220 0 182" stroke="#fff" strokeWidth="0.6" fill="none" />
       </svg>
 
       <span className="axd-next-icon"><IcHandshake size={30} stroke={1.8} /></span>
