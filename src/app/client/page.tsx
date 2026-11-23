@@ -100,32 +100,43 @@ function NextProjectCard() {
     <div className="axd-next" aria-label="نتطلع إلى مشروعنا القادم">
       <span className="axd-next-glow a" />
       <span className="axd-next-glow b" />
-      <svg className="axd-next-deco" viewBox="0 0 245 230" aria-hidden="true">
+      {/* the design's right-hand corner art, mirrored for Arabic: faint arcs + a blue ribbon, drawn over the whole card */}
+      <svg className="axd-next-deco" viewBox="0 0 528 240" preserveAspectRatio="none" aria-hidden="true">
         <defs>
-          <linearGradient id="axdArc" x1="1" y1="0" x2="0" y2="1">
-            <stop offset="0.17" stopColor="#EBF1FF" stopOpacity="0.8" />
+          <linearGradient id="axdArcOuter" x1="0" y1="0" x2="1" y2="0.2">
+            <stop offset="0.17" stopColor="#EBF1FF" stopOpacity="0.47" />
             <stop offset="0.83" stopColor="#E2EBFF" stopOpacity="0.05" />
           </linearGradient>
-          <linearGradient id="axdRibbon" x1="0" y1="1" x2="1" y2="0">
-            <stop offset="0.1" stopColor="#E6EDFF" stopOpacity="0.15" />
+          <linearGradient id="axdArcInner" x1="0" y1="0" x2="1" y2="0.2">
+            <stop offset="0.17" stopColor="#D7E3FF" stopOpacity="0.8" />
+            <stop offset="0.56" stopColor="#E6EDFF" stopOpacity="0.4" />
+            <stop offset="0.88" stopColor="#F7F9FF" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="axdRibbon" x1="1" y1="1" x2="0" y2="0.55">
+            <stop offset="0.17" stopColor="#E6EDFF" stopOpacity="0.13" />
             <stop offset="0.47" stopColor="#C9D9FF" />
             <stop offset="0.65" stopColor="#A3BFFF" />
-            <stop offset="0.8" stopColor="#C3D6FF" />
+            <stop offset="0.79" stopColor="#C3D6FF" />
           </linearGradient>
         </defs>
-        <circle cx="215" cy="70" r="110" fill="url(#axdArc)" stroke="#E6EDFF" strokeWidth="0.8" />
-        <circle cx="235" cy="120" r="75" fill="url(#axdArc)" stroke="#fff" strokeWidth="0.8" />
-        <path d="M0 214C78 212 150 186 245 104V146C158 200 86 224 0 230Z" fill="url(#axdRibbon)" />
-        <path d="M0 222C86 216 160 192 245 126" stroke="#fff" strokeWidth="0.8" fill="none" />
+        <path d="M172 240C172 140 104 62 0 41V240Z" fill="url(#axdArcOuter)" stroke="#E6EDFF" strokeWidth="0.6" />
+        <path d="M106 240C106 168 64 102 0 81V240Z" fill="url(#axdArcInner)" stroke="#fff" strokeWidth="0.6" />
+        <path d="M245 240C150 233 62 203 0 136V178C62 220 150 240 245 240Z" fill="url(#axdRibbon)" />
+        <path d="M245 240C150 236 64 212 0 155" stroke="#fff" strokeWidth="0.6" fill="none" />
       </svg>
 
       <span className="axd-next-icon"><IcHandshake size={30} stroke={1.8} /></span>
+      {/* same split as the design: "Looking Forward / to Our Next Project", the last words in light blue, underlined */}
       <h2 className="axd-next-title">
-        نتطلع إلى
+        نتطلع بشغف
         <br />
-        <span className="blue">مشروعنا <span className="underlined">القادم</span></span>
+        إلى <span className="blue">مشروعنا <span className="underlined">القادم</span></span>
       </h2>
-      <p className="axd-next-text">نحن هنا دائماً ومتحمسون للعمل معك مجدداً في مشروعك القادم.</p>
+      <p className="axd-next-text">
+        نحن هنا دائماً ومتحمسون للعمل معك مجدداً
+        <br />
+        في مشروعك القادم.
+      </p>
       <span className="axd-next-callout">
         <IcClock size={16} stroke={1.8} />
         <i aria-hidden="true" />

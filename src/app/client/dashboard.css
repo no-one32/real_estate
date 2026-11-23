@@ -495,11 +495,13 @@
   position: absolute;
   pointer-events: none;
 }
+/* soft round glows (no box edges): behind the icon, and in the top corner */
 .axd-next-glow.a {
   width: 77px;
   height: 47px;
   right: 31px;
   top: 25px;
+  border-radius: 50%;
   background: rgba(169, 194, 251, 0.4);
   filter: blur(8px);
 }
@@ -508,15 +510,15 @@
   height: 88px;
   left: 3px;
   top: 5px;
-  background: rgba(220, 230, 255, 0.4);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(220, 230, 255, 0.55), rgba(220, 230, 255, 0));
   filter: blur(9.6px);
 }
 .axd-next-deco {
   position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 245px;
-  height: 230px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 .axd-next-icon {
@@ -543,7 +545,7 @@
   letter-spacing: -1.03px;
   color: #02082f;
 }
-.axd-next-title .blue { color: var(--axd-blue); }
+.axd-next-title .blue { color: #6ba2f7; } /* the light blue of the design's "Next Project" */
 .axd-next-title .underlined {
   position: relative;
   display: inline-block;
@@ -553,11 +555,11 @@
   position: absolute;
   right: 18%;
   left: -4%;
-  bottom: -7px;
+  bottom: -6px;
   height: 7px;
   border-bottom: 1.6px solid #5f87ff;
   border-radius: 0 0 40% 60% / 0 0 100% 100%;
-  background: linear-gradient(-90deg, rgba(115, 152, 255, 0) 0%, rgba(109, 147, 255, 0.35) 100%);
+  background: linear-gradient(-90deg, rgba(115, 152, 255, 0) 0%, rgba(109, 147, 255, 0.18) 100%);
 }
 .axd-next-text {
   position: absolute;
