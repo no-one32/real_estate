@@ -41,9 +41,9 @@ const barlow = Barlow({
 });
 
 export const metadata: Metadata = {
-  title: "AXIS",
+  title: "Designscape",
   description: "Interactive complex tours",
-  icons: { icon: "/branding/axis-logo.png" },
+  icons: { icon: "/branding/designscape-icon.png" },
 };
 
 export const viewport: Viewport = {
