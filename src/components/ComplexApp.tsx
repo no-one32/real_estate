@@ -27,12 +27,14 @@ import {
   IconPlus,
   IconTriL,
   IconTriR,
+  IconVideo,
 } from "@/components/Icons";
 import { GalleryPage, HelpPage, LocationPage } from "@/components/TourPages";
 import PanoramaViewer from "@/components/PanoramaViewer";
 import RecommendPanel, { IconSparkle } from "@/components/RecommendPanel";
 import Visite360Viewer from "@/components/Visite360Viewer";
 import DiscoverVideo, { type DiscoverVideoHandle } from "@/components/DiscoverVideo";
+import VideoWindow from "@/components/VideoWindow";
 import { startVisit, trackFavorite, trackUnitView } from "@/lib/track";
 import { attachGlideScroll } from "@/lib/glide-scroll";
 import { STREET_360_PINS } from "@/lib/street360";
@@ -630,6 +632,7 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
   const [recoOpen, setRecoOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
   const [tourUnit, setTourUnit] = useState<Unit | null>(null);
   const [favs, setFavs] = useState<string[]>([]);
@@ -2007,6 +2010,13 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
               <span className="rail-name">المعرض</span>
               <span className="rail-ico glass"><IconGallery size={20} /></span>
             </button>
+            <button type="button" className={`rail-fab${videoOpen ? " is-active" : ""}`} aria-pressed={videoOpen} onClick={() => {
+              if (isPhoneLayout()) closeFilters();
+              setVideoOpen((v) => !v);
+            }}>
+              <span className="rail-name">فيديو</span>
+              <span className="rail-ico glass"><IconVideo size={20} /></span>
+            </button>
             <button type="button" className="rail-fab" onClick={() => {
               if (isPhoneLayout()) closeFilters();
               setLocationOpen(true);
@@ -2347,6 +2357,7 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
       )}
       {locationOpen && <LocationPage tour={tour} onClose={() => setLocationOpen(false)} />}
       {galleryOpen && <GalleryPage tour={tour} onClose={() => setGalleryOpen(false)} />}
+      {videoOpen && <VideoWindow onClose={() => setVideoOpen(false)} />}
       {tourUnit && (
         <VillaTour
           unit={tourUnit}

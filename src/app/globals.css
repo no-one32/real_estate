@@ -7103,3 +7103,50 @@ html.phone-layout .reco-body h3 { font-size: 16.5px; }
 @keyframes discover-spin { to { transform: rotate(360deg); } }
 html.phone-layout .discover-skip { left: 16px; height: 40px; font-size: 14px; }
 html.phone-layout .discover-sound { right: 16px; width: 40px; height: 40px; }
+
+/* ---------- project video window (rail button under the gallery) ---------- */
+.vidwin-back {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+  animation: vidwin-fade 0.2s ease;
+}
+.vidwin {
+  position: relative;
+  width: min(720px, 92vw);
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  background: #000;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  animation: vidwin-pop 0.22s ease;
+}
+.vidwin iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 16px;
+}
+/* just above the window's corner, so it never covers YouTube's own buttons */
+.vidwin-close {
+  position: absolute;
+  top: -44px;
+  right: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+}
+.vidwin-close:hover { background: rgba(0, 0, 0, 0.8); }
+@keyframes vidwin-fade { from { opacity: 0; } }
+@keyframes vidwin-pop { from { opacity: 0; transform: scale(0.96); } }
