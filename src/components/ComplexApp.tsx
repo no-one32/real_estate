@@ -32,6 +32,7 @@ import { GalleryPage, HelpPage, LocationPage } from "@/components/TourPages";
 import PanoramaViewer from "@/components/PanoramaViewer";
 import RecommendPanel, { IconSparkle } from "@/components/RecommendPanel";
 import Visite360Viewer from "@/components/Visite360Viewer";
+import DiscoverVideo, { type DiscoverVideoHandle } from "@/components/DiscoverVideo";
 import { startVisit, trackFavorite, trackUnitView } from "@/lib/track";
 import { attachGlideScroll } from "@/lib/glide-scroll";
 import { STREET_360_PINS } from "@/lib/street360";
@@ -453,7 +454,26 @@ function cardPhoto(tour: TourMedia, unit: Unit) {
 }
 
 function IntroScreen({ ready, loadPct, onEnter }: { ready: boolean; loadPct: number; onEnter: () => void }) {
-  const open = ready || loadPct >= 99.999;
+  // the "discover" video buffers its first seconds together with the maquette (15% of the counter);
+  // if it is slow, the button still shows 10 s after the maquette is ready
+  const [videoPct, setVideoPct] = useState(0);
+  const [videoGrace, setVideoGrace] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const discoverRef = useRef<DiscoverVideoHandle>(null);
+  const bgVideoRef = useRef<HTMLVideoElement>(null);
+  const sceneReady = ready || loadPct >= 99.999;
+  useEffect(() => {
+    if (!sceneReady) return;
+    const t = window.setTimeout(() => setVideoGrace(true), 10_000);
+    return () => window.clearTimeout(t);
+  }, [sceneReady]);
+  const open = sceneReady && (videoPct >= 100 || videoGrace);
+  const shownPct = open ? 100 : Math.min(99, loadPct * 0.85 + videoPct * 0.15);
+  const discover = () => {
+    setPlaying(true);
+    bgVideoRef.current?.pause();
+    discoverRef.current?.play();
+  };
   const [nhc, setNhc] = useState(true);
   const [fullOn, setFullOn] = useState(false);
   useEffect(() => {
@@ -468,7 +488,7 @@ function IntroScreen({ ready, loadPct, onEnter }: { ready: boolean; loadPct: num
   };
   return (
     <div className="intro">
-      <video className="intro-video" autoPlay muted loop playsInline preload="auto" src={INTRO_VIDEO} />
+      <video ref={bgVideoRef} className="intro-video" autoPlay muted loop playsInline preload="auto" src={INTRO_VIDEO} />
       <div className="intro-dim" />
       <div className="intro-vignette" />
       <div className="intro-fade" />
@@ -477,9 +497,9 @@ function IntroScreen({ ready, loadPct, onEnter }: { ready: boolean; loadPct: num
         <img className="intro-logo" src={INTRO_LOGO} alt="" />
         <span className="intro-rule" />
         {open ? (
-          <button type="button" className="intro-cta" onClick={onEnter}><span>اكتشف المزيد</span></button>
+          <button type="button" className="intro-cta" onClick={discover}><span>اكتشف المزيد</span></button>
         ) : (
-          <p className="intro-count" aria-live="polite">{Math.round(loadPct)}%</p>
+          <p className="intro-count" aria-live="polite">{Math.round(shownPct)}%</p>
         )}
       </div>
       <div className="intro-works">
@@ -500,6 +520,7 @@ function IntroScreen({ ready, loadPct, onEnter }: { ready: boolean; loadPct: num
           <Social label="لينكد إن" href="https://www.linkedin.com/in/ajyad-arabia-84a938356"><InIcon /></Social>
         </div>
       </div>
+      <DiscoverVideo ref={discoverRef} playing={playing} onProgress={setVideoPct} onDone={onEnter} />
     </div>
   );
 }
@@ -543,7 +564,6 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
     let stop = false;
     const stopped = () => stop;
     const first = villaFrameUrls(tour, 0);
-    const second = villaFrameUrls(tour, 1);
     setVillaHasFrames(first.length > 0);
     if (!first.length) {
       setVillaPct(100);
@@ -559,16 +579,27 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
     }).then(() => {
       if (stop) return;
       setVillaHalfDone(true);
-      // The other half in the background, gently — on computers only. On a phone it means tens of MB
-      // downloaded and decoded for minutes, which makes the whole maquette sluggish; there the villa
-      // viewer loads the frames it needs when a villa is open.
-      const phone = isPhoneLayout() || window.matchMedia?.("(pointer: coarse)").matches;
-      if (!phone) void loadPool(second, 2, stopped, () => {});
     });
     return () => {
       stop = true;
     };
   }, [tour]);
+  // The other half in the background, gently, once the visitor is in the maquette (not while the
+  // discover video streams) — on computers only. On a phone it means tens of MB downloaded and decoded
+  // for minutes, which makes the whole maquette sluggish; there the villa viewer loads the frames it
+  // needs when a villa is open.
+  useEffect(() => {
+    if (!villaHalfDone || introOpen) return;
+    const phone = isPhoneLayout() || window.matchMedia?.("(pointer: coarse)").matches;
+    if (phone) return;
+    const second = villaFrameUrls(tour, 1);
+    if (!second.length) return;
+    let stop = false;
+    void loadPool(second, 2, () => stop, () => {});
+    return () => {
+      stop = true;
+    };
+  }, [tour, villaHalfDone, introOpen]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [frame, setFrame] = useState(0);
   const [hover, setHover] = useState<Unit | null>(null);

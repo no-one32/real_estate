@@ -7027,3 +7027,79 @@ html.phone-layout .reco-body h3 { font-size: 16.5px; }
 @media (prefers-reduced-motion: reduce) {
   .reco, .reco-body, .reco-card { animation: none; }
 }
+
+/* ---------- "discover" video: after اكتشف المزيد, before the maquette ---------- */
+.discover {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: #000;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.45s ease, visibility 0s linear 0.45s;
+}
+.discover.on {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.45s ease;
+}
+.discover-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+.discover-skip,
+.discover-sound {
+  position: absolute;
+  bottom: max(28px, calc(env(safe-area-inset-bottom) + 20px));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.38);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.discover-skip:hover,
+.discover-sound:hover { background: rgba(0, 0, 0, 0.6); }
+/* RTL page: skip on the left, sound on the right */
+.discover-skip { left: 28px; padding: 0 18px 0 16px; direction: rtl; }
+.discover-sound { right: 28px; width: 44px; justify-content: center; padding: 0; }
+.discover-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.85);
+  transform-origin: right center;
+  transition: transform 0.25s linear;
+}
+.discover-spin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: discover-spin 0.9s linear infinite;
+}
+@keyframes discover-spin { to { transform: rotate(360deg); } }
+html.phone-layout .discover-skip { left: 16px; height: 40px; font-size: 14px; }
+html.phone-layout .discover-sound { right: 16px; width: 40px; height: 40px; }
