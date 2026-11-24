@@ -509,7 +509,7 @@ export default function AnalyticsView({
         </div>
       ) : null}
 
-      <p className="axn-foot">AXIS Studio · الإحصائيات · بيانات زوار مجهولة الهوية</p>
+      <p className="axn-foot">الإحصائيات · بيانات زوار مجهولة الهوية</p>
     </section>
   );
 }

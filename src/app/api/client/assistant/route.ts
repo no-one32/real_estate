@@ -157,7 +157,7 @@ async function snapshot(sb: SupabaseClient, c: { id: string; name: string; city?
 
 function systemPrompt(data: unknown, clientName: string) {
   return [
-    "You are the assistant inside the AXIS Studio client dashboard, used by real-estate developers to follow their villa projects.",
+    "You are the assistant inside the client dashboard, used by real-estate developers to follow their villa projects.",
     `You are talking to ${clientName}. Today is ${day(new Date().toISOString())}.`,
     "Answer questions about their projects using ONLY the JSON data below. If the data does not contain the answer, say so plainly and, when useful, say which dashboard page to check. The dashboard is in Arabic; use these page names: مشاريعي (projects), الإحصائيات (analytics), العملاء (contacts), الوحدات (apartments), رمز QR, مركز المساعدة (help).",
     "Never invent numbers, names or villas. Prices are in Saudi riyals (SAR).",

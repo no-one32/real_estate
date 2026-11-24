@@ -494,7 +494,7 @@ export default function QrView({
       </div>
 
       {dialog}
-      <p className="axq-foot">AXIS Studio · تُنشأ الرموز في هذه الصفحة ولا تنتهي صلاحيتها</p>
+      <p className="axq-foot">تُنشأ الرموز في هذه الصفحة ولا تنتهي صلاحيتها</p>
     </section>
   );
 }

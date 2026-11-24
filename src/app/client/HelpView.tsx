@@ -102,7 +102,7 @@ export default function HelpView({ onView }: { onView: (v: ClientView) => void }
       <header className="axh-head">
         <div>
           <h1>مركز المساعدة</h1>
-          <p>كل ما تحتاجه للاستفادة القصوى من AXIS Studio</p>
+          <p>كل ما تحتاجه للاستفادة القصوى من لوحة التحكم</p>
         </div>
         <label className="axh-search">
           <IcSearch size={15} stroke={1.25} />
@@ -179,7 +179,7 @@ export default function HelpView({ onView }: { onView: (v: ClientView) => void }
         </a>
       </section>
 
-      <p className="axh-foot">AXIS Studio · مركز المساعدة</p>
+      <p className="axh-foot">مركز المساعدة</p>
     </section>
   );
 }
