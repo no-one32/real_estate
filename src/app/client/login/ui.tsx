@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
-import AxisMark from "@/components/AxisMark";
+import DesignscapeLogo from "@/components/DesignscapeLogo";
 import PasswordField from "@/components/PasswordField";
 import "../../admin/admin.css";
 
@@ -39,7 +39,7 @@ export default function ClientLoginForm() {
   return (
     <div className="gate" dir="rtl" lang="ar">
       <form className="gate-card" onSubmit={submit}>
-        <AxisMark size={56} />
+        <DesignscapeLogo />
         <h1>مرحباً بك</h1>
         <p className="lede">سجّل الدخول لمتابعة مشروعك.</p>
         {setup && <p className="muted">هذه الصفحة غير جاهزة بعد.</p>}

@@ -133,7 +133,7 @@ export default function ClientShell({ children, view, onView, notifications, nam
 
       <aside className="axd-side">
         <div className="axd-logo">
-          <img src="/branding/axis.png" alt="AXIS Studio" width={76} height={99} />
+          <img src="/branding/designscape-vertical.png" alt="Designscape" width={85} height={146} />
         </div>
 
         <nav className="axd-nav" aria-label="القائمة الرئيسية">

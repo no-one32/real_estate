@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
-import AxisMark from "@/components/AxisMark";
+import DesignscapeLogo from "@/components/DesignscapeLogo";
 import PasswordField from "@/components/PasswordField";
 import { completeAuthFromUrl } from "@/lib/auth-link";
 import "../../admin/admin.css";
@@ -63,7 +63,7 @@ function SetPasswordForm() {
   return (
     <div className="gate" dir="rtl" lang="ar">
       <form className="gate-card" onSubmit={submit}>
-        <AxisMark size={56} />
+        <DesignscapeLogo />
         <h1>أنشئ كلمة مرور</h1>
         <p className="lede">بعدها ستتمكن من رؤية مشروعك.</p>
         {err && <p className="err">{err}</p>}

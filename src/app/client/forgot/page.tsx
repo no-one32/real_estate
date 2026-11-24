@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import AxisMark from "@/components/AxisMark";
+import DesignscapeLogo from "@/components/DesignscapeLogo";
 import "../../admin/admin.css";
 
 export default function ForgotPage() {
@@ -31,7 +31,7 @@ export default function ForgotPage() {
   return (
     <div className="gate" dir="rtl" lang="ar">
       <form className="gate-card" onSubmit={submit}>
-        <AxisMark size={56} />
+        <DesignscapeLogo />
         <h1>إعادة تعيين كلمة المرور</h1>
         <p className="lede">سنرسل لك رابطاً لاختيار كلمة مرور جديدة.</p>
         {ok ? <p className="ok">إذا كان هذا البريد مسجلاً، فالرابط في طريقه إليك.</p> : (

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
-import AxisMark from "@/components/AxisMark";
+import DesignscapeLogo from "@/components/DesignscapeLogo";
 import PasswordField from "@/components/PasswordField";
 import "../admin.css";
 
@@ -41,7 +41,7 @@ export default function AdminLoginPage() {
   return (
     <div className="gate">
       <form className="gate-card" onSubmit={submit}>
-        <AxisMark size={56} />
+        <DesignscapeLogo />
         <h1>Welcome</h1>
         <p className="lede">Sign in to manage your projects.</p>
         {setup && <p className="muted">This page isn’t ready yet.</p>}

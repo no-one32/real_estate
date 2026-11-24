@@ -744,6 +744,8 @@ a.admin-card:hover {
   box-shadow: 0 30px 80px rgba(0,0,0,0.35);
 }
 .gate-card .axis-mark { justify-content: center; }
+.gate-card .ds-logo { display: flex; justify-content: center; }
+.gate-card .ds-logo img { display: block; width: auto; height: 56px; max-width: 100%; }
 .gate-card h1 {
   font-size: 28px;
   letter-spacing: -0.04em;
