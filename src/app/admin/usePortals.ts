@@ -38,3 +38,18 @@ export function trend(now: number, before: number): number | null {
   if (!before) return null;
   return Math.round(((now - before) / before) * 100);
 }
+
+/** Admin enters a client's dashboard (/client) and works there as that client. */
+export async function enterClientPortal(clientId: string): Promise<string | null> {
+  const res = await fetch("/api/admin/view-as", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clientId }),
+  });
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}));
+    return j.error || "Could not open the portal";
+  }
+  window.location.href = "/client";
+  return null;
+}

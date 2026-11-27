@@ -7,6 +7,8 @@ import { listComplexIdsForUser } from "@/lib/members";
 export async function POST(req: Request) {
   const auth = await requireClient();
   if (!auth.ok) return auth.response;
+  // an admin looking at the portal must not clear the client's own "new" badges
+  if (auth.viewAs) return NextResponse.json({ ok: true, skipped: true });
   const body = await req.json().catch(() => null);
   const complexId = String(body?.complexId ?? "");
   const service = createServiceSupabase() ?? auth.supabase;

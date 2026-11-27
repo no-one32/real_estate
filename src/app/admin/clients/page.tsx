@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AdminShell from "../AdminShell";
+import { enterClientPortal } from "../usePortals";
 import type { ComplexRow } from "@/lib/types";
 import { IconSend, IconTrash } from "@/components/Icons";
 import { displayPersonName } from "@/lib/person-name";
@@ -100,6 +101,9 @@ export default function ClientsPage() {
                 <header className="person-head">
                   <strong>{displayPersonName(cl.full_name, cl.email) || "—"}</strong>
                   <span className="icon-actions">
+                    <button className="btn ghost small" type="button" disabled={busy} title="Open this client's dashboard and work in it" onClick={() => void enterClientPortal(cl.id).then((e) => e && setErr(e))}>
+                      Open portal
+                    </button>
                     {cl.email && (
                       <button className="icon-btn" type="button" disabled={busy} aria-label="Resend invitation" title="Resend" onClick={(e) => void invite(e, cl.email!)}>
                         <IconSend size={16} />

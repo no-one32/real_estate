@@ -190,6 +190,8 @@ export default function ClientHome() {
   const [focus, setFocus] = useState<{ id: string; n: number } | null>(null);
   const [err, setErr] = useState("");
   const [name, setName] = useState("");
+  /** set when an admin entered this client's portal from the admin */
+  const [viewAs, setViewAs] = useState<{ adminName: string } | null>(null);
   const [email, setEmail] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -205,6 +207,7 @@ export default function ClientHome() {
     setName(json.profile?.full_name || "");
     setEmail(json.profile?.email || "");
     setAvatar(json.profile?.avatar_url || null);
+    setViewAs(json.viewAs ?? null);
     // the dashboard is in Arabic: show the project names in Arabic too
     setComplexes(((json.complexes ?? []) as ComplexRow[]).map((c) => ({ ...c, city: arabicCity(c), name: AR_PROJECT_NAME[c.name.trim().toLowerCase()] ?? c.name })));
     setUnits(json.units ?? []);
@@ -358,6 +361,7 @@ export default function ClientHome() {
       name={displayPersonName(name, email) || name}
       avatarUrl={avatar}
       onAvatar={setAvatar}
+      viewAs={viewAs}
     >
       {view === "projects" ? (
         <section className="axd-page">

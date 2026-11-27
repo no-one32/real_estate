@@ -506,3 +506,84 @@
 @media (max-width: 900px) { .axa-work { width: 100%; } }
 /* project page upload buttons: same blue and shape as the rest of the new admin */
 .axa .upload-pick { background: var(--blue); border-radius: 12px; box-shadow: 0 8px 18px -10px rgba(36, 88, 255, 0.8); }
+
+/* ---------- 360 Tour Builder workspace ---------- */
+.axa label.axa-project-pick { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.axa label.axa-project-pick select { min-width: 220px; padding: 10px 14px; border-radius: 12px; background: #fff; border: 1px solid var(--line); font-size: 14.5px; font-weight: 600; color: var(--ink); }
+.axa-builder { display: grid; grid-template-columns: 260px minmax(0, 1fr) 300px; gap: 16px; height: calc(100dvh - 200px); min-height: 560px; }
+.axa-builder-scenes, .axa-builder-props { display: flex; flex-direction: column; min-height: 0; padding: 14px; border-radius: 20px; background: var(--card); box-shadow: 0 20px 40px -28px rgba(31, 56, 102, 0.5); overflow-y: auto; }
+.axa label.axa-drop { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px 10px; border: 1.5px dashed #b9c8ea; border-radius: 14px; background: #f6f8ff; color: var(--blue); text-align: center; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease; }
+.axa label.axa-drop b { font-size: 14px; font-weight: 600; }
+.axa label.axa-drop small { font-size: 11.5px; font-weight: 400; color: var(--muted); }
+.axa label.axa-drop.over { background: #e6edff; border-color: var(--blue); }
+.axa label.axa-drop.busy { opacity: 0.7; pointer-events: none; }
+.axa-scene-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.axa-scene-list li { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 12px; border: 1.5px solid transparent; }
+.axa-scene-list li.on { border-color: var(--blue); background: #fff; }
+.axa-scene-list li > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.axa-scene-list b { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.axa-scene-list small { font-size: 12px; color: var(--muted); }
+.axa-scene-pick { position: relative; flex: none; width: 84px; height: 46px; padding: 0; border-radius: 9px; overflow: hidden; }
+.axa-scene-pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.axa-scene-pick .axa-scene-n { position: absolute; left: 4px; top: 4px; width: 18px; height: 18px; font-size: 11px; border-radius: 6px; }
+.axa-scene-pick em { position: absolute; right: 4px; bottom: 4px; padding: 0 6px; border-radius: 99px; background: var(--green); color: #fff; font-size: 10px; font-style: normal; font-weight: 700; }
+.axa-builder-view { position: relative; min-width: 0; border-radius: 20px; overflow: hidden; background: #0b1220; }
+.axa-builder-empty { display: grid; place-items: center; height: 100%; color: #9fb0cc; font-size: 15px; }
+.axa-builder-props header small { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.axa-builder-props header h2 { margin: 2px 0 12px !important; font-size: 19px !important; }
+.axa-builder-props h3 { margin: 16px 0 8px; font-size: 14px; }
+.axa-builder-props .axa-pin-form { margin-top: 12px; border: 1px solid var(--line); }
+.axa-builder-props footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: auto; padding-top: 14px; }
+.axa-builder-props .axa-links li { cursor: pointer; }
+.axa-builder-props .axa-links li > div { gap: 0; }
+@media (max-width: 1200px) {
+  .axa-builder { grid-template-columns: 220px minmax(0, 1fr); height: auto; }
+  .axa-builder-view { height: 60vh; }
+  .axa-builder-props { grid-column: 1 / -1; }
+}
+@media (max-width: 900px) {
+  .axa-builder { grid-template-columns: minmax(0, 1fr); }
+  .axa-builder-view { height: 55vh; }
+}
+
+/* ---------- project page + clients page: same look as the rest of the new admin ---------- */
+.axa .crumb { font-size: 13.5px; color: var(--muted); }
+.axa .crumb a { color: var(--blue); }
+.axa .project-head { margin-bottom: 18px; }
+.axa .tabs-inline { gap: 8px; margin: 0 0 20px; }
+.axa .tabs-inline a { display: inline-flex; align-items: center; height: 38px; padding: 0 16px; border-radius: 12px; border: 0; background: rgba(255, 255, 255, 0.75); color: var(--text); font-size: 14px; font-weight: 500; }
+.axa .tabs-inline a:hover:not(.on) { background: #fff; }
+.axa .tabs-inline a.on { background: #000; color: #fff; }
+.axa .settings-row,
+.axa .assign-box,
+.axa .upload-card,
+.axa .person-card,
+.axa .panel-card,
+.axa .admin-card {
+  background: var(--card);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px -28px rgba(31, 56, 102, 0.5);
+}
+.axa .settings-row { margin-bottom: 16px; }
+.axa .assign-box h3, .axa .upload-title h3 { font-size: 16px; font-weight: 600; color: var(--ink); }
+.axa .assign-box p, .axa .upload-card p { color: var(--text); }
+.axa .assign-chip { background: #e6edff; color: #1d3fae; font-weight: 600; }
+.axa .assign-chip button:hover { background: #d3defd; }
+.axa .portal-main h2 { font-size: 18px; font-weight: 700; color: var(--ink); margin: 28px 0 6px; }
+.axa .upload-card em.has { color: var(--green); }
+.axa .upload-card .where { background: #f1f4fb; color: var(--text); border-radius: 10px; }
+.axa .icon-btn { border-radius: 10px; color: var(--text); }
+.axa .icon-btn:hover:not(:disabled) { background: #eef2fa; }
+.axa .icon-btn.danger:hover:not(:disabled) { background: #fdeeee; color: var(--red); }
+.axa .units-panel .table-wrap, .axa .table-wrap { border-radius: 16px; border-color: var(--line); box-shadow: none; }
+.axa .portal-main th { background: #f4f6fb; color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.axa .portal-main td { color: var(--ink); }
+.axa .type-pill { background: #e6edff; color: #1d3fae; }
+.axa label.file-pick { display: inline-flex; color: var(--blue); border-color: #c9d6f5; border-radius: 12px; font-size: 13.5px; font-weight: 600; }
+.axa label.file-pick:hover { background: #eef3ff; }
+.axa .units-count { background: #e6edff; color: #1d3fae; }
+.axa .files-panel { border-radius: 20px; }
+.axa .units-panel { background: var(--card); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 20px; box-shadow: 0 20px 40px -28px rgba(31, 56, 102, 0.5); }
+.axa .units-panel label.file-pick { background: var(--blue); color: #fff; border: 0; }
+.axa .units-panel label.file-pick:hover { background: #1c4ae6; }

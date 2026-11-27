@@ -74,6 +74,7 @@ export default function AdminShell({ children, search, onSearch, searchPlacehold
   }, [menuOpen]);
 
   const signOut = async () => {
+    await fetch("/api/admin/view-as", { method: "DELETE" }).catch(() => {});
     const sb = createBrowserSupabase();
     await sb?.auth.signOut();
     router.replace("/admin/login");
@@ -125,10 +126,6 @@ export default function AdminShell({ children, search, onSearch, searchPlacehold
             </button>
             {menuOpen && (
               <div className="axa-menu" role="menu">
-                <Link role="menuitem" href="/admin/settings" className="plain">
-                  <AiGear size={18} />
-                  Settings
-                </Link>
                 <button type="button" role="menuitem" onClick={() => void signOut()}>
                   <AiLogout size={18} />
                   Sign out

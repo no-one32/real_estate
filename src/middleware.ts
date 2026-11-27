@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { VIEW_AS_COOKIE } from "@/lib/view-as";
 
 export async function middleware(req: NextRequest) {
   const { res, user, role } = await updateSession(req);
@@ -53,7 +54,9 @@ export async function middleware(req: NextRequest) {
       login.searchParams.set("next", path);
       return NextResponse.redirect(login);
     }
-    if (role !== "client") {
+    // an admin may enter a client's portal after choosing the client in the admin (see /api/admin/view-as)
+    const adminInPortal = role === "admin" && Boolean(req.cookies.get(VIEW_AS_COOKIE)?.value);
+    if (role !== "client" && !adminInPortal) {
       const dest = req.nextUrl.clone();
       dest.pathname = role === "admin" ? "/admin" : "/client/login";
       if (role !== "admin") dest.searchParams.set("denied", "1");

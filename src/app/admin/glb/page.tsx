@@ -200,26 +200,6 @@ export default function GlbStudioPage() {
         })}
       </div>
 
-      <section className="axa-note axa-note-pins">
-        <span className="axa-list-ico"><AiPin size={20} /></span>
-        <div>
-          <h2>Hotspots on the 3D maquette</h2>
-          <p>
-            Press <b>Edit pins</b> on a project: its 3D model opens here in the studio. Turn and zoom, click any point of the model
-            to drop a pin, then choose what it does — open a 360° scene, show an info card (mosque, school, park…) or open a link.
-            Press <b>Save</b>: the tour then uses these pins. Until the first save, the tour keeps its current pins (they are shown here as the starting point).
-          </p>
-        </div>
-      </section>
-
-      <section className="axa-note">
-        <h2>Preparing a model for the web</h2>
-        <ul>
-          <li>Export as <b>.glb</b> (binary glTF) with each villa as its own named mesh — the name is how the tour knows which villa was tapped.</li>
-          <li>Keep it under <b>{HEAVY_MB} MB</b>: remove hidden geometry, merge materials, use 1–2K textures and Draco or meshopt compression.</li>
-          <li>Uploading again replaces the model on the live tour straight away.</li>
-        </ul>
-      </section>
       {pinsFor && pinsFor.p.glb[0] && (
         <GlbPinEditor
           glbUrl={pinsFor.p.glb[0].path}

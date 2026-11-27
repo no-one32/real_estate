@@ -87,6 +87,8 @@ export async function GET() {
       full_name: auth.profile.full_name,
       avatar_url: (profileRow?.avatar_url as string | null | undefined) ?? null,
     },
+    /** set when an admin entered this client's portal */
+    viewAs: auth.viewAs ? { adminName: auth.viewAs.adminName } : null,
     complexes: list,
     units,
     leads,

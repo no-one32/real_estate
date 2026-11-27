@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import AdminShell from "./AdminShell";
 import { useConfirm } from "@/components/ConfirmDialog";
-import { fmt, trend, usePortals, type PortalOverview } from "./usePortals";
+import { enterClientPortal, fmt, trend, usePortals, type PortalOverview } from "./usePortals";
 import type { PortalStatus } from "@/lib/portal-status";
 import {
   AiExternal,
@@ -235,6 +235,11 @@ export default function PortalsPage() {
                 <button type="button" aria-label="More" aria-expanded={menu === p.id} onClick={() => setMenu(menu === p.id ? null : p.id)}>···</button>
                 {menu === p.id && (
                   <span className="axa-pop" role="menu">
+                    {p.clients.map((c) => (
+                      <button key={c.id} type="button" role="menuitem" onClick={() => void enterClientPortal(c.id).then((e) => e && setErr(e))}>
+                        Enter {c.name}’s portal
+                      </button>
+                    ))}
                     {p.status !== "active" && <button type="button" role="menuitem" onClick={() => void setStatus(p, "active")}>Activate (tour live)</button>}
                     {p.status !== "pending" && <button type="button" role="menuitem" onClick={() => void setStatus(p, "pending")}>Set as pending</button>}
                     {p.status !== "suspended" && <button type="button" role="menuitem" className="danger" onClick={() => void setStatus(p, "suspended")}>Suspend</button>}

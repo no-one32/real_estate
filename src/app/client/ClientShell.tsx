@@ -23,6 +23,8 @@ type Props = {
   onAvatar: (url: string) => void;
   /** everything "Search anything" can find */
   searchItems: SearchHit[];
+  /** an admin is inside this client's portal: show a banner and "back to admin" instead of sign out */
+  viewAs?: { adminName: string } | null;
 };
 
 /** Square-crop and shrink the picked photo to 256px WebP before upload. */
@@ -48,7 +50,7 @@ function initials(name: string) {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
 }
 
-export default function ClientShell({ children, view, onView, notifications, name, avatarUrl, onAvatar, searchItems }: Props) {
+export default function ClientShell({ children, view, onView, notifications, name, avatarUrl, onAvatar, searchItems, viewAs }: Props) {
   const router = useRouter();
   // The dashboard is drawn on the 1920 × 1080 Figma frame and scaled to fit the window (like Figma's preview),
   // so proportions match the design on any computer screen. Phones / small windows keep the normal layout.
@@ -94,7 +96,14 @@ export default function ClientShell({ children, view, onView, notifications, nam
     };
   }, [menuOpen]);
 
+  const leavePortal = async () => {
+    await fetch("/api/admin/view-as", { method: "DELETE" }).catch(() => {});
+    router.replace("/admin");
+    router.refresh();
+  };
+
   const signOut = async () => {
+    if (viewAs) return leavePortal(); // never sign the admin out from a client's portal
     const sb = createBrowserSupabase();
     await sb?.auth.signOut();
     router.replace("/client/login");
@@ -220,7 +229,7 @@ export default function ClientShell({ children, view, onView, notifications, nam
               <div className="axd-menu" role="menu">
                 <button type="button" role="menuitem" onClick={() => void signOut()}>
                   <IcLogout size={18} />
-                  تسجيل الخروج
+                  {viewAs ? "العودة إلى لوحة الإدارة" : "تسجيل الخروج"}
                 </button>
               </div>
             ) : null}
@@ -230,6 +239,14 @@ export default function ClientShell({ children, view, onView, notifications, nam
       </aside>
 
       <div className="axd-work">
+        {viewAs ? (
+          <div className="axd-viewas" dir="ltr" role="status">
+            <span>
+              Admin view · you are inside <b>{name || "this client"}</b>’s portal. Changes you make here are saved for this client.
+            </span>
+            <button type="button" onClick={() => void leavePortal()}>Back to admin</button>
+          </div>
+        ) : null}
         <GlobalSearch items={searchItems} />
         {children}
       </div>

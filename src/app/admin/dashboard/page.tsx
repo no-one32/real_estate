@@ -5,8 +5,7 @@ import AdminShell from "../AdminShell";
 import { AreaChart, BarList } from "../AdminCharts";
 import { fmt, trend, usePortals } from "../usePortals";
 import { ago, useAnalytics } from "../useAnalytics";
-import { buildScenes360 } from "@/lib/tour";
-import { Ai360, AiCube, AiEye, AiGlobe, AiLeads, AiPlus, AiUsers } from "../AdminIcons";
+import { AiEye, AiGlobe, AiLeads, AiPlus, AiUsers } from "../AdminIcons";
 
 function Trend({ value }: { value: number | null }) {
   if (value === null) return null;
@@ -17,8 +16,6 @@ export default function DashboardPage() {
   const { portals, totalClients } = usePortals();
   const { data, err } = useAnalytics(30);
   const active = portals.filter((p) => p.status === "active").length;
-  const scenes = portals.reduce((n, p) => n + buildScenes360(p.scenes.map((x) => x.path)).length, 0);
-  const models = portals.filter((p) => p.glb.length).length;
 
   return (
     <AdminShell>
@@ -73,7 +70,7 @@ export default function DashboardPage() {
         </section>
       </div>
 
-      <div className="axa-grid-2">
+      <div>
         <section className="axa-panel">
           <header className="axa-panel-title">
             <h2>Latest leads</h2>
@@ -92,16 +89,6 @@ export default function DashboardPage() {
               </li>
             ))}
           </ul>
-        </section>
-        <section className="axa-panel">
-          <header className="axa-panel-title">
-            <h2>Studio</h2>
-          </header>
-          <div className="axa-quick">
-            <Link href="/admin"><span className="axa-list-ico blue"><AiGlobe size={20} /></span><b>Portals</b><small>{portals.length} portals · {totalClients} clients</small></Link>
-            <Link href="/admin/tours"><span className="axa-list-ico"><Ai360 size={20} /></span><b>360° Tour Builder</b><small>{scenes} panoramas</small></Link>
-            <Link href="/admin/glb"><span className="axa-list-ico orange"><AiCube size={20} /></span><b>GLB Studio</b><small>{models} projects with a 3D model</small></Link>
-          </div>
         </section>
       </div>
     </AdminShell>
