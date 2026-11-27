@@ -2,18 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import AdminShell from "../../AdminShell";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import type { AssetKind, AssetRow, ComplexRow, LeadRow, UnitRow, UnitStatus } from "@/lib/types";
 import { displayPersonName } from "@/lib/person-name";
-import { filesForKind, relativeUploadPath } from "@/lib/upload-files";
-import { optimizeUploadFile } from "@/lib/image-optimize";
+import { uploadAssets, type BrandSlot } from "@/lib/admin-upload";
 import { assetFileLabel, assetRelSegments } from "@/lib/asset-path";
 import { IconEye, IconFolder, IconTrash } from "@/components/Icons";
 import { useConfirm } from "@/components/ConfirmDialog";
-
-type BrandSlot = "agency" | "project";
 
 const UPLOAD_STEPS: {
   id: AssetKind;
@@ -70,18 +67,6 @@ function brandingSlotOf(path: string): BrandSlot | "" {
   return "";
 }
 
-async function pool<T>(items: T[], width: number, fn: (item: T) => Promise<void>) {
-  let i = 0;
-  const workers = Array.from({ length: Math.min(width, items.length) }, async () => {
-    while (i < items.length) {
-      const item = items[i];
-      i += 1;
-      await fn(item);
-    }
-  });
-  await Promise.all(workers);
-}
-
 export default function ComplexAdminPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -98,7 +83,11 @@ export default function ComplexAdminPage() {
   const [filesDir, setFilesDir] = useState<string[]>([]);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
-  const [tab, setTab] = useState<"units" | "media" | "leads" | "qr">("units");
+  const search = useSearchParams();
+  const [tab, setTab] = useState<"units" | "media" | "leads" | "qr">(() => {
+    const t = search.get("tab");
+    return t === "media" || t === "leads" || t === "qr" ? t : "units";
+  });
   const { confirm, dialog } = useConfirm();
   const qrSrc = useMemo(() => (cx ? `/api/qr?slug=${cx.slug}` : ""), [cx]);
   const filesBrowse = useMemo(() => {
@@ -313,71 +302,17 @@ export default function ComplexAdminPage() {
 
   const upload = async (files: File[], nextKind: AssetKind, brandSlot?: BrandSlot) => {
     if (!cx) return;
-    const list = filesForKind(files, nextKind).slice(0, brandSlot ? 1 : undefined);
-    if (!list.length) {
-      setErr("No usable files in that selection");
-      return;
-    }
-    const sb = createBrowserSupabase();
-    if (!sb) {
-      setErr("Storage is not configured");
-      return;
-    }
     setErr("");
     setMsg("");
     setBusyKind(nextKind);
-    setBusyProgress(`0 / ${list.length}`);
-    let ok = 0;
-    let lastErr = "";
-    await pool(list, nextKind === "frame_high" ? 2 : 3, async (raw) => {
-      const file = await optimizeUploadFile(raw, nextKind);
-      const rel = brandSlot
-        ? `${brandSlot}.${(file.name.split(".").pop() || "webp").toLowerCase()}`
-        : relativeUploadPath(file);
-      const prepRes = await fetch("/api/admin/assets/prepare", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          complexId: cx.id,
-          kind: nextKind,
-          relativePath: rel,
-          contentType: file.type,
-        }),
-      });
-      const prep = await prepRes.json().catch(() => ({}));
-      if (!prepRes.ok) {
-        lastErr = typeof prep.error === "string" ? prep.error : "Could not start upload";
-        return;
-      }
-      const { error: upErr } = await sb.storage.from(prep.bucket).uploadToSignedUrl(prep.objectPath, prep.token, file, {
-        contentType: prep.contentType,
-      });
-      if (upErr) {
-        lastErr = upErr.message;
-        return;
-      }
-      const commitRes = await fetch("/api/admin/assets/commit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          complexId: cx.id,
-          kind: nextKind,
-          stored: prep.stored,
-          sort_index: prep.sort_index,
-        }),
-      });
-      const commit = await commitRes.json().catch(() => ({}));
-      if (!commitRes.ok) {
-        lastErr = typeof commit.error === "string" ? commit.error : "Could not save file";
-        return;
-      }
-      ok += 1;
-      setBusyProgress(`${ok} / ${list.length}`);
+    const res = await uploadAssets(cx.id, files, nextKind, {
+      brandSlot,
+      onProgress: (done, total) => setBusyProgress(`${done} / ${total}`),
     });
     setBusyKind(null);
     setBusyProgress("");
-    if (lastErr) setErr(lastErr);
-    if (ok) setMsg(`${ok} file(s) saved`);
+    if (res.error) setErr(res.error);
+    if (res.ok) setMsg(`${res.ok} file(s) saved`);
     void load();
   };
 
@@ -391,7 +326,7 @@ export default function ComplexAdminPage() {
 
   return (
     <AdminShell>
-      <p className="crumb"><Link href="/admin">Projects</Link> / {cx.name}</p>
+      <p className="crumb"><Link href="/admin">Portals</Link> / {cx.name}</p>
       <header className="page-head project-head">
         <h1>{cx.name}</h1>
         <button className="icon-btn danger" type="button" title="Delete project" aria-label="Delete project" onClick={() => void removeProject()}>
@@ -400,7 +335,7 @@ export default function ComplexAdminPage() {
       </header>
       <div className="tabs-inline">
         <a className={tab === "units" ? "on" : ""} href="#units" onClick={(e) => { e.preventDefault(); setTab("units"); }}>Units</a>
-        <a className={tab === "media" ? "on" : ""} href="#media" onClick={(e) => { e.preventDefault(); setTab("media"); }}>Upload</a>
+        <a className={tab === "media" ? "on" : ""} href="#media" onClick={(e) => { e.preventDefault(); setTab("media"); }}>Photos & logos</a>
         <a className={tab === "leads" ? "on" : ""} href="#leads" onClick={(e) => { e.preventDefault(); setTab("leads"); }}>Leads ({leads.length})</a>
         <a className={tab === "qr" ? "on" : ""} href="#qr" onClick={(e) => { e.preventDefault(); setTab("qr"); }}>Code</a>
         <Link href={`/digital-twins/${cx.slug}`}>View tour</Link>
