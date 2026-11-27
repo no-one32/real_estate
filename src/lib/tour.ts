@@ -1,5 +1,6 @@
 import { COMPLEX, type Unit } from "@/lib/complex";
 import type { AssetKind, AssetRow, ComplexRow } from "@/lib/types";
+import type { TourHotspots } from "@/lib/hotspots";
 
 export type TourScene360 = {
   id: string;
@@ -37,6 +38,8 @@ export type TourMedia = {
   plans: Record<string, string>;
   villa360: Record<string, string>;
   scenes360: TourScene360[];
+  /** what the admin changed (360 buttons, maquette pins); null = nothing changed */
+  hotspots: TourHotspots | null;
   source: "db" | "file" | "local";
 };
 
@@ -45,6 +48,7 @@ type Payload = {
   complex?: Partial<ComplexRow> & { slug?: string; name?: string; location_query?: string | null };
   units?: Unit[];
   assets?: Pick<AssetRow, "kind" | "path" | "sort_index">[];
+  hotspots?: TourHotspots | null;
 };
 
 function frameNum(path: string) {
@@ -206,6 +210,7 @@ function emptyShell(slug: string, name?: string): TourMedia {
     plans: {},
     villa360: {},
     scenes360: [],
+    hotspots: null,
     source: "db",
   };
 }
@@ -271,6 +276,7 @@ export function buildTour(payload: Payload, slug: string): TourMedia {
     plans,
     villa360,
     scenes360,
+    hotspots: payload.hotspots ?? null,
     source: payload.source === "file" ? "file" : "db",
   };
 }

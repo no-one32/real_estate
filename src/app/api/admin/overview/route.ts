@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { createServiceSupabase } from "@/lib/supabase/service";
 import { assetRelSegments } from "@/lib/asset-path";
+import { readSuspended, type PortalStatus } from "@/lib/portal-status";
 
 /** One row per project for the admin Portals / 360 / GLB pages: real counts, cover photo, logo, files. */
 export type PortalOverview = {
@@ -11,6 +12,8 @@ export type PortalOverview = {
   city: string | null;
   description: string | null;
   published: boolean;
+  /** active = live · pending = not live yet · suspended = taken offline by the admin */
+  status: PortalStatus;
   created_at: string | null;
   clients: { id: string; name: string; email: string | null }[];
   visits: number;
@@ -47,6 +50,7 @@ export async function GET() {
     sb.from("units").select("complex_id"),
   ]);
 
+  const suspended = new Set(createServiceSupabase() ? await readSuspended(createServiceSupabase()!) : []);
   const now = Date.now();
   const since30 = new Date(now - 30 * DAY).toISOString();
   const since60 = new Date(now - 60 * DAY).toISOString();
@@ -84,6 +88,7 @@ export async function GET() {
       city: c.city ?? null,
       description: c.description ?? null,
       published: Boolean(c.published),
+      status: c.published ? "active" : suspended.has(c.id) ? "suspended" : "pending",
       created_at: c.created_at ?? null,
       clients: [...clientIds]
         .map((id) => profileOf.get(id))

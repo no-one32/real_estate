@@ -137,3 +137,38 @@ export const AiArrowUp = (p: P) => (
     <path d="M12 19V5M6 11l6-6 6 6" />
   </S>
 );
+export const AiPin = (p: P) => (
+  <S {...p}>
+    <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+    <circle cx="12" cy="9.5" r="2.5" />
+  </S>
+);
+export const AiHome = (p: P) => (
+  <S {...p}>
+    <path d="M3.5 11 12 4l8.5 7" />
+    <path d="M5.5 9.5V20h13V9.5M10 20v-5.5h4V20" />
+  </S>
+);
+export const AiChart = (p: P) => (
+  <S {...p}>
+    <path d="M5 20v-6M10 20V9M15 20v-9M20 20V5" />
+  </S>
+);
+export const AiBell = (p: P) => (
+  <S {...p}>
+    <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" />
+    <path d="M10 20.5a2 2 0 0 0 4 0" />
+  </S>
+);
+export const AiHelp = (p: P) => (
+  <S {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01" />
+  </S>
+);
+export const AiCamera = (p: P) => (
+  <S {...p}>
+    <path d="M4 8h3l2-2.5h6L17 8h3v11H4z" />
+    <circle cx="12" cy="13" r="3.5" />
+  </S>
+);

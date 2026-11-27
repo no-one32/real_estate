@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import AdminShell from "./AdminShell";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { fmt, trend, usePortals, type PortalOverview } from "./usePortals";
+import type { PortalStatus } from "@/lib/portal-status";
 import {
   AiExternal,
   AiEye,
@@ -22,7 +23,13 @@ import {
   AiUsers,
 } from "./AdminIcons";
 
-type Filter = "all" | "live" | "hidden";
+type Filter = "all" | PortalStatus;
+
+const STATUS: Record<PortalStatus, { label: string; color: string }> = {
+  active: { label: "Active", color: "green" },
+  pending: { label: "Pending", color: "orange" },
+  suspended: { label: "Suspended", color: "red" },
+};
 
 function Trend({ value }: { value: number | null }) {
   if (value === null) return null;
@@ -47,6 +54,24 @@ export default function PortalsPage() {
   const [menu, setMenu] = useState<string | null>(null);
   const { confirm, dialog } = useConfirm();
   const router = useRouter();
+  // "Create New Portal" from the Dashboard opens the form here
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("new") === "1") setCreating(true);
+  }, []);
+  // the "···" menu closes on a click elsewhere or Escape
+  useEffect(() => {
+    if (!menu) return;
+    const close = (e: PointerEvent) => {
+      if (!(e.target as HTMLElement | null)?.closest?.(".axa-more")) setMenu(null);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setMenu(null);
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [menu]);
 
   const live = portals.filter((p) => p.published).length;
   const visits = portals.reduce((s, p) => s + p.visits, 0);
@@ -58,7 +83,7 @@ export default function PortalsPage() {
     const needle = q.trim().toLowerCase();
     return portals.filter(
       (p) =>
-        (filter === "all" || (filter === "live") === p.published) &&
+        (filter === "all" || filter === p.status) &&
         (!needle || [p.name, p.city ?? "", ...p.clients.map((c) => `${c.name} ${c.email ?? ""}`)].join(" ").toLowerCase().includes(needle)),
     );
   }, [portals, filter, q]);
@@ -101,17 +126,25 @@ export default function PortalsPage() {
     else void reload();
   };
 
-  const toggleLive = async (p: PortalOverview) => {
+  const setStatus = async (p: PortalOverview, status: PortalStatus) => {
     setMenu(null);
-    const { error } = (await createBrowserSupabase()?.from("complexes").update({ published: !p.published }).eq("id", p.id)) ?? {};
-    if (error) setErr(error.message);
+    if (status === "suspended" && !(await confirm(`Suspend ${p.name}? Its tour goes offline until you activate it again.`, "Suspend portal"))) return;
+    const res = await fetch("/api/admin/portal-status", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ complexId: p.id, status }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) setErr(json.error || "Could not change the status");
     else void reload();
   };
 
+  const countOf = (st: PortalStatus) => portals.filter((p) => p.status === st).length;
   const filters: [Filter, string, number, string][] = [
     ["all", "All Portals", portals.length, ""],
-    ["live", "Live", live, "green"],
-    ["hidden", "Hidden", portals.length - live, "orange"],
+    ["active", "Active", countOf("active"), "green"],
+    ["pending", "Pending", countOf("pending"), "orange"],
+    ["suspended", "Suspended", countOf("suspended"), "red"],
   ];
 
   return (
@@ -130,7 +163,7 @@ export default function PortalsPage() {
         </article>
         <article className="axa-stat violet">
           <span className="axa-stat-ico"><AiGlobe /></span>
-          <div><b>{live}</b><small>Live Portals</small></div>
+          <div><b>{live}</b><small>Active Portals</small></div>
           <em className="axa-trend muted">of {portals.length}</em>
         </article>
         <article className="axa-stat green">
@@ -140,7 +173,7 @@ export default function PortalsPage() {
         </article>
         <article className="axa-stat orange">
           <span className="axa-stat-ico"><AiLeads /></span>
-          <div><b>{fmt(leads)}</b><small>Interested buyers</small></div>
+          <div><b>{fmt(leads)}</b><small>Leads</small></div>
         </article>
         <button type="button" className="axa-cta" onClick={() => setCreating(true)}>
           <AiPlus size={20} stroke={2.2} />
@@ -180,7 +213,7 @@ export default function PortalsPage() {
           <article key={p.id} className="axa-card">
             <div className="axa-cover">
               {p.cover ? <img src={p.cover} alt="" loading="lazy" /> : <div className="axa-cover-empty">No cover photo yet</div>}
-              <span className={`axa-pill ${p.published ? "green" : "orange"}`}><i />{p.published ? "Live" : "Hidden"}</span>
+              <span className={`axa-pill ${STATUS[p.status].color}`}><i />{STATUS[p.status].label}</span>
               <a className="axa-open" href={`/digital-twins/${p.slug}`} target="_blank" rel="noreferrer" aria-label="Open tour"><AiExternal size={16} /></a>
             </div>
             <div className="axa-card-body">
@@ -202,7 +235,9 @@ export default function PortalsPage() {
                 <button type="button" aria-label="More" aria-expanded={menu === p.id} onClick={() => setMenu(menu === p.id ? null : p.id)}>···</button>
                 {menu === p.id && (
                   <span className="axa-pop" role="menu">
-                    <button type="button" role="menuitem" onClick={() => void toggleLive(p)}>{p.published ? "Hide portal" : "Make live"}</button>
+                    {p.status !== "active" && <button type="button" role="menuitem" onClick={() => void setStatus(p, "active")}>Activate (tour live)</button>}
+                    {p.status !== "pending" && <button type="button" role="menuitem" onClick={() => void setStatus(p, "pending")}>Set as pending</button>}
+                    {p.status !== "suspended" && <button type="button" role="menuitem" className="danger" onClick={() => void setStatus(p, "suspended")}>Suspend</button>}
                     <Link role="menuitem" href={`/admin/complexes/${p.id}?tab=qr`}>Visitor QR code</Link>
                     <button type="button" role="menuitem" className="danger" onClick={() => void remove(p)}><AiTrash size={15} />Delete</button>
                   </span>

@@ -7151,3 +7151,62 @@ html.phone-layout .discover-sound { right: 16px; width: 40px; height: 40px; }
 .vidwin-close:hover { background: rgba(0, 0, 0, 0.8); }
 @keyframes vidwin-fade { from { opacity: 0; } }
 @keyframes vidwin-pop { from { opacity: 0; transform: scale(0.96); } }
+
+/* ---------- set by the admin (360 Tour Builder / GLB Studio); nothing here applies when the admin changed nothing ---------- */
+.pano-link {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  will-change: transform;
+}
+.pano-link-ring {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(16, 24, 34, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.pano-link:hover .pano-link-ring { transform: scale(1.12); background: var(--teal); }
+.pano-link-label {
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: rgba(16, 24, 34, 0.68);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.street360-pin-info .street360-tag { padding: 0 10px; }
+.street360-info {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: 120px;
+  transform: translateX(-50%);
+  width: min(360px, calc(100% - 32px));
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #1b2430;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+.street360-info h3 { margin: 0 0 6px; padding-inline-end: 40px; font-size: 17px; }
+.street360-info p { margin: 0; font-size: 14.5px; line-height: 1.7; white-space: pre-line; }
+.street360-info button { position: absolute; top: 8px; left: 10px; width: 30px; height: 30px; border: 0; border-radius: 50%; background: #eef2f6; font-size: 18px; cursor: pointer; }
+/* phone: the bottom bar (360 / eye / compass) sits low, so the card goes under the header instead */
+html.phone-layout .street360-info { top: 110px; bottom: auto; z-index: 30; }

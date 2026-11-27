@@ -38,6 +38,7 @@ import VideoWindow from "@/components/VideoWindow";
 import { startVisit, trackFavorite, trackUnitView } from "@/lib/track";
 import { attachGlideScroll } from "@/lib/glide-scroll";
 import { STREET_360_PINS } from "@/lib/street360";
+import type { MapPin } from "@/lib/hotspots";
 
 const STATUS_AR: Record<UnitStatus, string> = {
   available: "متاح",
@@ -1070,10 +1071,16 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
   }, [selected]);
 
   // Street 360 pins on the aerial: follow the map (turn / zoom / pan) by moving the DOM directly each frame.
-  const streetPins = useMemo(
-    () => (STREET_360_PINS[tour.slug] ?? []).filter((p) => tour.scenes360.some((s) => s.id === p.sceneId)),
-    [tour.slug, tour.scenes360],
+  // Built-in pins, unless the admin changed them in GLB Studio (then the admin's list is used).
+  const streetPins = useMemo<MapPin[]>(
+    () =>
+      (
+        tour.hotspots?.mapPins ??
+        (STREET_360_PINS[tour.slug] ?? []).map((p): MapPin => ({ id: p.sceneId, pos: p.pos, kind: "scene", sceneId: p.sceneId }))
+      ).filter((p) => p.kind !== "scene" || tour.scenes360.some((s) => s.id === p.sceneId)),
+    [tour.slug, tour.scenes360, tour.hotspots],
   );
+  const [pinInfo, setPinInfo] = useState<MapPin | null>(null);
   const pinEls = useRef<(HTMLButtonElement | null)[]>([]);
   const showStreetPins = ready && !introOpen && !tourUnit && !scene360Open && streetPins.length > 0;
   useEffect(() => {
@@ -1873,19 +1880,23 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
           <div className="street360-pins">
             {streetPins.map((p, i) => (
               <button
-                key={p.sceneId}
+                key={p.id}
                 ref={(el) => {
                   pinEls.current[i] = el;
                 }}
                 type="button"
-                className="street360-pin"
+                className={p.kind === "scene" ? "street360-pin" : "street360-pin street360-pin-info"}
                 style={{ visibility: "hidden" }}
-                aria-label={`جولة 360° في الشارع — ${p.sceneId}`}
+                aria-label={p.kind === "scene" ? `جولة 360° في الشارع — ${p.sceneId}` : p.title || ""}
                 onPointerDown={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
-                onClick={() => openScene360View(p.sceneId)}
+                onClick={() => {
+                  if (p.kind === "scene" && p.sceneId) openScene360View(p.sceneId);
+                  else if (p.kind === "link" && p.url) window.open(p.url, "_blank", "noopener,noreferrer");
+                  else setPinInfo(p);
+                }}
               >
-                {(() => {
+                {p.kind === "scene" && (() => {
                   const thumb = tour.scenes360.find((sc) => sc.id === p.sceneId)?.thumbUrl;
                   return thumb ? (
                     <span className="street360-preview" aria-hidden>
@@ -1894,16 +1905,30 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
                   ) : null;
                 })()}
                 <span className="street360-tag">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <ellipse cx="12" cy="12" rx="9" ry="4" />
-                    <path d="M17.5 15.2 21 16l-1.2-3.4" />
-                  </svg>
-                  <b>360°</b>
+                  {p.kind === "scene" ? (
+                    <>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <ellipse cx="12" cy="12" rx="9" ry="4" />
+                        <path d="M17.5 15.2 21 16l-1.2-3.4" />
+                      </svg>
+                      <b>360°</b>
+                    </>
+                  ) : (
+                    <b>{p.title}</b>
+                  )}
                 </span>
                 <span className="street360-stem" aria-hidden />
                 <span className="street360-dot" aria-hidden />
               </button>
             ))}
+          </div>
+        )}
+
+        {pinInfo && showStreetPins && (
+          <div className="street360-info" dir="rtl" onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+            <button type="button" aria-label="إغلاق" onClick={() => setPinInfo(null)}>×</button>
+            {pinInfo.title ? <h3>{pinInfo.title}</h3> : null}
+            {pinInfo.text ? <p>{pinInfo.text}</p> : null}
           </div>
         )}
 
@@ -2243,7 +2268,18 @@ function ComplexStage({ tour, introOpen, onEnter, initialVilla }: { tour: TourMe
                 onPointerDown={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                <PanoramaViewer key={activeScene.id} src={activeScene.url} className="scene360-pano" />
+                <PanoramaViewer
+                  key={activeScene.id}
+                  src={activeScene.url}
+                  className="scene360-pano"
+                  links={(tour.hotspots?.scenes[activeScene.id] ?? [])
+                    .filter((l) => tour.scenes360.some((sc) => sc.id === l.target))
+                    .map((l) => ({ id: l.id, lon: l.lon, lat: l.lat, label: l.label || tour.scenes360.find((sc) => sc.id === l.target)?.label }))}
+                  onLink={(id) => {
+                    const target = tour.hotspots?.scenes[activeScene.id]?.find((l) => l.id === id)?.target;
+                    if (target) setActiveSceneId(target);
+                  }}
+                />
                 {activeScene.label ? <span className="scene360-view-label">{activeScene.label}</span> : null}
               </div>
             ) : (

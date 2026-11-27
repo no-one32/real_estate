@@ -3,14 +3,23 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
+/** A button the admin placed in this panorama (look angles in degrees, see the admin 360 builder). */
+export type PanoLink = { id: string; lon: number; lat: number; label?: string };
+
 type Props = {
   src: string;
   className?: string;
+  /** buttons placed by the admin (none = the viewer is exactly as before) */
+  links?: PanoLink[];
+  onLink?: (id: string) => void;
 };
 
 /** Equirectangular 360 — hold and drag to look around; release to stop. */
-export default function PanoramaViewer({ src, className }: Props) {
+export default function PanoramaViewer({ src, className, links, onLink }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const linkEls = useRef<(HTMLButtonElement | null)[]>([]);
+  const linksRef = useRef(links);
+  linksRef.current = links;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -137,6 +146,32 @@ export default function PanoramaViewer({ src, className }: Props) {
         500 * Math.sin(phi) * Math.sin(theta),
       );
       renderer.render(scene, camera);
+      placeLinks();
+    };
+
+    // admin buttons follow the picture
+    const fwd = new THREE.Vector3();
+    const v = new THREE.Vector3();
+    const placeLinks = () => {
+      const list = linksRef.current;
+      if (!list?.length) return;
+      camera.getWorldDirection(fwd);
+      const w = host.clientWidth;
+      const h = host.clientHeight;
+      list.forEach((l, i) => {
+        const el = linkEls.current[i];
+        if (!el) return;
+        const p = THREE.MathUtils.degToRad(90 - l.lat);
+        const t = THREE.MathUtils.degToRad(l.lon);
+        v.set(Math.sin(p) * Math.cos(t), Math.cos(p), Math.sin(p) * Math.sin(t));
+        if (v.dot(fwd) <= 0.05) {
+          el.style.visibility = "hidden";
+          return;
+        }
+        v.multiplyScalar(400).project(camera);
+        el.style.visibility = "visible";
+        el.style.transform = `translate3d(${Math.round((v.x * 0.5 + 0.5) * w)}px, ${Math.round((-v.y * 0.5 + 0.5) * h)}px, 0) translate(-50%, -50%)`;
+      });
     };
     tick();
 
@@ -158,5 +193,30 @@ export default function PanoramaViewer({ src, className }: Props) {
     };
   }, [src]);
 
-  return <div ref={hostRef} className={className} style={{ width: "100%", height: "100%", touchAction: "none" }} />;
+  return (
+    <div ref={hostRef} className={className} style={{ width: "100%", height: "100%", touchAction: "none" }}>
+      {links?.map((l, i) => (
+        <button
+          key={l.id}
+          ref={(el) => {
+            linkEls.current[i] = el;
+          }}
+          type="button"
+          className="pano-link"
+          style={{ visibility: "hidden" }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onLink?.(l.id);
+          }}
+          aria-label={l.label || ""}
+        >
+          <span className="pano-link-ring" aria-hidden>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
+          </span>
+          {l.label ? <span className="pano-link-label">{l.label}</span> : null}
+        </button>
+      ))}
+    </div>
+  );
 }

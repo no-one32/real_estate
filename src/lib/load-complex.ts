@@ -4,6 +4,7 @@ import { COMPLEX, modelOf, type Unit } from "@/lib/complex";
 import type { canViewComplex } from "@/lib/complex-access";
 import { createServiceSupabase } from "@/lib/supabase/service";
 import type { AssetRow, ComplexRow, UnitRow } from "@/lib/types";
+import { cleanHotspots, hotspotsPath, type TourHotspots } from "@/lib/hotspots";
 
 export type ComplexPayload = {
   source: "db" | "file";
@@ -11,6 +12,8 @@ export type ComplexPayload = {
   units: Unit[];
   assets: Pick<AssetRow, "kind" | "path" | "sort_index">[];
   published: boolean;
+  /** what the admin changed (360 buttons, maquette pins); null = nothing changed, keep the built-in values */
+  hotspots?: TourHotspots | null;
 };
 
 function mapUnit(row: UnitRow): Unit {
@@ -35,9 +38,14 @@ type Access = Awaited<ReturnType<typeof canViewComplex>>;
 export async function loadComplexPayload(slug: string, access: Access): Promise<ComplexPayload | { error: string; status: number }> {
   const sb = createServiceSupabase();
   if (sb && access.complex) {
-    const [{ data: units }, { data: assets }] = await Promise.all([
+    const [{ data: units }, { data: assets }, hotspots] = await Promise.all([
       sb.from("units").select("*").eq("complex_id", access.complex.id),
       sb.from("assets").select("kind, path, sort_index").eq("complex_id", access.complex.id).order("sort_index"),
+      sb.storage
+        .from("media")
+        .download(hotspotsPath(access.complex.slug))
+        .then(async ({ data }) => (data ? cleanHotspots(JSON.parse(await data.text())) : null))
+        .catch(() => null),
     ]);
     return {
       source: "db",
@@ -45,6 +53,7 @@ export async function loadComplexPayload(slug: string, access: Access): Promise<
       units: ((units as UnitRow[]) ?? []).map(mapUnit),
       assets: (assets as Pick<AssetRow, "kind" | "path" | "sort_index">[]) ?? [],
       published: Boolean(access.complex.published),
+      hotspots,
     };
   }
 

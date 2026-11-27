@@ -5,8 +5,12 @@ import AdminShell from "../AdminShell";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { uploadAssets } from "@/lib/admin-upload";
 import { assetFileLabel } from "@/lib/asset-path";
-import { usePortals } from "../usePortals";
-import { AiCube, AiEye, AiLink, AiTrash, AiUpload } from "../AdminIcons";
+import { usePortals, type PortalOverview } from "../usePortals";
+import { buildScenes360 } from "@/lib/tour";
+import type { MapPin } from "@/lib/hotspots";
+import { STREET_360_PINS } from "@/lib/street360";
+import GlbPinEditor from "./GlbPinEditor";
+import { AiCube, AiEye, AiLink, AiPin, AiTrash, AiUpload } from "../AdminIcons";
 
 /** Above this a GLB is slow on phones; it should be compressed (Draco / meshopt, smaller textures) before upload. */
 const HEAVY_MB = 25;
@@ -37,6 +41,35 @@ export default function GlbStudioPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
   const { confirm, dialog } = useConfirm();
+  const [pinsFor, setPinsFor] = useState<{ p: PortalOverview; pins: MapPin[] } | null>(null);
+  const [savingPins, setSavingPins] = useState(false);
+
+  const openPins = async (p: PortalOverview) => {
+    setErr("");
+    const res = await fetch(`/api/admin/hotspots?complexId=${p.id}`);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) return setErr(json.error || "Could not load pins");
+    // nothing changed yet: start from the pins the tour already has
+    const builtIn = (STREET_360_PINS[p.slug] ?? []).map((x): MapPin => ({ id: x.sceneId, pos: x.pos, kind: "scene", sceneId: x.sceneId }));
+    setPinsFor({ p, pins: json.hotspots?.mapPins ?? builtIn });
+  };
+  const savePins = async (pins: MapPin[]) => {
+    if (!pinsFor) return false;
+    setSavingPins(true);
+    const res = await fetch("/api/admin/hotspots", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ complexId: pinsFor.p.id, mapPins: pins }),
+    });
+    const json = await res.json().catch(() => ({}));
+    setSavingPins(false);
+    if (!res.ok) {
+      setErr(json.error || "Could not save");
+      return false;
+    }
+    setMsg(`${pins.length} pin(s) saved for ${pinsFor.p.name}`);
+    return true;
+  };
 
   const shown = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -137,6 +170,10 @@ export default function GlbStudioPage() {
               <span className="axa-td-actions">
                 {g && (
                   <>
+                    <button type="button" className="btn ghost small" title="Place clickable pins on the 3D model" onClick={() => void openPins(p)}>
+                      <AiPin size={15} />
+                      Edit pins
+                    </button>
                     <a className="icon-btn" href={`/digital-twins/${p.slug}`} target="_blank" rel="noreferrer" title="Open in tour" aria-label="Open in tour"><AiEye size={16} /></a>
                     <button type="button" className="icon-btn" title="Copy model link" aria-label="Copy model link" onClick={() => void copy(g.path)}><AiLink size={16} /></button>
                     <button type="button" className="icon-btn danger" title="Delete model" aria-label="Delete model" onClick={() => void remove(g.id)}><AiTrash size={16} /></button>
@@ -163,6 +200,18 @@ export default function GlbStudioPage() {
         })}
       </div>
 
+      <section className="axa-note axa-note-pins">
+        <span className="axa-list-ico"><AiPin size={20} /></span>
+        <div>
+          <h2>Hotspots on the 3D maquette</h2>
+          <p>
+            Press <b>Edit pins</b> on a project: its 3D model opens here in the studio. Turn and zoom, click any point of the model
+            to drop a pin, then choose what it does — open a 360° scene, show an info card (mosque, school, park…) or open a link.
+            Press <b>Save</b>: the tour then uses these pins. Until the first save, the tour keeps its current pins (they are shown here as the starting point).
+          </p>
+        </div>
+      </section>
+
       <section className="axa-note">
         <h2>Preparing a model for the web</h2>
         <ul>
@@ -171,6 +220,17 @@ export default function GlbStudioPage() {
           <li>Uploading again replaces the model on the live tour straight away.</li>
         </ul>
       </section>
+      {pinsFor && pinsFor.p.glb[0] && (
+        <GlbPinEditor
+          glbUrl={pinsFor.p.glb[0].path}
+          projectName={pinsFor.p.name}
+          scenes={buildScenes360(pinsFor.p.scenes.map((s) => s.path))}
+          pins={pinsFor.pins}
+          saving={savingPins}
+          onSave={savePins}
+          onClose={() => setPinsFor(null)}
+        />
+      )}
       {dialog}
     </AdminShell>
   );
