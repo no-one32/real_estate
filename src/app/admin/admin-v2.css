@@ -587,3 +587,84 @@
 .axa .units-panel { background: var(--card); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 20px; box-shadow: 0 20px 40px -28px rgba(31, 56, 102, 0.5); }
 .axa .units-panel label.file-pick { background: var(--blue); color: #fff; border: 0; }
 .axa .units-panel label.file-pick:hover { background: #1c4ae6; }
+
+/* ---------- 360 Tour Builder: inside the villa ---------- */
+.axa-builder-view { display: flex; flex-direction: column; }
+.axa-inside-view { position: relative; flex: 1; min-height: 0; }
+.axa-inside-view .visite360-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.axa-place-layer { position: absolute; inset: 0; z-index: 60; cursor: crosshair; }
+.axa-inside-bar { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #0f1828; }
+.axa-inside-bar .axa-editor-hint { position: static; transform: none; background: none; padding: 0; color: rgba(255, 255, 255, 0.8); }
+.axa-inside-bar .btn { display: inline-flex; align-items: center; gap: 8px; }
+.axa-builder-h { margin: 2px 4px 10px; font-size: 15px; }
+.axa-room-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.axa-room-list li { display: flex; flex-direction: column; gap: 4px; }
+.axa-room-list small { margin: 0 4px 2px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.axa-room-list button { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; border: 1.5px solid transparent; border-radius: 12px; background: transparent; font: inherit; font-size: 14px; text-align: start; cursor: pointer; color: inherit; }
+.axa-room-list button:hover { background: #fff; }
+.axa-room-list button.on { border-color: var(--blue); background: #fff; font-weight: 600; }
+.axa-room-list em { font-style: normal; font-size: 10px; color: var(--blue); }
+.axa-pin-form textarea { width: 100%; resize: vertical; font: inherit; }
+.axa .v360-hotspot.is-sel .v360-hotspot-ring { border-color: #3984da; box-shadow: 0 0 0 4px rgba(57, 132, 218, 0.45); }
+.axa-inside-bar .btn { flex: none; white-space: nowrap; }
+.axa-room-list button { direction: rtl; }
+.axa-builder-props .axa-pin-form select,
+.axa-builder-props .axa-pin-form input,
+.axa-builder-props .axa-pin-form textarea { width: 100%; min-width: 0; box-sizing: border-box; }
+.axa-photo-btn { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; }
+/* click the photo (sidebar / top bar) → choose a new one, like the client dashboard */
+.axa-photo-pick { position: relative; flex: none; display: flex; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
+.axa-photo-cam { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%; background: rgba(12, 19, 35, 0.5); color: #fff; opacity: 0; transition: opacity 0.15s ease; }
+.axa-photo-pick:hover .axa-photo-cam,
+.axa-photo-pick:focus-visible .axa-photo-cam,
+.axa-photo-pick.busy .axa-photo-cam { opacity: 1; }
+.axa-top-right .axa-photo-pick { margin-right: -4px; }
+/* pages without a search bar: no empty row above the title — the bell and profile sit on the title's line */
+@media (min-width: 901px) {
+  .axa-work { position: relative; }
+  .axa-top.bare { position: absolute; top: 22px; right: 36px; margin: 0; z-index: 5; }
+  .axa-top.bare > span:first-child { display: none; }
+  .axa-top.bare + .axa-main > .axa-head { min-height: 72px; padding-right: 290px; }
+  .axa-top.bare + .axa-main > .axa-head-row { padding-right: 0; min-height: 112px; }
+  .axa-top.bare + .axa-main > .axa-head-row > :first-child { align-self: flex-start; }
+}
+@media (max-width: 900px) {
+  .axa-top .axa-search { flex: 1; min-width: 0; }
+  .axa-top-right { gap: 10px; flex: none; }
+}
+@media (max-width: 900px) {
+  .axa-work { position: relative; }
+  .axa-top.bare { position: absolute; top: 18px; right: 16px; margin: 0; z-index: 5; }
+  .axa-top.bare > span:first-child { display: none; }
+  .axa-top.bare + .axa-main > .axa-head { padding-right: 96px; }
+  .axa-top.bare + .axa-main > .axa-head-row > :first-child { padding-right: 96px; }
+}
+.axa-room-tip { margin: -4px 4px 10px; font-size: 12.5px; line-height: 1.5; }
+.axa-room-edit { display: flex; align-items: center; gap: 8px; padding: 3px; border: 1.5px solid transparent; border-radius: 12px; }
+.axa-room-edit.on { border-color: var(--blue); background: #fff; }
+.axa-room-edit button { flex: none; width: 30px; height: 30px; padding: 0; justify-content: center; border-radius: 9px; background: #eef2fa; font-size: 12.5px; font-weight: 600; }
+.axa-room-edit input { flex: 1; min-width: 0; padding: 7px 10px; font-size: 14px; }
+.axa-import { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; max-width: 760px; }
+.axa-import h2 { margin: 0; font-size: 19px; }
+.axa-import p { margin: 0; color: var(--text); line-height: 1.6; }
+.axa-import .btn { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.axa-reimport { margin-top: 18px; }
+.axa-reimport summary { cursor: pointer; color: var(--muted); font-size: 14px; margin-bottom: 12px; }
+.axa-room-list input.axa-floor-name { margin: 0 0 2px; padding: 4px 8px; border: 1px dashed transparent; border-radius: 8px; background: transparent; font-size: 12px; font-weight: 700; color: var(--muted); }
+.axa-room-list input.axa-floor-name:hover, .axa-room-list input.axa-floor-name:focus { border-color: var(--line); background: #fff; color: var(--ink); }
+
+/* ---------- GLB Studio: real 3D model + its pins ---------- */
+.axa-glb-sec { margin-bottom: 28px; }
+.axa-glb-sec h2 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin: 0 0 12px; font-size: 19px; }
+.axa-glb-sec h2 small { font-size: 13px; font-weight: 400; color: var(--muted); }
+.axa-mpin { position: absolute; left: 0; top: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; padding: 0; border: 0; background: none; cursor: pointer; will-change: transform; }
+.axa-mpin > span { display: flex; align-items: center; gap: 6px; padding: 6px 11px 6px 8px; border-radius: 99px; background: #fff; color: #1b2a44; box-shadow: 0 6px 18px rgba(15, 30, 60, 0.25); font-size: 12.5px; }
+.axa-mpin > span b { font-weight: 600; white-space: nowrap; }
+.axa-mpin > i { width: 2px; height: 16px; background: #fff; box-shadow: 0 2px 6px rgba(15, 30, 60, 0.3); }
+.axa-mpin.on > span { background: var(--blue); color: #fff; }
+.axa-mpin.far > span { background: #f6f0e3; }
+.axa-mpin-add { position: absolute; left: 16px; bottom: 16px; z-index: 4; }
+.axa-mpin-photo { display: flex; align-items: center; gap: 10px; }
+.axa-mpin-photo img { width: 120px; height: 69px; object-fit: cover; border-radius: 8px; }
+.axa-mpin-view { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; background: #f3f6fc; }
+.axa-mpin-view b { font-size: 13.5px; }

@@ -17,7 +17,6 @@ const UPLOAD_STEPS: {
   key: string;
   title: string;
   why: string;
-  where: string;
   pick: "folder" | "files";
   action: string;
   brandSlot?: BrandSlot;
@@ -26,8 +25,7 @@ const UPLOAD_STEPS: {
     id: "branding",
     key: "branding-agency",
     title: "Agency logo",
-    why: "Left mark in the tour sidebar (أجياد العربية…).",
-    where: "branding → agency.png",
+    why: "Your agency logo — PNG with a transparent background.",
     pick: "files",
     action: "Add agency logo",
     brandSlot: "agency",
@@ -36,28 +34,26 @@ const UPLOAD_STEPS: {
     id: "branding",
     key: "branding-project",
     title: "Project logo",
-    why: "Wordmark next to it in the sidebar (أجياد سديم…).",
-    where: "branding → project.png",
+    why: "The project's logo — PNG with a transparent background.",
     pick: "files",
     action: "Add project logo",
     brandSlot: "project",
   },
-  { id: "glb", key: "glb", title: "3D model", why: "Lets visitors tap a villa.", where: "models → building.glb", pick: "files", action: "Add model" },
-  { id: "frame_low", key: "frame_low", title: "Orbit photos", why: "The aerial while turning. Auto-resized on upload (~1280px).", where: "panorama → frames_low", pick: "folder", action: "Add folder" },
-  { id: "gallery", key: "gallery", title: "Gallery", why: "One cover photo at the root, then exterior/ and interior/ folders. Auto-capped (~2048px).", where: "gallery → cover + exterior + interior", pick: "folder", action: "Add folder" },
+  { id: "glb", key: "glb", title: "3D model", why: "The project's 3D file: building.glb.", pick: "files", action: "Add model" },
+  { id: "frame_low", key: "frame_low", title: "Orbit photos", why: "The folder of 90 aerial photos taken all around the project.", pick: "folder", action: "Add folder" },
+  { id: "gallery", key: "gallery", title: "Gallery", why: "A cover photo, plus an exterior folder and an interior folder.", pick: "folder", action: "Add folder" },
   {
     id: "scene_360",
     key: "scene_360",
     title: "Site 360 scenes",
-    why: "Equirectangular panoramas (2:1, e.g. 14000×7000). Tap a thumb → drag to look around inside. Name files 1.jpg…12.jpg (or folders). Do not upload the 3DVista cube export. Auto-capped (~4096px wide).",
-    where: "scene_360 → 1.jpg · 2.jpg · …",
+    why: "The street 360° photos (2:1 panoramas), named 1.jpg, 2.jpg…",
     pick: "folder",
     action: "Add panoramas",
   },
-  { id: "plan", key: "plan", title: "Plans", why: "Types and floors", where: "plans → types , plans → floors", pick: "folder", action: "Add folder" },
-  { id: "villa_360", key: "villa_360", title: "Inside 360", why: "Each type: RDC, floors, whole villa. Auto-capped (~2048px).", where: "villa-types", pick: "folder", action: "Add folder" },
-  { id: "frame_high", key: "frame_high", title: "Sharp aerials", why: "Last step — auto-capped to ~4096px WebP (not full 13k).", where: "panorama → frames", pick: "folder", action: "Add folder" },
-  { id: "document", key: "document", title: "Private", why: "Contracts. Not on the tour.", where: "Any PDF", pick: "files", action: "Add files" },
+  { id: "plan", key: "plan", title: "Plans", why: "A folder with the villa type plans and the floor plans.", pick: "folder", action: "Add folder" },
+  { id: "villa_360", key: "villa_360", title: "Inside 360", why: "One folder per villa type with the turning-view images: ground floor, each floor, whole villa.", pick: "folder", action: "Add folder" },
+  { id: "frame_high", key: "frame_high", title: "Sharp aerials", why: "The same 90 aerial photos, in high quality.", pick: "folder", action: "Add folder" },
+  { id: "document", key: "document", title: "Private", why: "Contracts and private PDF files (never shown on the tour).", pick: "files", action: "Add files" },
 ];
 
 function brandingSlotOf(path: string): BrandSlot | "" {
@@ -515,7 +511,6 @@ export default function ComplexAdminPage() {
                     </div>
                   </header>
                   <p>{step.why}</p>
-                  <p className="where">{step.where}</p>
                   <label className="upload-pick">
                     <input
                       type="file"

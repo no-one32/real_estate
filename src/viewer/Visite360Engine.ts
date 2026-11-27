@@ -47,6 +47,8 @@ export type TourCamera = {
 };
 
 export type TourHotspot = {
+  /** set for hotspots placed in the admin (lets the admin builder select them) */
+  id?: string;
   name: string;
   /** World position in cm (Layama coordinates — use the dev pick logger). */
   pos: LayamaVec;
@@ -100,6 +102,8 @@ export type EngineOptions = {
   onMeasurementsChange?: (count: number) => void;
   /** Dev aid: logs every clicked surface point in Layama cm (for placing hotspots). */
   debugPick?: boolean;
+  /** Admin builder only: return true to handle a hotspot click yourself (no walk / link). */
+  onHotspotClick?: (def: TourHotspot) => boolean | void;
 };
 
 type CamDef = {
@@ -382,6 +386,21 @@ export class Visite360Engine {
   }
 
   // ============================================================ public API
+
+  /** Admin builder: the wall / floor point under the screen position, in Layama cm (null = nothing there). */
+  pickAt(clientX: number, clientY: number): LayamaVec | null {
+    const hit = this.pickScreen(clientX, clientY);
+    return hit ? this.toLayama(hit.point) : null;
+  }
+
+  /** Admin builder: replace the hotspots shown (the public tour sets them once through `tour.hotspots`). */
+  setHotspots(list: TourHotspot[]) {
+    this.hotspots.forEach((h) => h.el.remove());
+    this.hotspots = [];
+    this.o.tour.hotspots = list;
+    this.buildHotspots();
+    this.updateHotspotVisibility();
+  }
 
   async start() {
     const { tour, baseUrl } = this.o;
@@ -1567,6 +1586,7 @@ export class Visite360Engine {
       el.className = `v360-hotspot v360-hotspot--m${def.mode}`;
       el.style.setProperty("--hs-scale", String(scale));
       el.setAttribute("aria-label", def.title ?? def.name);
+      if (def.id) el.dataset.id = def.id;
       if (def.icon) el.style.backgroundImage = `url("${def.icon}")`;
       el.innerHTML = `<span class="v360-hotspot-ring"></span><span class="v360-hotspot-core"></span>${
         def.title ? `<span class="v360-hotspot-title"></span>` : ""
@@ -1577,6 +1597,7 @@ export class Visite360Engine {
       el.addEventListener("pointerdown", (e) => e.stopPropagation());
       el.addEventListener("click", (e) => {
         e.stopPropagation();
+        if (this.o.onHotspotClick?.(def) === true) return;
         this.hotspotClicked(def);
       });
       this.o.overlay.appendChild(el);

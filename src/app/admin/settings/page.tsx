@@ -2,27 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import AdminShell, { Avatar, type AdminMe } from "../AdminShell";
+import AdminShell, { Avatar, uploadAdminPhoto, type AdminMe } from "../AdminShell";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import PasswordField from "@/components/PasswordField";
 import { AiCamera, AiLogout } from "../AdminIcons";
-
-/** Square-crop and shrink the photo to 256px before upload (same as the client dashboard). */
-async function shrinkPhoto(file: File): Promise<Blob> {
-  const bmp = await createImageBitmap(file);
-  const side = Math.min(bmp.width, bmp.height);
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = 256;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("no canvas");
-  ctx.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, 256, 256);
-  bmp.close();
-  const webp = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/webp", 0.86));
-  if (webp && webp.type === "image/webp") return webp;
-  const jpg = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.88));
-  if (!jpg) throw new Error("encode failed");
-  return jpg;
-}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -65,13 +48,8 @@ export default function SettingsPage() {
     if (!file) return;
     setBusy("photo");
     try {
-      const blob = await shrinkPhoto(file);
-      const form = new FormData();
-      form.append("file", blob, blob.type === "image/webp" ? "avatar.webp" : "avatar.jpg");
-      const res = await fetch("/api/admin/avatar", { method: "POST", body: form });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || "Could not upload the photo");
-      setMe((m) => (m ? { ...m, avatarUrl: j.avatarUrl } : m));
+      const avatarUrl = await uploadAdminPhoto(file);
+      setMe((m) => (m ? { ...m, avatarUrl } : m));
       flash("Photo updated.");
     } catch (e) {
       flash("", e instanceof Error ? e.message : "Could not upload the photo");
@@ -101,7 +79,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <AdminShell me={me}>
+    <AdminShell me={me} onPhoto={(avatarUrl) => setMe((m) => (m ? { ...m, avatarUrl } : m))}>
       <header className="axa-head">
         <div>
           <h1>Settings</h1>
@@ -123,7 +101,10 @@ export default function SettingsPage() {
             <div>
               <b>{me?.name || "…"}</b>
               <small>{me?.email}</small>
-              <small>{busy === "photo" ? "Uploading…" : "Click the photo to change it"}</small>
+              <button type="button" className="btn ghost small axa-photo-btn" onClick={() => fileRef.current?.click()} disabled={busy === "photo"}>
+                <AiCamera size={15} />
+                {busy === "photo" ? "Uploading…" : me?.avatarUrl ? "Change photo" : "Add a photo"}
+              </button>
             </div>
           </div>
           <form className="stack" onSubmit={saveName}>

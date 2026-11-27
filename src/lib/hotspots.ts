@@ -28,6 +28,21 @@ export type MapPin = {
   url?: string;
 };
 
+/** What a hotspot inside the villa (walk-through 360) does when clicked. */
+export type InsideKind = "room" | "info" | "link";
+
+/** A hotspot inside the villa, at a wall / floor point in the walk-through's own units (Layama cm). */
+export type InsideHotspot = {
+  id: string;
+  pos: [number, number, number];
+  kind: InsideKind;
+  /** camera id of the room it walks to (kind "room") */
+  room?: string;
+  title?: string;
+  text?: string;
+  url?: string;
+};
+
 export type TourHotspots = {
   version: 1;
   /** scene shown first when the 360 view opens */
@@ -36,10 +51,25 @@ export type TourHotspots = {
   scenes: Record<string, SceneLink[]>;
   /** null = never edited (the tour keeps its built-in pins) */
   mapPins: MapPin[] | null;
+  /** hotspots inside the villa walk-through; null = never edited */
+  inside?: InsideHotspot[] | null;
   updatedAt?: string;
 };
 
-export const EMPTY_HOTSPOTS: TourHotspots = { version: 1, scenes: {}, mapPins: null };
+export const EMPTY_HOTSPOTS: TourHotspots = { version: 1, scenes: {}, mapPins: null, inside: null };
+
+/** Inside hotspots in the walk-through engine's format (mode 5 = walk to a room, 1 = info card, 3 = new tab). */
+export function insideForEngine(list: InsideHotspot[]) {
+  return list.map((h) => ({
+    id: h.id,
+    name: h.title || h.id,
+    pos: h.pos,
+    mode: (h.kind === "room" ? 5 : h.kind === "link" ? 3 : 1) as 1 | 3 | 5,
+    url: h.kind === "room" ? h.room : h.kind === "link" ? h.url : undefined,
+    title: h.title,
+    text: h.text,
+  }));
+}
 
 export const hotspotsPath = (slug: string) => `${slug}/config/hotspots.json`;
 
@@ -88,5 +118,26 @@ export function cleanHotspots(raw: unknown): TourHotspots {
       })
       .filter(Boolean) as MapPin[];
   }
-  return { version: 1, startScene: str(src.startScene, 120), scenes, mapPins, updatedAt: str(src.updatedAt, 40) };
+  let inside: InsideHotspot[] | null = null;
+  if (Array.isArray(src.inside)) {
+    inside = src.inside
+      .map((p) => {
+        const o = (p ?? {}) as Record<string, unknown>;
+        const pos = Array.isArray(o.pos) ? o.pos.map(num) : [];
+        if (pos.length !== 3 || pos.some((n) => n === null)) return null;
+        const kind: InsideKind = o.kind === "info" || o.kind === "link" ? o.kind : "room";
+        const url = str(o.url, 1000);
+        return {
+          id: str(o.id, 40) || newId(),
+          pos: pos as [number, number, number],
+          kind,
+          room: str(o.room, 120),
+          title: str(o.title, 80),
+          text: str(o.text, 600),
+          url: url && /^https?:\/\//i.test(url) ? url : undefined,
+        };
+      })
+      .filter(Boolean) as InsideHotspot[];
+  }
+  return { version: 1, startScene: str(src.startScene, 120), scenes, mapPins, inside, updatedAt: str(src.updatedAt, 40) };
 }

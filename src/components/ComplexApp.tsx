@@ -38,7 +38,7 @@ import VideoWindow from "@/components/VideoWindow";
 import { startVisit, trackFavorite, trackUnitView } from "@/lib/track";
 import { attachGlideScroll } from "@/lib/glide-scroll";
 import { STREET_360_PINS } from "@/lib/street360";
-import type { MapPin } from "@/lib/hotspots";
+import { insideForEngine, type MapPin } from "@/lib/hotspots";
 
 const STATUS_AR: Record<UnitStatus, string> = {
   available: "متاح",
@@ -2890,6 +2890,8 @@ function VillaTour({
 }) {
   const tour = useTour();
   const [tab, setTab] = useState<"plan" | "visit">("plan");
+  // hotspots the admin placed inside the villa (none saved → the walk-through stays as it is)
+  const insideHotspots = useMemo(() => (tour.hotspots?.inside ? insideForEngine(tour.hotspots.inside) : null), [tour.hotspots]);
   const floors = COMPLEX.villa360?.floors ?? [];
   // RDC → 1st → Final (do not reverse)
   const floorOrder = floors;
@@ -3011,7 +3013,7 @@ function VillaTour({
               ) : null}
             </>
           ) : (
-            <Visite360Viewer className="detail-visit" startId="10000" />
+            <Visite360Viewer className="detail-visit" startId={tour.walkthrough ? undefined : "10000"} hotspots={insideHotspots} base={tour.walkthrough} />
           )}
           <button
             type="button"

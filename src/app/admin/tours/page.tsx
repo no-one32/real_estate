@@ -1,57 +1,58 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import AdminShell from "../AdminShell";
-import { useConfirm } from "@/components/ConfirmDialog";
-import { uploadAssets } from "@/lib/admin-upload";
-import { buildScenes360 } from "@/lib/tour";
-import { EMPTY_HOTSPOTS, type TourHotspots } from "@/lib/hotspots";
-import TourBuilder from "./TourBuilder";
+import { COMPLEX, visite360Base, visite360ImageBase, visite360TourUrl } from "@/lib/complex";
+import { EMPTY_HOTSPOTS, type InsideHotspot, type TourHotspots } from "@/lib/hotspots";
+import type { TourData } from "@/viewer/Visite360Engine";
+import InsideBuilder, { type WalkthroughSource } from "./InsideBuilder";
+import WalkthroughImport from "./WalkthroughImport";
 import { usePortals } from "../usePortals";
 
-/** Scene id a panorama file belongs to — same grouping as buildScenes360 (one scene per folder or per file). */
-function sceneIdOf(path: string) {
-  const clean = decodeURIComponent(path.split("?")[0]).replace(/\\/g, "/");
-  const i = clean.toLowerCase().lastIndexOf("/scene_360/");
-  const parts = (i >= 0 ? clean.slice(i + "/scene_360/".length) : clean.split("/").pop() || "").split("/").filter(Boolean);
-  if (!parts.length) return "";
-  const key = parts.length >= 2 ? parts[0] : parts[0].replace(/\.[^.]+$/, "").replace(/[-_]?(thumb|thumbnail|_sm|_small)$/i, "") || parts[0];
-  return key.toLowerCase().replace(/\s+/g, "-");
-}
+/** Villas Ajyad's walk-through ships with the site (not imported). */
+const BUILT_IN = COMPLEX.slug;
+
 export default function ToursPage() {
-  const { portals, ready, err, setErr, reload } = usePortals();
+  const { portals, ready, err, setErr } = usePortals();
   const [openId, setOpenId] = useState<string | null>(null);
-  const [busy, setBusy] = useState("");
   const [msg, setMsg] = useState("");
-  const { confirm, dialog } = useConfirm();
+  const open = portals.find((p) => p.id === (openId ?? portals.find((x) => x.slug === BUILT_IN)?.id ?? portals[0]?.id)) ?? null;
 
-  const open = portals.find((p) => p.id === (openId ?? portals[0]?.id)) ?? null;
-  // one scene per panorama (thumbnails grouped with it) — same ids as the public tour
-  const scenes = useMemo(() => buildScenes360((open?.scenes ?? []).map((s) => s.path)), [open]);
-  const assetIdsOf = (sceneId: string) => (open?.scenes ?? []).filter((a) => sceneIdOf(a.path) === sceneId).map((a) => a.id);
-
-  const [hotspots, setHotspots] = useState<TourHotspots>(EMPTY_HOTSPOTS);
+  const [hotspots, setHotspots] = useState<TourHotspots | null>(null);
+  // undefined = loading; null = no walk-through yet
+  const [source, setSource] = useState<WalkthroughSource | null | undefined>(undefined);
   const [saving, setSaving] = useState(false);
+  const [version, setVersion] = useState(0);
+
   useEffect(() => {
     if (!open) return;
     let alive = true;
-    setHotspots(EMPTY_HOTSPOTS);
+    setHotspots(null);
+    setSource(undefined);
     void fetch(`/api/admin/hotspots?complexId=${open.id}`)
       .then((r) => r.json())
-      .then((j) => alive && j.hotspots && setHotspots(j.hotspots));
+      .then((j) => alive && setHotspots(j.hotspots ?? EMPTY_HOTSPOTS));
+    if (open.slug === BUILT_IN) {
+      setSource({ tourUrl: visite360TourUrl(), base: visite360Base(), imageBase: visite360ImageBase(), imported: false });
+    } else {
+      void fetch(`/api/admin/walkthrough?complexId=${open.id}`)
+        .then((r) => r.json())
+        .then((j) => alive && setSource(j.base ? { tourUrl: `${j.base}/tour.json?v=${Date.now()}`, base: j.base, imageBase: j.base, imported: true } : null));
+    }
     return () => {
       alive = false;
     };
-  }, [open?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open?.id, version]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const saveLinks = async (scenesLinks: TourHotspots["scenes"], startScene: string | undefined) => {
+  const save = async (inside: InsideHotspot[]) => {
     if (!open) return false;
     setSaving(true);
     setErr("");
+    setMsg("");
     const res = await fetch("/api/admin/hotspots", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ complexId: open.id, scenes: scenesLinks, startScene: startScene ?? null }),
+      body: JSON.stringify({ complexId: open.id, inside }),
     });
     const json = await res.json().catch(() => ({}));
     setSaving(false);
@@ -60,43 +61,27 @@ export default function ToursPage() {
       return false;
     }
     setHotspots(json.hotspots);
-    setMsg("Saved — the hotspots now appear in the tour.");
+    setMsg("Saved — the hotspots now appear inside the villa on the tour.");
     return true;
   };
 
-  const add = async (files: File[]) => {
-    if (!open) return;
+  const saveTour = async (tour: TourData) => {
+    if (!open) return false;
+    setSaving(true);
     setErr("");
-    setMsg("");
-    const res = await uploadAssets(open.id, files, "scene_360", { onProgress: (d, t) => setBusy(`Uploading ${d} / ${t}`) });
-    setBusy("");
-    if (res.error) setErr(res.error);
-    if (res.ok) setMsg(`${res.ok} panorama(s) added to ${open.name}`);
-    void reload();
-  };
-
-  const remove = async (sceneId: string, label: string) => {
-    if (!(await confirm(`Delete the panorama “${label}”? Its buttons are removed too.`, "Delete scene"))) return;
-    for (const id of assetIdsOf(sceneId)) {
-      const res = await fetch("/api/admin/assets", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        setErr(json.error || "Could not delete");
-        break;
-      }
+    const res = await fetch("/api/admin/walkthrough", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ complexId: open.id, tour }),
+    });
+    const json = await res.json().catch(() => ({}));
+    setSaving(false);
+    if (!res.ok) {
+      setErr(json.error || "Could not save the room names");
+      return false;
     }
-    // drop its buttons and every button that led to it
-    const next: TourHotspots["scenes"] = {};
-    for (const [k, list] of Object.entries(hotspots.scenes)) {
-      if (k === sceneId) continue;
-      next[k] = list.filter((l) => l.target !== sceneId);
-    }
-    await saveLinks(next, hotspots.startScene === sceneId ? undefined : hotspots.startScene);
-    void reload();
+    setMsg("Room names saved.");
+    return true;
   };
 
   return (
@@ -104,7 +89,7 @@ export default function ToursPage() {
       <header className="axa-head axa-head-row">
         <div>
           <h1>360° Tour Builder</h1>
-          <p>Import the 360 images, place the hotspots, choose where each one leads.</p>
+          <p>Import the villa walk-through, name the rooms and place the buttons (Majlis, Kitchen…) that take visitors to each room.</p>
         </div>
         {portals.length > 0 && (
           <label className="axa-project-pick">
@@ -121,21 +106,36 @@ export default function ToursPage() {
       {msg && <p className="ok">{msg}</p>}
       {!ready && <p className="muted">Loading…</p>}
       {ready && !portals.length && <p className="axa-empty">Create a portal first, then build its 360 tour here.</p>}
-      {open && (
-        <TourBuilder
-          key={open.id}
-          projectSlug={open.slug}
-          scenes={scenes}
-          links={hotspots.scenes}
-          startScene={hotspots.startScene}
-          uploading={busy}
-          saving={saving}
-          onUpload={(files) => void add(files)}
-          onDeleteScene={(id, label) => void remove(id, label)}
-          onSave={saveLinks}
+      {open && source === null && (
+        <WalkthroughImport
+          complexId={open.id}
+          projectName={open.name}
+          onDone={() => {
+            setMsg("Walk-through imported. Now name the rooms and place the hotspots.");
+            setVersion((v) => v + 1);
+          }}
+          onError={setErr}
         />
       )}
-      {dialog}
+      {open && source && hotspots && (
+        <>
+          <InsideBuilder
+            key={`${open.id}-${version}`}
+            projectSlug={open.slug}
+            source={source}
+            onSaveTour={source.imported ? saveTour : undefined}
+            saved={hotspots.inside ?? null}
+            saving={saving}
+            onSave={save}
+          />
+          {source.imported && (
+            <details className="axa-reimport">
+              <summary>Replace this walk-through with a new export</summary>
+              <WalkthroughImport complexId={open.id} projectName={open.name} onDone={() => setVersion((v) => v + 1)} onError={setErr} />
+            </details>
+          )}
+        </>
+      )}
     </AdminShell>
   );
 }

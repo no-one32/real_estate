@@ -40,6 +40,8 @@ export type TourMedia = {
   scenes360: TourScene360[];
   /** what the admin changed (360 buttons, maquette pins); null = nothing changed */
   hotspots: TourHotspots | null;
+  /** villa walk-through imported in the admin (folder URL); null = the built-in one */
+  walkthrough: string | null;
   source: "db" | "file" | "local";
 };
 
@@ -49,6 +51,7 @@ type Payload = {
   units?: Unit[];
   assets?: Pick<AssetRow, "kind" | "path" | "sort_index">[];
   hotspots?: TourHotspots | null;
+  walkthrough?: string | null;
 };
 
 function frameNum(path: string) {
@@ -211,6 +214,7 @@ function emptyShell(slug: string, name?: string): TourMedia {
     villa360: {},
     scenes360: [],
     hotspots: null,
+    walkthrough: null,
     source: "db",
   };
 }
@@ -277,6 +281,7 @@ export function buildTour(payload: Payload, slug: string): TourMedia {
     villa360,
     scenes360,
     hotspots: payload.hotspots ?? null,
+    walkthrough: payload.walkthrough ?? null,
     source: payload.source === "file" ? "file" : "db",
   };
 }

@@ -5,6 +5,7 @@ import type { canViewComplex } from "@/lib/complex-access";
 import { createServiceSupabase } from "@/lib/supabase/service";
 import type { AssetRow, ComplexRow, UnitRow } from "@/lib/types";
 import { cleanHotspots, hotspotsPath, type TourHotspots } from "@/lib/hotspots";
+import { walkthroughDir } from "@/lib/layama";
 
 export type ComplexPayload = {
   source: "db" | "file";
@@ -14,6 +15,8 @@ export type ComplexPayload = {
   published: boolean;
   /** what the admin changed (360 buttons, maquette pins); null = nothing changed, keep the built-in values */
   hotspots?: TourHotspots | null;
+  /** folder URL of a villa walk-through imported in the admin; null = none (the built-in one is used) */
+  walkthrough?: string | null;
 };
 
 function mapUnit(row: UnitRow): Unit {
@@ -38,13 +41,19 @@ type Access = Awaited<ReturnType<typeof canViewComplex>>;
 export async function loadComplexPayload(slug: string, access: Access): Promise<ComplexPayload | { error: string; status: number }> {
   const sb = createServiceSupabase();
   if (sb && access.complex) {
-    const [{ data: units }, { data: assets }, hotspots] = await Promise.all([
+    const dir = walkthroughDir(access.complex.slug);
+    const [{ data: units }, { data: assets }, hotspots, walkthrough] = await Promise.all([
       sb.from("units").select("*").eq("complex_id", access.complex.id),
       sb.from("assets").select("kind, path, sort_index").eq("complex_id", access.complex.id).order("sort_index"),
       sb.storage
         .from("media")
         .download(hotspotsPath(access.complex.slug))
         .then(async ({ data }) => (data ? cleanHotspots(JSON.parse(await data.text())) : null))
+        .catch(() => null),
+      sb.storage
+        .from("media")
+        .list(dir, { search: "tour.json", limit: 1 })
+        .then(({ data }) => (data?.some((f) => f.name === "tour.json") ? sb.storage.from("media").getPublicUrl(dir).data.publicUrl : null))
         .catch(() => null),
     ]);
     return {
@@ -54,6 +63,7 @@ export async function loadComplexPayload(slug: string, access: Access): Promise<
       assets: (assets as Pick<AssetRow, "kind" | "path" | "sort_index">[]) ?? [],
       published: Boolean(access.complex.published),
       hotspots,
+      walkthrough,
     };
   }
 

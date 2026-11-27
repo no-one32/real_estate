@@ -41,6 +41,7 @@ export async function PUT(req: Request) {
     mapPins?: unknown;
     scenes?: unknown;
     startScene?: unknown;
+    inside?: unknown;
   };
   let slug: string | null = null;
   if (body.complexId) slug = await projectSlug(sb, String(body.complexId));
@@ -58,6 +59,7 @@ export async function PUT(req: Request) {
       ...("mapPins" in body ? { mapPins: body.mapPins } : {}),
       ...("scenes" in body ? { scenes: body.scenes } : {}),
       ...("startScene" in body ? { startScene: body.startScene } : {}),
+      ...("inside" in body ? { inside: body.inside } : {}),
     };
   }
   const hotspots = { ...cleanHotspots(next), updatedAt: new Date().toISOString() };

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { visite360Base, visite360ImageBase, visite360TourUrl } from "@/lib/complex";
-import { Visite360Engine, type TourData } from "@/viewer/Visite360Engine";
+import { Visite360Engine, type TourData, type TourHotspot } from "@/viewer/Visite360Engine";
 
 // Arabic labels for the tour (tour.json ships English names from the export).
 const ROOM_AR: Record<string, string> = {
@@ -22,7 +22,7 @@ const FLOOR_AR: Record<string, string> = {
   first: "الدور الأول",
   roof: "السطح",
 };
-function roomAr(lb?: string) {
+export function roomAr(lb?: string) {
   if (!lb) return lb;
   if (ROOM_AR[lb]) return ROOM_AR[lb];
   const bath = /^Bedroom (\d+) Bathroom$/.exec(lb);
@@ -31,7 +31,7 @@ function roomAr(lb?: string) {
   if (bed) return `غرفة النوم ${bed[1]}`;
   return lb;
 }
-function arabizeTour(t: TourData): TourData {
+export function arabizeTour(t: TourData): TourData {
   return {
     ...t,
     floors: t.floors?.map((f) => ({ ...f, label: FLOOR_AR[f.id] ?? f.label })),
@@ -43,6 +43,10 @@ type Props = {
   className?: string;
   /** Camera id to open on (defaults to tour.json `startCamera`). */
   startId?: string;
+  /** Hotspots the admin placed (360 Tour Builder). Not given / null → the tour's own (tour.json). */
+  hotspots?: TourHotspot[] | null;
+  /** folder of a walk-through imported in the admin (tour.json, mesh.glb, images). Not given → the built-in one. */
+  base?: string | null;
 };
 
 /**
@@ -50,7 +54,7 @@ type Props = {
  * drag to look, wheel/pinch to zoom, click the floor to glide to the nearest ring,
  * rooms rail + floors to jump.
  */
-export default function Visite360Viewer({ className, startId }: Props) {
+export default function Visite360Viewer({ className, startId, hotspots, base }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -77,19 +81,20 @@ export default function Visite360Viewer({ className, startId }: Props) {
 
     (async () => {
       try {
-        const res = await fetch(visite360TourUrl());
+        const res = await fetch(base ? `${base}/tour.json` : visite360TourUrl());
         if (!res.ok) throw new Error(`tour.json ${res.status}`);
         const data = arabizeTour((await res.json()) as TourData);
         if (disposed) return;
         if (startId && data.cameras.some((c) => c.n === startId)) data.startCamera = startId;
+        if (hotspots) data.hotspots = hotspots;
         setTour(data);
         setCurrentId(data.startCamera ?? data.cameras[0]?.n ?? "");
 
         engine = new Visite360Engine({
           canvas,
           overlay: host,
-          baseUrl: visite360Base(),
-          imageBaseUrl: visite360ImageBase(),
+          baseUrl: base || visite360Base(),
+          imageBaseUrl: base || visite360ImageBase(),
           tour: data,
           debugPick: new URLSearchParams(window.location.search).has("pick"),
           onCameraChange: (id) => !disposed && setCurrentId(id),
@@ -114,7 +119,7 @@ export default function Visite360Viewer({ className, startId }: Props) {
       engineRef.current = null;
       engine?.dispose();
     };
-  }, [startId]);
+  }, [startId, hotspots, base]);
 
   // ------------------------------------------------------------ derived UI
   const camById = useMemo(() => new Map((tour?.cameras ?? []).map((c) => [c.n, c])), [tour]);
