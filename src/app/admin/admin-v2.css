@@ -668,3 +668,4 @@
 .axa-mpin-photo img { width: 120px; height: 69px; object-fit: cover; border-radius: 8px; }
 .axa-mpin-view { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; background: #f3f6fc; }
 .axa-mpin-view b { font-size: 13.5px; }
+.axa-pin-form label small.muted { display: inline; font-size: 12px; font-weight: 400; }
