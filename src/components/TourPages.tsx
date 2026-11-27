@@ -285,7 +285,15 @@ export function HelpPage({ tour, onClose }: { tour: TourMedia; onClose: () => vo
   const shots = shotsOf(tour);
   return (
     <SiteFrame kicker="الدليل" title="كيفية استخدام الجولة من الجوّ إلى داخل الفيلا" onClose={onClose}>
-      <PhotoGrid tall urls={[shots.aerial, shots.night, shots.cutaway]} />
+      {/* same video as the one shown after "اكتشف المزيد", so it can be watched again */}
+      <video
+        className="site-video"
+        src="/complexes/villas-ajyad/discover/video-720.mp4"
+        poster="/complexes/villas-ajyad/discover/poster.jpg"
+        controls
+        playsInline
+        preload="metadata"
+      />
       <p className="site-lead">
         هذه ليست فيديو. هذا نموذج حقيقي للحيّ تستطيع أن تديره وتقرّبه ثم تدخل إلى الفيلا كما يدخل الزائر
         مع المستشار. اضغط أي جزء أدناه. الأقسام الأخيرة تشرح ماذا تفعل بعد دخول الشقة من الداخل.

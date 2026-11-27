@@ -4388,6 +4388,7 @@ html.phone-layout .detail-full { display: none; }
   display: block;
   background: #e8eef3;
 }
+.site-video { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; display: block; background: #0f172a; margin: 0 0 14px; }
 .site-lead { font-size: 15px; line-height: 1.85; color: #3d4a55; margin: 0 0 16px; }
 .site-foot { font-size: 13px; color: #7a8794; margin-top: 14px; line-height: 1.7; }
 .site-view { margin-bottom: 16px; }

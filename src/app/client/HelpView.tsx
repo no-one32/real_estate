@@ -110,6 +110,16 @@ export default function HelpView({ onView }: { onView: (v: ClientView) => void }
         </label>
       </header>
 
+      {!needle ? (
+        <section className="axh-card axh-video">
+          <video src="/help/client-guide.mp4" poster="/help/client-guide.jpg" controls playsInline preload="metadata" />
+          <div>
+            <h2>جولة مصوّرة في لوحة التحكم</h2>
+            <p className="axh-sub">شاهد كيف تتابع مشاريعك وزوارك وعملاءك خطوة بخطوة</p>
+          </div>
+        </section>
+      ) : null}
+
       {nothing ? <p className="axh-empty">لا توجد نتائج لـ «{q.trim()}».</p> : null}
 
       {shownTopics.length ? (
