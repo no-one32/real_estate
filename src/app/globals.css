@@ -6725,7 +6725,7 @@ html.phone-layout .tip.tip-enter { max-width: min(270px, calc(100vw - 80px)); }
 html.phone-layout .tip.tip-enter img { width: 90px; height: 66px; border-radius: 10px; }
 
 /* ======================= Villa finder (recommendation) ======================= */
-.rail-stack { height: 365.71px; } /* one more button (اقتراح فيلا) under مساعدة */
+.rail-stack { height: 423.69px; } /* two more buttons (فيديو, اقتراح فيلا): 45.49 + 12.49 gap each */
 /* the اقتراح فيلا icon uses the same grey / white as the other rail buttons */
 
 /* opens at the bottom, right next to the villa list (sidebar), in the free space before the 360 / map tools */
