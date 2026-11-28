@@ -133,13 +133,25 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
     setLooks((all) => ({ ...all, [id]: look }));
     setNamesDirty(true);
   };
-  const addRoom = () => {
-    if (!here) return;
-    if (!added.includes(here)) {
-      setAdded((all) => [...all, here]);
-      keepView(here);
+  // "+" next to a floor: the room is where you stand (with the view you see);
+  // on another floor → jump to a free spot of that floor and add it there
+  const addRoom = (floorId: string) => {
+    let id = here;
+    if (!id) return;
+    if (cams.get(id)?.floor === floorId) {
+      if (!added.includes(id)) {
+        setAdded((all) => [...all, id]);
+        keepView(id);
+      }
+    } else {
+      const spots = (tour?.cameras ?? []).filter((c) => c.floor === floorId).map((c) => c.n);
+      id = spots.find((x) => !added.includes(x)) ?? spots[0];
+      if (!id) return;
+      engineRef.current?.teleportTo(id);
+      if (!added.includes(id)) setAdded((all) => [...all, id]);
+      setNamesDirty(true);
     }
-    setTimeout(() => hostRef.current?.closest(".axa-builder")?.querySelector<HTMLInputElement>(`input[data-room="${here}"]`)?.focus(), 0);
+    setTimeout(() => hostRef.current?.closest(".axa-builder")?.querySelector<HTMLInputElement>(`input[data-room="${id}"]`)?.focus(), 0);
   };
   const removeRoom = (id: string) => {
     setAdded((all) => all.filter((x) => x !== id));
@@ -174,14 +186,16 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
       {/* rooms */}
       <aside className="axa-builder-scenes">
         <h3 className="axa-builder-h">Rooms</h3>
-        {source.imported && <p className="muted axa-room-tip">Walk with the white circles, turn to the view you want, click <b>+ Add room</b> and type its name (المطبخ…). Clicking the room on the tour brings visitors to this exact view.</p>}
+        {source.imported && <p className="muted axa-room-tip">Stand in the room, face the view, click <b>+</b>.</p>}
         <ul className="axa-room-list">
           {(tour?.floors ?? []).map((f) => (
             <li key={f.id}>
               {source.imported ? (
+                <div className="axa-floor-row">
                 <input
                   className="axa-floor-name"
                   dir="auto"
+                  size={Math.max(6, (floorNames[f.id] ?? f.label).length + 1)}
                   value={floorNames[f.id] ?? f.label}
                   maxLength={30}
                   aria-label="Floor name"
@@ -190,6 +204,8 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
                     setNamesDirty(true);
                   }}
                 />
+                <button type="button" className="axa-floor-add" title="Add a room on this floor" aria-label="Add a room on this floor" disabled={!loaded} onClick={() => addRoom(f.id)}>+</button>
+                </div>
               ) : (
                 <small>{f.label}</small>
               )}
@@ -219,15 +235,9 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
                   </button>
                 ),
               )}
-              {source.imported && !floorPoints(f).length && <p className="muted axa-floor-empty">No rooms yet on this floor</p>}
             </li>
           ))}
         </ul>
-        {source.imported && tour && (
-          <button type="button" className="btn ghost small axa-room-add" disabled={!loaded} onClick={addRoom}>
-            + Add room {here && !added.includes(here) ? `(point ${pointNo.get(here)})` : ""}
-          </button>
-        )}
         {!tour && !error && <p className="muted">Loading the villa…</p>}
       </aside>
 

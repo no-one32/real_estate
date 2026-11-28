@@ -720,3 +720,13 @@
 .axa-room-edit button.axa-room-view { background: #e6edff; color: var(--blue); display: grid; place-items: center; }
 .axa-room-edit button.axa-room-view:disabled { opacity: 0.35; cursor: default; }
 .axa-floor-empty { margin: 0 4px; font-size: 12px; text-align: right; }
+/* 360 Tours · "+" next to each floor name */
+.axa-floor-row { display: flex; align-items: center; gap: 6px; direction: rtl; }
+.axa-floor-row input.axa-floor-name { flex: 1; min-width: 0; margin: 0; }
+.axa-room-list button.axa-floor-add { flex: none; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border-radius: 9px; background: var(--blue); color: #fff; font-size: 18px; font-weight: 500; line-height: 1; direction: ltr; }
+.axa-room-list button.axa-floor-add:hover { background: #1b47d8; }
+.axa-room-list button.axa-floor-add:disabled { opacity: 0.4; }
+.axa-floor-row { justify-content: flex-start; }
+.axa-floor-row input.axa-floor-name { flex: 0 1 auto; width: auto; }
+.axa-room-list button.axa-floor-add { justify-content: center; width: 24px; height: 24px; border-radius: 8px; font-size: 16px; }
+.axa-floor-row input.axa-floor-name { field-sizing: content; min-width: 5ch; }
