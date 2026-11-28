@@ -44,6 +44,8 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
   const [names, setNames] = useState<Record<string, string>>({});
   const [namesDirty, setNamesDirty] = useState(false);
   const [floorNames, setFloorNames] = useState<Record<string, string>>({});
+  // imported walk-throughs: the points the admin made rooms (with "+ Add room"), in the order added
+  const [added, setAdded] = useState<string[]>([]);
 
   useEffect(() => {
     setList(saved ?? []);
@@ -66,6 +68,7 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
         if (disposed) return;
         if (!source.imported) data.startCamera = "10000";
         setNames(Object.fromEntries(raw.cameras.map((c) => [c.n, c.lb ?? ""])));
+        setAdded(raw.cameras.filter((c) => c.lb?.trim()).map((c) => c.n));
         data.hotspots = insideForEngine(saved ?? []);
         setTour(data);
         setHere(data.startCamera ?? data.cameras[0]?.n ?? "");
@@ -115,12 +118,22 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
     const n = source.imported ? names[id]?.trim() : cams.get(id)?.lb;
     return n || `Point ${pointNo.get(id) ?? id}`;
   };
-  // the points of each floor: built-in → its rooms list; imported → every point (the admin names the rooms)
-  const floorPoints = (f: { id: string; rooms: string[] }) => (source.imported ? (tour?.cameras ?? []).filter((c) => c.floor === f.id).map((c) => c.n) : f.rooms);
+  // the rooms of each floor: built-in → its rooms list; imported → the points the admin added as rooms
+  const floorPoints = (f: { id: string; rooms: string[] }) => (source.imported ? added.filter((id) => cams.get(id)?.floor === f.id) : f.rooms);
   const rooms = useMemo(
     () => (tour?.floors ?? []).flatMap((f) => floorPoints(f).map((id) => ({ id, label: roomName(id), floor: f.label }))),
-    [tour, cams, names], // eslint-disable-line react-hooks/exhaustive-deps
+    [tour, cams, names, added], // eslint-disable-line react-hooks/exhaustive-deps
   );
+  const addRoom = () => {
+    if (!here) return;
+    if (!added.includes(here)) setAdded((all) => [...all, here]);
+    setTimeout(() => hostRef.current?.closest(".axa-builder")?.querySelector<HTMLInputElement>(`input[data-room="${here}"]`)?.focus(), 0);
+  };
+  const removeRoom = (id: string) => {
+    setAdded((all) => all.filter((x) => x !== id));
+    setNames((all) => ({ ...all, [id]: "" }));
+    setNamesDirty(true);
+  };
   const sel = list.find((h) => h.id === selected) ?? null;
 
   const edit = (id: string, patch: Partial<InsideHotspot>) => {
@@ -149,9 +162,9 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
       {/* rooms */}
       <aside className="axa-builder-scenes">
         <h3 className="axa-builder-h">Rooms</h3>
-        {source.imported && <p className="muted axa-room-tip">Click a number to stand there, then type the room&apos;s name. Named rooms appear in the tour&apos;s rooms bar.</p>}
+        {source.imported && <p className="muted axa-room-tip">Walk to a room (click the floor), click <b>+ Add room</b> and type its name. Named rooms appear in the tour&apos;s rooms bar.</p>}
         <ul className="axa-room-list">
-          {(tour?.floors ?? []).map((f) => (
+          {(tour?.floors ?? []).filter((f) => !source.imported || floorPoints(f).length > 0).map((f) => (
             <li key={f.id}>
               {source.imported ? (
                 <input
@@ -174,6 +187,7 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
                     <button type="button" title="Go there" onClick={() => engineRef.current?.teleportTo(id)}>{pointNo.get(id)}</button>
                     <input
                       dir="auto"
+                      data-room={id}
                       value={names[id] ?? ""}
                       maxLength={40}
                       placeholder="Name this room…"
@@ -183,6 +197,7 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
                         setNamesDirty(true);
                       }}
                     />
+                    <button type="button" className="axa-room-del" title="Remove this room" aria-label="Remove this room" onClick={() => removeRoom(id)}>−</button>
                   </div>
                 ) : (
                   <button key={id} type="button" className={id === here ? "on" : ""} onClick={() => engineRef.current?.teleportTo(id)}>
@@ -194,6 +209,11 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
             </li>
           ))}
         </ul>
+        {source.imported && tour && (
+          <button type="button" className="btn ghost small axa-room-add" disabled={!loaded} onClick={addRoom}>
+            + Add room {here && !added.includes(here) ? `(point ${pointNo.get(here)})` : ""}
+          </button>
+        )}
         {!tour && !error && <p className="muted">Loading the villa…</p>}
       </aside>
 

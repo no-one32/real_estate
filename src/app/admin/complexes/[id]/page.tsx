@@ -11,6 +11,20 @@ import { uploadAssets, type BrandSlot } from "@/lib/admin-upload";
 import { assetFileLabel, assetRelSegments } from "@/lib/asset-path";
 import { IconEye, IconFolder, IconTrash } from "@/components/Icons";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { AiCamera, AiCube, AiGlobe, AiGridView, AiHome, AiImage, AiUpload } from "../../AdminIcons";
+
+/** The picture on each upload card. */
+const STEP_ICON: Record<string, (p: { size?: number }) => React.ReactNode> = {
+  "branding-agency": AiImage,
+  "branding-project": AiImage,
+  glb: AiCube,
+  frame_low: AiCamera,
+  gallery: AiImage,
+  villa_360: AiHome,
+  plan: AiGridView,
+  frame_high: AiCamera,
+  document: (p) => <IconFolder size={p.size} />,
+};
 
 const UPLOAD_STEPS: {
   id: AssetKind;
@@ -477,15 +491,38 @@ export default function ComplexAdminPage() {
               const preview = step.brandSlot ? rows.find((a) => a.path.startsWith("http")) : undefined;
               const folderPick = step.pick === "folder";
               return (
-                <article key={step.key} className="upload-card">
-                  <header>
-                    <div className="upload-title">
-                      {preview ? <img className="logo-preview" src={preview.path} alt="" /> : null}
-                      <div>
-                        <h3>{step.title}</h3>
-                        <em className={n ? "has" : ""}>{n ? n : "Empty"}</em>
-                      </div>
-                    </div>
+                <article key={step.key} className={`upload-card up2${n ? " has" : ""}`}>
+                  <span className={`up2-ico${preview ? " logo" : ""}`}>
+                    {preview ? <img src={preview.path} alt="" /> : (() => { const I = STEP_ICON[step.key] ?? STEP_ICON[step.id] ?? AiGlobe; return <I size={22} />; })()}
+                  </span>
+                  <div className="up2-body">
+                    <h3>
+                      {step.title}
+                      <em className={n ? "has" : ""}>{n ? `${n} file${n > 1 ? "s" : ""}` : "Empty"}</em>
+                    </h3>
+                    <p>{step.why}</p>
+                  </div>
+                  <div className="up2-actions">
+                    <label className={`upload-pick${n ? " soft" : ""}`}>
+                      <input
+                      type="file"
+                      multiple={folderPick}
+                      accept={step.id === "branding" ? "image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" : step.id === "glb" ? ".glb,model/gltf-binary" : step.id === "document" ? ".pdf,application/pdf" : undefined}
+                      disabled={busyKind !== null}
+                      ref={(el) => {
+                        if (!el) return;
+                        if (folderPick) el.setAttribute("webkitdirectory", "");
+                        else el.removeAttribute("webkitdirectory");
+                      }}
+                      onChange={(e) => {
+                        const list = Array.from(e.target.files ?? []);
+                        e.target.value = "";
+                        void upload(list, step.id, step.brandSlot);
+                      }}
+                    />
+                      <AiUpload size={15} />
+                      <span>{busyKind === step.id && (!step.brandSlot || busyProgress) ? (busyProgress ? `Adding ${busyProgress}` : "Adding…") : step.action}</span>
+                    </label>
                     <div className="upload-icons">
                       <button className="icon-btn" type="button" disabled={!n} title="View files" aria-label="View files" onClick={() => { setFilesKind(step.id); setFilesDir([]); }}>
                         <IconEye size={16} />
@@ -509,27 +546,7 @@ export default function ComplexAdminPage() {
                         <IconTrash size={16} />
                       </button>
                     </div>
-                  </header>
-                  <p>{step.why}</p>
-                  <label className="upload-pick">
-                    <input
-                      type="file"
-                      multiple={folderPick}
-                      accept={step.id === "branding" ? "image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" : step.id === "glb" ? ".glb,model/gltf-binary" : step.id === "document" ? ".pdf,application/pdf" : undefined}
-                      disabled={busyKind !== null}
-                      ref={(el) => {
-                        if (!el) return;
-                        if (folderPick) el.setAttribute("webkitdirectory", "");
-                        else el.removeAttribute("webkitdirectory");
-                      }}
-                      onChange={(e) => {
-                        const list = Array.from(e.target.files ?? []);
-                        e.target.value = "";
-                        void upload(list, step.id, step.brandSlot);
-                      }}
-                    />
-                    <span>{busyKind === step.id && (!step.brandSlot || busyProgress) ? (busyProgress ? `Adding ${busyProgress}` : "Adding…") : step.action}</span>
-                  </label>
+                  </div>
                 </article>
               );
             })}
