@@ -684,3 +684,6 @@
   .axa-account-text b { font-size: 13.5px; }
   .axa-account-text small { font-size: 12px; }
 }
+/* 360 Tours · floor names (الدور الأرضي، الدور الأول، السطح) on the right, like the rooms */
+.axa-room-list small { direction: rtl; text-align: right; }
+.axa-room-list input.axa-floor-name { direction: rtl; text-align: right; }
