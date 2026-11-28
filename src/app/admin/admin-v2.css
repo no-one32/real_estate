@@ -717,3 +717,6 @@
   .axa .up2-ico { width: 44px; height: 44px; }
   .axa .up2-actions { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; }
 }
+.axa-room-edit button.axa-room-view { background: #e6edff; color: var(--blue); display: grid; place-items: center; }
+.axa-room-edit button.axa-room-view:disabled { opacity: 0.35; cursor: default; }
+.axa-floor-empty { margin: 0 4px; font-size: 12px; text-align: right; }

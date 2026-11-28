@@ -5,7 +5,7 @@ import { Visite360Engine, type TourData } from "@/viewer/Visite360Engine";
 import { arabizeTour } from "@/components/Visite360Viewer";
 import { insideForEngine, newId, type InsideHotspot, type InsideKind } from "@/lib/hotspots";
 import { withRoomBar } from "@/lib/layama";
-import { AiEye, AiPin, AiTrash } from "../AdminIcons";
+import { AiCamera, AiEye, AiPin, AiTrash } from "../AdminIcons";
 
 /** Where the walk-through files are: the built-in one (Villas Ajyad) or one imported in the admin. */
 export type WalkthroughSource = { tourUrl: string; base: string; imageBase: string; imported: boolean };
@@ -46,6 +46,8 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
   const [floorNames, setFloorNames] = useState<Record<string, string>>({});
   // imported walk-throughs: the points the admin made rooms (with "+ Add room"), in the order added
   const [added, setAdded] = useState<string[]>([]);
+  // the view each room opens on (where the admin was looking when adding it / "Use this view")
+  const [looks, setLooks] = useState<Record<string, [number, number, number]>>({});
 
   useEffect(() => {
     setList(saved ?? []);
@@ -124,9 +126,19 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
     () => (tour?.floors ?? []).flatMap((f) => floorPoints(f).map((id) => ({ id, label: roomName(id), floor: f.label }))),
     [tour, cams, names, added], // eslint-disable-line react-hooks/exhaustive-deps
   );
+  const keepView = (id: string) => {
+    const look = engineRef.current?.currentLook();
+    if (!look) return;
+    engineRef.current?.setView(id, look);
+    setLooks((all) => ({ ...all, [id]: look }));
+    setNamesDirty(true);
+  };
   const addRoom = () => {
     if (!here) return;
-    if (!added.includes(here)) setAdded((all) => [...all, here]);
+    if (!added.includes(here)) {
+      setAdded((all) => [...all, here]);
+      keepView(here);
+    }
     setTimeout(() => hostRef.current?.closest(".axa-builder")?.querySelector<HTMLInputElement>(`input[data-room="${here}"]`)?.focus(), 0);
   };
   const removeRoom = (id: string) => {
@@ -162,9 +174,9 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
       {/* rooms */}
       <aside className="axa-builder-scenes">
         <h3 className="axa-builder-h">Rooms</h3>
-        {source.imported && <p className="muted axa-room-tip">Walk to a room (click the floor), click <b>+ Add room</b> and type its name. Named rooms appear in the tour&apos;s rooms bar.</p>}
+        {source.imported && <p className="muted axa-room-tip">Walk with the white circles, turn to the view you want, click <b>+ Add room</b> and type its name (المطبخ…). Clicking the room on the tour brings visitors to this exact view.</p>}
         <ul className="axa-room-list">
-          {(tour?.floors ?? []).filter((f) => !source.imported || floorPoints(f).length > 0).map((f) => (
+          {(tour?.floors ?? []).map((f) => (
             <li key={f.id}>
               {source.imported ? (
                 <input
@@ -197,6 +209,7 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
                         setNamesDirty(true);
                       }}
                     />
+                    <button type="button" className="axa-room-view" title="Use the view you see now for this room" aria-label="Use this view" disabled={id !== here} onClick={() => keepView(id)}><AiCamera size={15} /></button>
                     <button type="button" className="axa-room-del" title="Remove this room" aria-label="Remove this room" onClick={() => removeRoom(id)}>−</button>
                   </div>
                 ) : (
@@ -206,6 +219,7 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
                   </button>
                 ),
               )}
+              {source.imported && !floorPoints(f).length && <p className="muted axa-floor-empty">No rooms yet on this floor</p>}
             </li>
           ))}
         </ul>
@@ -337,7 +351,7 @@ export default function InsideBuilder({ projectSlug, source, onSaveTour, saved, 
                   const named = withRoomBar({
                     ...tour,
                     floors: tour.floors.map((f) => ({ ...f, label: floorNames[f.id]?.trim() || f.label })),
-                    cameras: tour.cameras.map((c) => ({ ...c, lb: names[c.n]?.trim() || undefined })),
+                    cameras: tour.cameras.map((c) => ({ ...c, lb: names[c.n]?.trim() || undefined, ...(looks[c.n] ? { l: looks[c.n] } : {}) })),
                   });
                   if (!(await onSaveTour(named))) return;
                   setNamesDirty(false);

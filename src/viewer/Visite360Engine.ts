@@ -393,6 +393,21 @@ export class Visite360Engine {
     return hit ? this.toLayama(hit.point) : null;
   }
 
+  /** Admin builder: a point 2 m ahead of where the visitor looks now (Layama cm) — saved as a room's view. */
+  currentLook(): LayamaVec {
+    const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.rigQuat);
+    return this.toLayama(this.rigPos.clone().addScaledVector(fwd, 2));
+  }
+
+  /** Admin builder: the direction to face when arriving at a point (its saved view). */
+  setView(id: string, look: LayamaVec) {
+    const i = this.cams.findIndex((c) => c.id === id);
+    if (i < 0) return;
+    this.cams[i].lookat = this.toWorld(look);
+    this.cams[i].authoredLook = true;
+    this.viewTargets.delete(i);
+  }
+
   /** Admin builder: replace the hotspots shown (the public tour sets them once through `tour.hotspots`). */
   setHotspots(list: TourHotspot[]) {
     this.hotspots.forEach((h) => h.el.remove());
